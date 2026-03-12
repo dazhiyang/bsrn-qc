@@ -5,7 +5,7 @@
 ## 📂 File Structure
 
 ```text
-/Volumes/Macintosh Research/Data/bsrn-qc/
+/Volumes/Macintosh Research/Data/bsrn/
 ├── .gitignore
 ├── README.md
 ├── pyproject.toml
