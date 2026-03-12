@@ -8,6 +8,10 @@
 /Volumes/Macintosh Research/Data/bsrn/
 ├── .gitignore
 ├── README.md
+├── .agents/
+│   └── skills/
+│       └── project-rules/
+│           └── SKILL.md         # Project standards & naming conventions
 ├── pyproject.toml
 ├── src/
 │   └── bsrn/
@@ -16,7 +20,7 @@
 │       ├── io/
 │       │   ├── __init__.py
 │       │   ├── readers.py       # Functions to read .001, .002 datasets
-│       │   ├── retrieval.py     # FTP automated downloads & inventory
+│       │   ├── retrieval.py     # FTP automated downloads with robust retries
 │       │   └── writers.py       # Exporting results
 │       ├── physics/
 │       │   ├── __init__.py
@@ -24,9 +28,11 @@
 │       │   └── clearsky.py      # Theoretical reference models
 │       ├── qc/
 │       │   ├── __init__.py
-│       │   ├── physical.py      # Physically possible limits (Level 1)
-│       │   ├── rare.py          # Extremely rare limits (Level 2)
-│       │   └── consistency.py   # Internal consistency checks (Level 3)
+│       │   ├── ppl.py           # Physically possible limits (Level 1)
+│       │   ├── erl.py           # Extremely rare limits (Level 2)
+│       │   ├── closure.py       # Internal consistency checks (Level 3)
+│       │   ├── k_index.py       # Radiometric index tests (kb, kt, k)
+│       │   └── tracker.py       # Solar tracker status detection
 │       ├── visualization/
 │       │   ├── __init__.py
 │       │   └── availability.py  # File coverage heatmaps
@@ -38,37 +44,46 @@
 │   ├── test_io.py
 │   └── test_qc.py
 ├── data/
-│   └── sample_bsrn_file.001     # Example file for testing/demo
+│   ├── QIQ/                     # Sample 2024 data for station QIQ
+│   └── download_qiq.py          # Script to fetch QIQ 2024 data
 └── notebooks/                   # Example usage notebooks
 ```
 
-## 🛠 Features (Planned)
+## 🛠 Features
 
-Based on the [BSRN Operations Manual (2018)](https://bsrn.awi.de/):
+Based on the [BSRN Operations Manual (2018)](https://bsrn.awi.de/) and [Forstinger et al. (2021)](https://doi.org/10.18086/swc.2021.36):
 
-- **Level 1 (Physically Possible):** Checks if values stay within absolute physical bounds.
-- **Level 2 (Extremely Rare):** Checks if values fall within very infrequent ranges, typical for specific climatic conditions.
-- **Level 3 (Internal Consistency):** Cross-comparison between complementary radiation components (GHI vs. DHI + DNI).
-- **Automation:** Easy ingestion of station-to-archive files from multiple sites.
+- **Level 1 (Physically Possible):** Absolute physical bounds for $G_h, B_n, D_h$, and $L_d$.
+- **Level 2 (Extremely Rare):** Climatological limits for specific regimes.
+- **Level 3 (Comparison):** Consistency checks ($G_h$ vs $B_n \cos Z + D_h$) with zenith-dependent thresholds.
+- **Radiometric Indices:** Advanced checks using clearness index ($k_t$), beam transmittance ($k_b$), and diffuse fraction ($k$).
+- **Tracker Detection:** Identify tracking errors by comparing measured values with clear-sky benchmarks.
+- **Robust Retrieval:** High-level API for batch FTP downloads from BSRN-AWI with exponential backoff retries.
 
 ## 🚀 Getting Started
 
-1.  **Installation:** (Planned)
+1.  **Installation:**
     ```bash
     pip install .
     ```
 
-2.  **Usage Example:** (Placeholder)
+2.  **Data Retrieval:**
+    To download all 2024 data for a station (e.g., QIQ):
+    ```python
+    from bsrn.io.retrieval import download_bsrn_stn
+    
+    # Downloads all available files for a station
+    download_bsrn_stn("QIQ", "data/QIQ", username="your_user", password="your_password")
+    ```
+
+3.  **QC Example:**
     ```python
     import bsrn
     
-    # Load BSRN data
-    data = bsrn.io.read_station_file("data/sample_bsrn_file.001")
-    
-    # Perform QC
-    results = bsrn.qc.run_standard_checks(data)
+    # Load BSRN data (placeholder for the full runner)
+    # data = bsrn.io.read_station_file("data/QIQ/qiq0124.dat.gz")
     ```
 
 ## 📜 License
 
-MIT License (Planned)
+MIT License

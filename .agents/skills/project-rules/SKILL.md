@@ -1,10 +1,24 @@
-# 🤖 AGENT.md: Project Standards & Governance
+---
+name: bsrn-project-rules
+description: Standards and governance for the bsrn project, including naming conventions and documentation rules.
+---
 
-This document defines the naming conventions, scientific symbols, and bilingual (English/Chinese) translations used throughout the `bsrn` project.
+# 🤖 Project Standards & Governance
+
+This document defines the mandatory development standards, naming conventions, and scientific protocols for the `bsrn` project.
+
+## ⚠️ CORE BEHAVIORAL DIRECTIVES
+
+- **MUST** use absolute paths for all imports within the codebase.
+- **DO NOT** use `Glob` or `Grep` for exploratory searches; prefer structured directory listing and file viewing.
+- **NEVER** execute destructive shell commands (e.g., `rm`, `kill`, `git reset`) without explicit user permission.
+- **MUST** adhere to the bilingual documentation format for all new functions.
+
+---
 
 ## 📏 Radiometric Parameters
 
-All code variables and documentation must adhere to these standards:
+Code variables and documentation **MUST** strictly adhere to the following table:
 
 | Acronym | Code Name | Symbol | Full English Name | Full Chinese Name |
 | :--- | :--- | :--- | :--- | :--- |
@@ -30,14 +44,15 @@ All code variables and documentation must adhere to these standards:
 
 ---
 
-## 📝 Documentation Rules
+## 📝 Documentation & Coding Rules
 
-### 1. Bilingual Comments (Single-Line)
-Format: `Description in English / 对应中文描述`
+### 1. Bilingual Comments
+- **MUST** use the format: `Description in English / 对应中文描述`
 - Example: `# Fetch data from FTP / 从 FTP 获取数据`
 
-### 2. Docstring Structure (NumPy/SciPy Style)
-All functions must include a bilingual description in the summary and parameters.
+### 2. Docstring Structure
+- **MUST** use NumPy/SciPy style with bilingual descriptions.
+- **MUST** include both English and Chinese in the summary and parameter descriptions.
 
 ```python
 def function_name(param):
@@ -59,9 +74,10 @@ def function_name(param):
     """
 ```
 
-### 3. Consistency
-- Avoid generic terms like "Direct" or "Global" in isolation. Always use the standardized acronyms or full names defined above.
-- LaTeX symbols should be used in READMEs and technical documentation.
-- Do not capitalize the long form of abbreviation, e.g., it should be "global horizontal irradiance (GHI)" but not "Global Horizontal Irradiance (GHI)".
-- Line length should not exceed 110 characters.
-- Title for scientific paper as references should be in sentence case, not title case.
+### 3. Naming & Consistency
+- **DO NOT** use generic terms like "Direct" or "Global" in isolation.
+- **MUST** use LaTeX symbols ($G_h, B_n$, etc.) in READMEs and technical docs.
+- **DO NOT** capitalize the long form of abbreviations (e.g., use "global horizontal irradiance").
+- **MUST** limit line length to a maximum of 110 characters.
+- **MUST** use sentence case for scientific paper titles in references.
+- **DO NOT** use a `qc_` prefix for quality control functions; they **MUST** end with `_test`.
