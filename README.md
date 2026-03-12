@@ -1,6 +1,6 @@
-# bsrn-qc: Quality Control for BSRN Files
+# bsrn: Quality Control for BSRN Files
 
-`bsrn-qc` is a Python package designed for automated quality control (QC) on Baseline Surface Radiation Network (BSRN) station-to-archive files (e.g., .001, .002, etc.).
+`bsrn` is a Python package designed for automated quality control (QC) on Baseline Surface Radiation Network (BSRN) station-to-archive files (e.g., .001, .002, etc.).
 
 ## 📂 File Structure
 
@@ -10,7 +10,7 @@
 ├── README.md
 ├── pyproject.toml
 ├── src/
-│   └── bsrn_qc/
+│   └── bsrn/
 │       ├── __init__.py
 │       ├── constants.py         # BSRN station database & physical constants
 │       ├── io/
@@ -60,13 +60,13 @@ Based on the [BSRN Operations Manual (2018)](https://bsrn.awi.de/):
 
 2.  **Usage Example:** (Placeholder)
     ```python
-    import bsrn_qc as bqc
-
+    import bsrn
+    
     # Load BSRN data
-    data = bqc.io.read_station_file("data/sample_bsrn_file.001")
-
+    data = bsrn.io.read_station_file("data/sample_bsrn_file.001")
+    
     # Perform QC
-    results = bqc.qc.run_standard_checks(data)
+    results = bsrn.qc.run_standard_checks(data)
     ```
 
 ## 📜 License

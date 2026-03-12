@@ -1,5 +1,5 @@
 """
-BSRN Data Retrieval Module.
+bsrn data retrieval module.
 Handles FTP connections and automated downloads.
 BSRN 数据获取模块。
 处理 FTP 连接和自动下载。
@@ -10,7 +10,7 @@ import os
 
 def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"):
     """
-    Connects to BSRN FTP and lists available station-to-archive files.
+    Connects to bsrn ftp and lists available station-to-archive files.
     连接到 BSRN FTP 并列出可用的站点存档文件。
 
     Parameters
@@ -77,7 +77,7 @@ def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"
 
 def download_bsrn_file(remote_path, local_dir, username, password, host="ftp.bsrn.awi.de"):
     """
-    Downloads a single file from BSRN FTP.
+    Downloads a single file from bsrn ftp.
     从 BSRN FTP 下载单个文件。
 
     Parameters

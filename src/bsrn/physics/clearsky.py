@@ -1,5 +1,5 @@
 """
-Clear-Sky Radiation Models.
+clear-sky radiation models.
 Provides theoretical reference for QC checks.
 晴空辐射模型。
 为 QC 检查提供理论参考。
@@ -15,16 +15,16 @@ def get_clearsky_ineichen(times, lat, lon, elev=0, linke_turbidity=3):
     Parameters
     ----------
     times : pd.DatetimeIndex
-        Times for calculation.
+        times for calculation.
         计算对应的时间。
     lat : float
-        Latitude.
+        latitude.
         纬度。
     lon : float
-        Longitude.
+        longitude.
         经度。
     elev : float, default 0
-        Elevation in meters.
+        elevation in meters.
         海拔（米）。
     linke_turbidity : float, default 3
         Linke turbidity factor.
@@ -33,9 +33,16 @@ def get_clearsky_ineichen(times, lat, lon, elev=0, linke_turbidity=3):
     Returns
     -------
     clearsky : pd.DataFrame
-        DataFrame with columns 'ghi', 'dni', 'dhi'.
-        包含 'ghi'、'dni'、'dhi' 的 DataFrame。
+        DataFrame with columns 'ghi_clear', 'bni_clear', 'dhi_clear'.
+        包含 'ghi_clear' (晴空水平总辐照度, $G_{hc}$)、'bni_clear' (晴空法向直接辐照度, $B_{nc}$)、'dhi_clear' (晴空水平散射辐照度, $D_{hc}$) 的 DataFrame。
     """
     location = pvlib.location.Location(lat, lon, altitude=elev)
     clearsky = location.get_clearsky(times, model='ineichen', linke_turbidity=linke_turbidity)
+    
+    # Rename columns to match AGENT.md standards / 重命名列以符合 AGENT.md 标准
+    clearsky = clearsky.rename(columns={
+        'ghi': 'ghi_clear',
+        'dni': 'bni_clear',
+        'dhi': 'dhi_clear'
+    })
     return clearsky

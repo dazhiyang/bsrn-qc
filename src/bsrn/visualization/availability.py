@@ -1,5 +1,5 @@
 """
-Visualization of BSRN file availability.
+visualization of bsrn file availability.
 BSRN文件可用性的可视化。
 """
 
@@ -11,12 +11,12 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
 from datetime import datetime
-from bsrn_qc.io.retrieval import get_bsrn_file_inventory
+from bsrn.io.retrieval import get_bsrn_file_inventory
 
 
 def plot_bsrn_availability(stations, username, password, start_year=1992, end_year=None):
     """
-    Unified function to plot BSRN file availability from FTP.
+    Unified function to plot bsrn file availability from ftp.
     统一功能，用于绘制FTP中的BSRN文件可用性。
 
     Parameters
@@ -31,10 +31,10 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
         BSRN FTP password.
         BSRN FTP 密码。
     start_year : int, default 1992
-        Year to start the visualization.
+        year to start the visualization.
         可视化开始的年份。
     end_year : int, optional
-        Year to end the visualization. If not specified, the current year is used.
+        year to end the visualization. If not specified, the current year is used.
         可视化结束的年份。如果未指定，则使用当前年份。
 
     Returns

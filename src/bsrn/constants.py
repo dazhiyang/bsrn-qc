@@ -5,8 +5,13 @@ BSRN 标准和常量。
 包含物理常量和站点元数据。
 """
 
-# Solar Constant (Isc) in W/m^2 (value in Chris Gueymard's 2018 paper) / 太阳常数 (Isc) W/m^2 (出自 Chris Gueymard 2018 年论文)
-Isc = 1361.1
+"""
+Citations:
+[1] Gueymard, Christian A. "A reevaluation of the solar constant based on a 42-year total solar irradiance time 
+series and a reconciliation of spaceborne observations." Solar Energy 168 (2018): 2-9.
+"""
+# solar constant (SC) in W/m^2 ($E_{\text{sc}}$) / 太阳常数 (SC) W/m^2 ($E_{\text{sc}}$)
+solar_constant = 1361.1
 
 # BSRN Calibration Constants (if any) / BSRN 校准常数（如果有）
 # ...

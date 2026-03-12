@@ -2,13 +2,13 @@ import os
 import sys
 import matplotlib.pyplot as plt
 
-# Add src to python path to ensure bsrn_qc is importable
+# Add src to python path to ensure bsrn is importable
 sys.path.append(os.path.join(os.getcwd(), "src"))
 
 try:
-    from bsrn_qc.visualization import plot_bsrn_availability
+    from bsrn.visualization import plot_bsrn_availability
 except ImportError:
-    print("Error: Could not import bsrn_qc. Make sure you are running from the project root.")
+    print("Error: Could not import bsrn. Make sure you are running from the project root.")
     sys.exit(1)
 
 def main():

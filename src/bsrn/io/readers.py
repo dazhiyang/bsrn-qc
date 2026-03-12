@@ -1,5 +1,5 @@
 """
-BSRN File Readers.
+bsrn file readers.
 Handles .001, .002, ... and other archive formats.
 BSRN 文件读取模块。
 处理 .001, .002, ... 等存档格式。
@@ -16,7 +16,7 @@ def read_bsrn_station_to_archive(file_path):
     Parameters
     ----------
     file_path : str
-        Path to the BSRN station-to-archive file.
+        path to the bsrn station-to-archive file.
         BSRN 站点存档文件的路径。
 
     Returns
@@ -37,10 +37,10 @@ def read_bsrn_multiple_files(directory, extension="*.001"):
     Parameters
     ----------
     directory : str
-        Path to the directory containing BSRN files.
+        path to the directory containing bsrn files.
         包含 BSRN 文件的目录路径。
     extension : str, default "*.001"
-        File glob pattern (e.g., "*.001" or "*.dat.gz").
+        file glob pattern (e.g., "*.001" or "*.dat.gz").
         文件匹配模式（例如 "*.001" 或 "*.dat.gz"）。
 
     Returns
