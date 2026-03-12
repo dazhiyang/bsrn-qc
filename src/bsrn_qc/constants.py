@@ -1,16 +1,18 @@
 """
 BSRN Standards and Constants.
 Contains physical constants and station metadata.
+BSRN 标准和常量。
+包含物理常量和站点元数据。
 """
 
-# Solar Constant (Isc) in W/m^2 (value in Chris Gueymard's 2018 paper)
+# Solar Constant (Isc) in W/m^2 (value in Chris Gueymard's 2018 paper) / 太阳常数 (Isc) W/m^2 (出自 Chris Gueymard 2018 年论文)
 Isc = 1361.1
 
-# BSRN Calibration Constants (if any)
+# BSRN Calibration Constants (if any) / BSRN 校准常数（如果有）
 # ...
 
-# Station Metadata: Mapping of station abbreviations to (lat, lon, elev)
-# Note: These are example entries.
+# Station Metadata: Mapping of station abbreviations to (lat, lon, elev) / 站点元数据：站点缩写到（纬度，经度，海拔）的映射
+# Note: These are example entries. / 注意：这些是示例条目。
 BSRN_STATIONS = {
     "ABS": {"name": "Abashiri", "lat": 44.0178, "lon": 144.2797, "elev": 38.0, "status": "active", "kgc": "Dfb"},
     "ALE": {"name": "Alert", "lat": 82.49, "lon": -62.42, "elev": 127.0, "status": "closed", "kgc": "ET"},
