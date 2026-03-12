@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bsrn-qc"
+version = "0.1.0"
+authors = [
+  { name="Seryang D.", email="user@example.com" },
+]
+description = "A Python package for quality control (QC) checks on BSRN station-to-archive files."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pandas",
+    "numpy",
+    "xarray",
+    "matplotlib",
+    "seaborn",
+    "pvlib-python",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/bsrn-qc/bsrn-qc"
+"Bug Tracker" = "https://github.com/bsrn-qc/bsrn-qc/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]

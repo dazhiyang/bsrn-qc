@@ -1,0 +1,30 @@
+# Standard Python .gitignore
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environments
+.env/
+.venv/
+venv/
+env/
+conda-env/
+
+# IDEs
+.vscode/
+.idea/
+
+# Data and Notebooks
+data/*
+!data/sample_bsrn_file.001
+notebooks/.ipynb_checkpoints/
+*.log
+
+# Miscellaneous
+.DS_Store
