@@ -6,8 +6,14 @@
 
 ### Installation
 
+From PyPI (stable release):
 ```bash
 pip install bsrn
+```
+
+From GitHub (latest development version):
+```bash
+pip install git+https://github.com/dazhiyang/bsrn.git
 ```
 
 ### Quick Example
