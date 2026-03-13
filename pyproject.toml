@@ -6,15 +6,19 @@ build-backend = "setuptools.build_meta"
 name = "bsrn"
 version = "0.1.0"
 authors = [
-  { name="Seryang D.", email="user@example.com" },
+  { name="Dazhi Yang" },
 ]
 description = "A Python package for quality control (QC) checks on BSRN station-to-archive files."
 readme = "README.md"
+license = {file = "LICENSE"}
 requires-python = ">=3.9"
+keywords = ["bsrn", "solar radiation", "quality control", "irradiance", "solar energy"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 dependencies = [
     "pandas",
