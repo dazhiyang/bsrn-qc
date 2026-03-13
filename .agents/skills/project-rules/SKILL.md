@@ -78,3 +78,21 @@ def function_name(param):
 - **DO NOT** capitalize the long form of abbreviations (e.g., use "global horizontal irradiance").
 - **MUST** limit line length to a maximum of 110 characters.
 - **MUST** use sentence case for scientific paper titles in references.
+
+### 4. Git Usage
+- **DO NOT** push to git unless explicitly instructed by the USER.
+
+### 5. Visualization & Aesthetics
+- **Color Palettes**:
+    - **Discrete Variables**: **MUST** use the **Wong colorblind-friendly palette**. Colors **MUST** be used in this specific order based on the number of categories:
+        1. `#E69F00` (Orange)
+        2. `#56B4E9` (Sky Blue)
+        3. `#009E73` (Bluish Green)
+        4. `#CC79A7` (Reddish Purple)
+        5. `#D55E00` (Vermillion)
+        6. `#F0E442` (Yellow)
+        7. `#0072B2` (Blue)
+    - **Continuous Variables**: **MUST** use the **Viridis** color palette (or equivalent perceptually uniform colormaps).
+- **Clear-sky Reference**: **MUST** be visualized with both a **line** and a **ribbon** (fill from 0 upwards). Both **MUST** use the same color from the Wong sequence (typically the 2nd color if compared to 1st observed), with `alpha=0.4` applied to the ribbon.
+- **Fonts**: **MUST** use 'Times New Roman' for all axis labels, titles, and legends.
+- **Size**: **MUST** set text size to 7pt and figure width to 160mm (for standard journal column width).

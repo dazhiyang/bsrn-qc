@@ -77,37 +77,6 @@ def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"
     return inventory
 
 
-def download_bsrn_file(filename, local_dir, username, password, host="ftp.bsrn.awi.de"):
-    """
-    Download a single BSRN file by specifying its filename.
-    通过指定文件名下载单个 BSRN 文件。
-
-    Parameters
-    ----------
-    filename : str
-        BSRN station-to-archive filename (e.g., 'pay0123.dat.gz').
-        BSRN 站点存档文件名（例如 'pay0123.dat.gz'）。
-    local_dir : str
-        The local directory to save the file.
-        保存文件的本地目录。
-    username : str
-        BSRN FTP username.
-        BSRN FTP 用户名。
-    password : str
-        BSRN FTP password.
-        BSRN FTP 密码。
-    host : str, default "ftp.bsrn.awi.de"
-        FTP host address.
-        FTP 主机地址。
-
-    Returns
-    -------
-    local_path : str or None
-        The path to the downloaded file, or None if failed.
-        下载文件的路径，如果失败则返回 None。
-    """
-    return download_bsrn_files([filename], local_dir, username, password, host=host)[0]
-
 
 def download_bsrn_single(station, year, month, local_dir, username, password, host="ftp.bsrn.awi.de"):
     """
@@ -149,7 +118,7 @@ def download_bsrn_single(station, year, month, local_dir, username, password, ho
     year_str = str(year)[-2:]
     month_int = int(month)
     filename = f"{station.lower()}{month_int:02d}{year_str}.dat.gz"
-    return download_bsrn_file(filename, local_dir, username, password, host=host)
+    return download_bsrn_files([filename], local_dir, username, password, host=host)[0]
 
 
 def download_bsrn_stn(station, local_dir, username, password, host="ftp.bsrn.awi.de"):

@@ -159,13 +159,16 @@ def read_bsrn_multiple_files(directory, extension="*.dat.gz"):
         合并后的数据。
     """
     from glob import glob
+    # Collect files matching the pattern / 获取匹配模式的文件
     files = sorted(glob(os.path.join(directory, extension)))
     
+    # Handle no files found / 处理未找到文件的情况
     if not files:
         print(f"No files found matching {extension} in {directory}")
         return None
         
     dfs = []
+    # Iterate through files and read / 遍历并读取文件
     for f in files:
         data = read_bsrn_station_to_archive(f)
         if data is not None:
@@ -174,4 +177,5 @@ def read_bsrn_multiple_files(directory, extension="*.dat.gz"):
     if not dfs:
         return None
         
+    # Concatenate and sort results / 合并并排序结果
     return pd.concat(dfs).sort_index()
