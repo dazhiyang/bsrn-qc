@@ -81,12 +81,13 @@ def test_qc_table():
         if df is not None:
             station_code = "QIQ"
             meta = BSRN_STATIONS[station_code]
+            station_name = meta["name"]
             print("Calculating QC stats...")
             daily_stats = get_daily_stats(df, meta["lat"], meta["lon"], meta["elev"])
             
             filename = os.path.basename(FILE_PATH)
             month_label = datetime.strptime(filename[3:7], "%m%y").strftime("%B %Y")
-            title = f"BSRN quality flags and sunshine duration for {month_label}"
+            title = f"BSRN quality flags and sunshine duration for {station_code}, {month_label}"
             
             print(f"Generating plot: {output_file}...")
             plot_qc_table(daily_stats, title, output_file)

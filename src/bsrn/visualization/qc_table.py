@@ -3,27 +3,14 @@ quality control table visualization.
 质量控制表格可视化。
 """
 
-import os
 import pandas as pd
-import numpy as np
-from datetime import datetime
+from bsrn.constants import WONG_PALETTE
 from plotnine import (
     ggplot, aes, geom_tile, geom_text,
     theme, element_text, element_blank,
     labs, scale_x_discrete, scale_y_discrete,
     scale_fill_manual, theme_minimal, coord_fixed
 )
-
-# Project defined Wong palette / 项目定义的 Wong 配色方案
-WONG_PALETTE = [
-    "#E69F00",  # Orange / 橙色
-    "#56B4E9",  # Sky Blue / 天蓝色
-    "#009E73",  # Bluish Green / 青绿色
-    "#CC79A7",  # Reddish Purple / 浅紫红色
-    "#D55E00",  # Vermillion / 朱红色
-    "#F0E442",  # Yellow / 黄色
-    "#0072B2"   # Blue / 蓝色
-]
 
 def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
     """
@@ -58,18 +45,17 @@ def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
         'SD_MAX': 'SD MAX',
         'SD_ACT': 'SD ACT',
         'SD_REL': 'SD REL',
-        'SWD_PPL': 'SWD PPL',
-        'SWD_ERL': 'SWD ERL',
-        'DIF_PPL': 'DIF PPL',
-        'DIF_ERL': 'DIF ERL',
-        'DIR_PPL': 'DIR PPL',
-        'DIR_ERL': 'DIR ERL',
+        'GHI_PPL': 'GHI PPL',
+        'GHI_ERL': 'GHI ERL',
+        'DHI_PPL': 'DHI PPL',
+        'DHI_ERL': 'DHI ERL',
+        'BNI_PPL': 'BNI PPL',
+        'BNI_ERL': 'BNI ERL',
         'LWD_PPL': 'LWD PPL',
         'LWD_ERL': 'LWD ERL',
-        'CMP_CLO_L': 'CLO L',
-        'CMP_CLO_H': 'CLO H',
-        'CMP_KB_KT': 'KB KT',
-        'CMP_COMB': 'COMB',
+        'CMP_CLO': 'CLOSURE',
+        'CMP_DIF': 'DIF RATIO',
+        'CMP_K': 'K-INDEX',
         'TRACKER': 'TRACKER'
     }
     
@@ -143,7 +129,7 @@ def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
         theme_minimal() +
         theme(
             text=element_text(family='Times New Roman', size=7),
-            axis_text_x=element_text(rotation=45, hjust=0),
+            axis_text_x=element_text(rotation=45, hjust=0.5),
             plot_title=element_text(size=7, margin={'b': 5}),
             panel_grid=element_blank(),
             figure_size=(width_inch, height_inch)

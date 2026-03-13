@@ -179,3 +179,14 @@ LINKE_TURBIDITY = {
     "XIA": {"Jan": 4.8, "Feb": 4.8, "Mar": 5.1, "Apr": 7.2, "May": 7.9, "Jun": 8.5, "Jul": 7.8, "Aug": 6.2, "Sep": 6.5, "Oct": 6.3, "Nov": 4.8, "Dec": 4.5},
     "YUS": {"Jan": 2.7, "Feb": 2.8, "Mar": 3.4, "Apr": 3.3, "May": 3.1, "Jun": 2.7, "Jul": 2.4, "Aug": 2.6, "Sep": 2.9, "Oct": 3.0, "Nov": 2.7, "Dec": 2.5},
 }
+
+# Project defined Wong palette / 项目定义的 Wong 配色方案
+WONG_PALETTE = [
+    "#E69F00",  # Orange / 橙色
+    "#56B4E9",  # Sky Blue / 天蓝色
+    "#009E73",  # Bluish Green / 青绿色
+    "#CC79A7",  # Reddish Purple / 浅紫红色
+    "#D55E00",  # Vermillion / 朱红色
+    "#F0E442",  # Yellow / 黄色
+    "#0072B2"   # Blue / 蓝色
+]
