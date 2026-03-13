@@ -155,6 +155,7 @@ def calculate_vapor_pressure(temp_c, rh):
         实际水汽压，单位为 hPa。
     """
     # 1. Calculate Saturation Vapor Pressure (es) / 计算饱和水汽压 (es)
+    # 6.112 is the saturation pressure at 0°C in hPa
     es = 6.112 * np.exp((17.67 * temp_c) / (temp_c + 243.5))
     
     # 2. Calculate Actual Vapor Pressure (ea) / 计算实际水汽压 (ea)
@@ -192,9 +193,9 @@ def brutsaert_model(temp_c, rh):
     # Get vapor pressure (ea) in hPa / 获取水汽压 (ea)，单位为 hPa
     ea = calculate_vapor_pressure(temp_c, rh)
     
-    # Brutsaert (1975) Emissivity formula / Brutsaert (1975) 发射率公式
-    # epsilon = 0.643 * (ea / Ta)^(1/7)
-    emissivity = 0.643 * (ea / temp_k)**(1/7)
+    # Brutsaert (2005) updated emissivity formula / Brutsaert (2005) 更新发射率公式
+    # epsilon = 1.323 * (ea / Ta)^(1/7) for ea in hPa (millibars)
+    emissivity = 1.323 * (ea / temp_k)**(1/7)
     
     # Calculate Final Downward Radiation (L_down) / 计算最终的下行辐射
     lwd_clear = emissivity * sigma * (temp_k**4)

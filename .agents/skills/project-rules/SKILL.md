@@ -34,6 +34,9 @@ Code variables and documentation **MUST** strictly adhere to the following table
 | **k_b** | `k_b` | $k_b$ | beam transmittance | 直射透射率 |
 | **k_d** | `k_d` | $k_d$ | diffuse transmittance | 散射透射率 |
 | **k** | `k` | $k$ | diffuse fraction | 散射分数 |
+| **TMP** | `temp` | $T$ | air temperature | 空气温度 |
+| **RH** | `rh` | $RH$ | relative humidity | 相对湿度 |
+| **SP** | `pressure` | $P$ | station pressure | 站点气压 |
 
 ---
 
@@ -96,7 +99,6 @@ def function_name(param):
         6. `#F0E442` (Yellow)
         7. `#0072B2` (Blue)
     - **Continuous Variables**: **MUST** use the **Viridis** color palette (or equivalent perceptually uniform colormaps).
-- **Clear-sky Reference**: **MUST** be visualized with both a **line** and a **ribbon** (fill from 0 upwards). Both **MUST** use the same color from the Wong sequence (typically the 2nd color if compared to 1st observed), with `alpha=0.25` applied to the ribbon.
 - **Line Size**: Default line size **MUST** be set to 0.3 for all plots.
 - **Fonts**: **MUST** use 'Times New Roman' for all axis labels, titles, and legends.
 - **Size**: **MUST** set text size to 7pt and figure width to 160mm (for standard journal column width).

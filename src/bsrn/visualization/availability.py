@@ -67,15 +67,18 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
     # Pattern: STNMMYY.dat.gz or STNMMYY.001 / 匹配模式：STNMMYY.dat.gz 或 STNMMYY.001
     pattern = re.compile(r"([A-Z]{3})(\d{2})(\d{2})\.(?:dat\.gz|\d{3}).*", re.IGNORECASE)
 
+    # Calculate dimensions to ensure square cells / 计算尺寸以确保方形单元格
     # Width = 160mm = 6.299 inches / 宽度 = 160mm = 6.299 英寸
     width_inch = 160 / 25.4
     num_cols = len(years)
     num_rows = 12 if len(stations) == 1 else len(stations)
     
-    # Aspect ratio adjustment / 长宽比调整
-    ideal_height = width_inch * (num_rows / max(num_cols, 1))
-    height_inch = min(ideal_height, width_inch * 1.5) # Prevent extreme 26+ inch stretching for 1-2 year queries
-    total_height_inch = height_inch + 1.2  # Add extra height for labels and colorbar / 为标签和颜色条增加额外高度
+    # Estimate usable width for the plot (subtracting space for Y-axis labels)
+    usable_width = width_inch - 0.8 
+    cell_size = usable_width / num_cols
+    
+    # Total height scales with number of rows + overhead for title and legend
+    total_height_inch = (cell_size * num_rows) + 1.0 
     
     # Data collection
     plot_data = []
@@ -145,19 +148,20 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
         
     year_breaks = [y for i, y in enumerate(years) if i % 2 == 0] if len(years) > 20 else years
     
-    p = p + scale_x_continuous(breaks=year_breaks)
+    p = p + scale_x_continuous(breaks=year_breaks) + coord_equal()
 
     # Apply strict formatting rules / 应用严格的格式规则
     p = p + theme_minimal() + theme(
         text=element_text(family='Times New Roman', size=7),
         axis_title=element_text(size=7),
         axis_text=element_text(size=7),
-        plot_title=element_text(size=7, margin={'b': 10}),
+        plot_title=element_text(size=7, margin={'b': 1}),
         legend_title=element_text(size=7),
         legend_text=element_text(size=7),
         legend_position="bottom",
         legend_key_width=100,
         legend_key_height=5,
+        legend_margin=-12,
         panel_grid=element_line(color="white", size=0.5),
         figure_size=(width_inch, total_height_inch),
         axis_text_x=element_text(rotation=45, hjust=1)

@@ -140,24 +140,30 @@ def plot_bsrn_timeseries_booklet(file_path, output_file, station_code=None, appl
             name_map = {
                 'gh_diff': 'GHI-SUM', 
                 'gh_ratio': 'GHI/SUM', 
-                'temp': 'TEMP',
+                'temp': 'TMP',
                 'rh': 'RH',
-                'pressure': 'Pressure'
+                'pressure': 'SP'
             }
             day_diag['parameter'] = day_diag['parameter'].map(name_map)
             
             # Order categories / 设置类别顺序
-            all_params = ['GHI', 'BNI', 'DHI', 'GHI-SUM', 'GHI/SUM', 'LWD', 'TEMP', 'RH', 'Pressure']
-            day_main['parameter'] = pd.Categorical(day_main['parameter'], categories=all_params, ordered=True)
-            day_diag['parameter'] = pd.Categorical(day_diag['parameter'], categories=all_params, ordered=True)
+            all_params = ['GHI', 'BNI', 'DHI', 'GHI-SUM', 'GHI/SUM', 'LWD', 'TMP', 'RH', 'SP']
+            cat_type = pd.CategoricalDtype(categories=all_params, ordered=True)
+            
+            # Combine into a single dataframe to strictly enforce plotting order
+            day_diag_renamed = day_diag.rename(columns={'value': 'measured'})
+            day_diag_renamed['clearsky'] = np.nan
+            day_all = pd.concat([day_main, day_diag_renamed], ignore_index=True)
+            day_all['parameter'] = day_all['parameter'].astype(cat_type)
             
             # Thresholds for GHI/SUM
             day_thresh = pd.DataFrame({
                 'time': day_df.index,
                 'upper': np.where(day_zenith < 75, 1.08, 1.15),
                 'lower': np.where(day_zenith < 75, 0.92, 0.85),
-                'parameter': pd.Categorical(['GHI/SUM']*len(day_df.index), categories=all_params, ordered=True)
+                'parameter': 'GHI/SUM'
             }, index=day_df.index)
+            day_thresh['parameter'] = day_thresh['parameter'].astype(cat_type)
             # Mask thresholds at night as well for clarity
             day_thresh.loc[day_zenith >= 90, ['upper', 'lower']] = np.nan
 
@@ -165,20 +171,26 @@ def plot_bsrn_timeseries_booklet(file_path, output_file, station_code=None, appl
             if station_code: title = f"{station_code} - {title}"
             if apply_qc: title += " (QC Applied)"
 
+            hline_df = pd.DataFrame({'parameter': ['GHI/SUM'], 'y': [1.0]})
+            hline_df['parameter'] = hline_df['parameter'].astype(cat_type)
+
+            # Separate shortwave (ribbon from 0) and longwave (line only)
+            cs_data = day_all.dropna(subset=['clearsky'])
+            cs_sw = cs_data[cs_data['parameter'].isin(['GHI', 'BNI', 'DHI'])]
+            
             p = (
-                ggplot(day_main, aes(x='time')) +
-                # Row 1: Ribbons (Clear-sky)
-                geom_ribbon(aes(ymin=0, ymax='clearsky'), fill=ribbon_color, alpha=0.25) +
-                geom_line(aes(y='clearsky'), color=clearsky_color, size=0.3) +
+                ggplot(day_all, aes(x='time')) +
+                # Shortwave ribbons (ymin=0) / 短波色带（ymin=0）
+                geom_ribbon(data=cs_sw, mapping=aes(ymin=0, ymax='clearsky'), fill=ribbon_color, alpha=0.25) +
+                # Clear-sky lines for all (GHI, BNI, DHI, LWD) / 所有晴空线
+                geom_line(data=cs_data, mapping=aes(y='clearsky'), color=clearsky_color, size=0.3) +
+                # Measured data (all panels)
                 geom_line(aes(y='measured'), color=measured_color, size=0.3) +
-                # Diagnostic & Meteo Plots
-                geom_line(data=day_diag, mapping=aes(y='value'), color=measured_color, size=0.3) +
                 # Ratio Envelopes (Row 2, Column 2)
                 geom_line(data=day_thresh, mapping=aes(y='upper'), color='#999999', size=0.3, linetype='dashed') +
                 geom_line(data=day_thresh, mapping=aes(y='lower'), color='#999999', size=0.3, linetype='dashed') +
-                geom_hline(data=pd.DataFrame({'parameter': pd.Categorical(['GHI/SUM'], categories=all_params), 'y': [1.0]}), 
-                           mapping=aes(yintercept='y'), color='#999999', size=0.2) +
-                facet_wrap('~parameter', nrow=3, ncol=3, scales='free_y') +
+                geom_hline(data=hline_df, mapping=aes(yintercept='y'), color='#999999', size=0.2) +
+                facet_wrap('~parameter', nrow=3, ncol=3, scales='free_y', drop=False) +
                 labs(title=title, x="Time (UTC)", y="Value") +
                 theme_minimal() +
                 theme(
