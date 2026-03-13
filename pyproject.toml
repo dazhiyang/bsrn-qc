@@ -19,10 +19,7 @@ classifiers = [
 dependencies = [
     "pandas",
     "numpy",
-    "xarray",
-    "matplotlib",
-    "seaborn",
-    "pvlib-python",
+    "plotnine",
 ]
 
 [project.urls]

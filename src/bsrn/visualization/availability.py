@@ -7,10 +7,13 @@ import os
 import re
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import seaborn as sns
 from datetime import datetime
+from plotnine import (
+    ggplot, aes, geom_tile, scale_fill_cmap,
+    theme, element_text, element_blank, element_line,
+    labs, scale_x_continuous, scale_y_discrete,
+    coord_equal, theme_minimal
+)
 from bsrn.io.retrieval import get_bsrn_file_inventory
 
 
@@ -39,7 +42,7 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
 
     Returns
     -------
-    fig : matplotlib.figure.Figure
+    fig : plotnine.ggplot.ggplot
         The generated availability heatmap figure.
         生成的可用性热图对象。
     """
@@ -61,34 +64,23 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
     # Pattern: STNMMYY.dat.gz or STNMMYY.001 / 匹配模式：STNMMYY.dat.gz 或 STNMMYY.001
     pattern = re.compile(r"([A-Z]{3})(\d{2})(\d{2})\.(?:dat\.gz|\d{3}).*", re.IGNORECASE)
 
-    # Calculate dimensions to ensure square cells / 计算尺寸以确保方形单元格
     # Width = 160mm = 6.299 inches / 宽度 = 160mm = 6.299 英寸
     width_inch = 160 / 25.4
     num_cols = len(years)
     num_rows = 12 if len(stations) == 1 else len(stations)
     
     # Aspect ratio adjustment / 长宽比调整
-    height_inch = width_inch * (num_rows / num_cols)
+    ideal_height = width_inch * (num_rows / max(num_cols, 1))
+    height_inch = min(ideal_height, width_inch * 1.5) # Prevent extreme 26+ inch stretching for 1-2 year queries
     total_height_inch = height_inch + 1.2  # Add extra height for labels and colorbar / 为标签和颜色条增加额外高度
     
-    # Font settings / 字体设置
-    plt.rcParams.update({
-        'font.family': 'serif',
-        'font.serif': ['Times New Roman'],
-        'font.size': 7,
-        'axes.titlesize': 7,
-        'axes.labelsize': 7,
-        'xtick.labelsize': 7,
-        'ytick.labelsize': 7,
-        'legend.fontsize': 7
-    })
-    
-    fig = plt.figure(figsize=(width_inch, total_height_inch))
+    # Data collection
+    plot_data = []
     
     if len(stations) == 1:
         stn = stations[0]
-        months = list(range(1, 13))
-        df = pd.DataFrame(0, index=months, columns=years)
+        month_names = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+        df = pd.DataFrame(0, index=range(1, 13), columns=years)
         for filename in inventory.get(stn, []):
             basename = os.path.basename(filename)
             match = pattern.match(basename)
@@ -98,13 +90,28 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
                 year = (1900 + yy) if yy >= 92 else (2000 + yy)
                 if year in df.columns and month in df.index:
                     df.at[month, year] = 1
+                    
+        # Reset and melt for plotnine
+        df = df.reset_index().rename(columns={'index': 'Month'})
+        df_melt = df.melt(id_vars=['Month'], var_name='Year', value_name='Availability')
         
-        # Plot single station / 绘制单个站点
-        ax = sns.heatmap(df, cmap="viridis", cbar=True, linewidths=0.5, linecolor='white', 
-                         square=True, yticklabels=['J', 'F', 'M', 'A', 'M', 'J', 
-                                                  'J', 'A', 'S', 'O', 'N', 'D'],
-                         cbar_kws={"orientation": "horizontal", "pad": 0.35, "shrink": 0.5, "label": "Availability"})
-        plt.ylabel(f"Station: {stn}")
+        # Use string representations of month integers to keep uniqueness
+        month_strs = [str(m) for m in range(1, 13)]
+        df_melt['Month'] = pd.Categorical(df_melt['Month'].astype(str), categories=reversed(month_strs), ordered=True)
+        df_melt['Year'] = df_melt['Year'].astype(int)
+        
+        # Create mapping dictionary for ggplot axis labels
+        month_labels = {str(m): name for m, name in zip(range(1, 13), month_names)}
+        
+        p = (
+            ggplot(df_melt, aes(x='Year', y='Month', fill='Availability')) + 
+            geom_tile(color='white', size=0.5) +
+            scale_fill_cmap(cmap_name='viridis', name="Availability") +
+            labs(y=f"Station: {stn}", 
+                 x="Year", 
+                 title=f"BSRN File Availability ({start_year}-{end_year})") +
+            scale_y_discrete(labels=lambda items: [month_labels.get(x, x) for x in items])
+        )
     else:
         df = pd.DataFrame(0, index=stations, columns=years)
         for stn in stations:
@@ -117,20 +124,40 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
                     year = (1900 + yy) if yy >= 92 else (2000 + yy)
                     if year in df.columns:
                         df.at[stn, year] += 1
+                        
+        df = df.reset_index().rename(columns={'index': 'Station'})
+        df_melt = df.melt(id_vars=['Station'], var_name='Year', value_name='Months_Available')
+        df_melt['Station'] = pd.Categorical(df_melt['Station'], categories=reversed(stations), ordered=True)
+        df_melt['Year'] = df_melt['Year'].astype(int)
         
-        # Plot multiple stations / 绘制多个站点
-        ax = sns.heatmap(df, cmap="viridis", cbar=True, linewidths=0.5, linecolor='white', square=True,
-                         cbar_kws={"orientation": "horizontal", "pad": 0.35, "shrink": 0.5, "label": "Months Available"})
-        plt.ylabel("Stations")
-
-    plt.title(f"BSRN File Availability ({start_year}-{end_year})", pad=10)
-    plt.xlabel("Year", labelpad=5)
+        p = (
+            ggplot(df_melt, aes(x='Year', y='Station', fill='Months_Available')) + 
+            geom_tile(color='white', size=0.5) +
+            scale_fill_cmap(cmap_name='viridis', name="Months Available") +
+            labs(y="Stations", 
+                 x="Year", 
+                 title=f"BSRN File Availability ({start_year}-{end_year})") +
+            scale_y_discrete()
+        )
+        
+    year_breaks = [y for i, y in enumerate(years) if i % 2 == 0] if len(years) > 20 else years
     
-    # Adjust X-ticks visibility / 调整 X 轴刻度可见性
-    if len(years) > 20:
-        for i, label in enumerate(ax.get_xticklabels()):
-            if i % 2 != 0: label.set_visible(False)
-    plt.xticks(rotation=45)
+    p = p + scale_x_continuous(breaks=year_breaks)
 
-    plt.tight_layout()
-    return fig
+    # Apply strict formatting rules / 应用严格的格式规则
+    p = p + theme_minimal() + theme(
+        text=element_text(family='Times New Roman', size=7),
+        axis_title=element_text(size=7),
+        axis_text=element_text(size=7),
+        plot_title=element_text(size=7, margin={'b': 10}),
+        legend_title=element_text(size=7),
+        legend_text=element_text(size=7),
+        legend_position="bottom",
+        legend_key_width=100,
+        legend_key_height=5,
+        panel_grid=element_line(color="white", size=0.5),
+        figure_size=(width_inch, total_height_inch),
+        axis_text_x=element_text(rotation=45, hjust=1)
+    )
+
+    return p

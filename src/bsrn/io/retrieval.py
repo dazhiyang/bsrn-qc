@@ -42,7 +42,8 @@ def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"
             ftp.set_pasv(True)
             ftp.login(user=username, passwd=password)
 
-            for stn in stations:
+            for i, stn in enumerate(stations):
+                print(f"[{i+1}/{len(stations)}] Fetching inventory for station {stn.upper()}...")
                 stn_lower = stn.lower()
                 success = False
 

@@ -1,19 +1,27 @@
 """
 solar geometry calculations.
-Uses pvlib for high-precision solar position.
+Provides high-precision solar position and extraterrestrial radiation.
 太阳几何计算。
-使用 pvlib 进行高精度太阳位置计算。
+提供高精度太阳位置和地外辐射计算。
 """
 
-import pvlib
 import pandas as pd
 import numpy as np
+from bsrn.physics import spa
 
 
+"""
+Citations:
+[1] Holmgren, William F., Clifford W. Hansen, and Mark A. Mikofski. "pvlib python: 
+A python package for modeling solar energy systems." Journal of Open Source Software 
+3.29 (2018): 884.
+[2] Anderson, Kevin S., et al. "pvlib python: 2023 project update." Journal of Open 
+Source Software 8.92 (2023): 5994.
+"""
 def get_solar_position(times, lat, lon, elev=0):
     r"""
-    Calculates solar zenith angle ($Z$) and solar azimuth angle ($\phi$).
-    计算太阳天顶角 ($Z$) 和太阳方位角 ($\phi$)。
+    Calculates solar zenith angle ($Z$) and solar azimuth angle ($\phi$) using SPA.
+    使用 SPA 算法计算太阳天顶角 ($Z$) 和太阳方位角 ($\phi$)。
 
     Parameters
     ----------
@@ -34,16 +42,34 @@ def get_solar_position(times, lat, lon, elev=0):
     -------
     solpos : pd.DataFrame
         DataFrame with columns 'zenith', 'apparent_zenith', 'azimuth'.
-        包含 'zenith' ($Z$)、'apparent_zenith'、'azimuth' ($\phi$) 等列的 DataFrame。
+        包含 'zenith' ($Z$)、'apparent_zenith'、'azimuth' ($\phi$) 的 DataFrame。
     """
-    solpos = pvlib.solarposition.get_solarposition(times, lat, lon, elev)
+    # Convert times to unix timestamp / 将时间转换为 unix 时间轴
+    unixtime = times.view(np.int64) / 1e9
+    
+    # We use a fixed delta_t for simplicity. 
+    # For 2024, delta_t is approximately 69.1s / 2024年, delta_t 约为 69.1秒
+    zenith, apparent_zenith, azimuth, _ = spa.solar_position(
+        unixtime, lat, lon, elev, delta_t=69.1
+    )
+    
+    solpos = pd.DataFrame({
+        'zenith': zenith,
+        'apparent_zenith': apparent_zenith,
+        'azimuth': azimuth
+    }, index=times)
+    
     return solpos
 
 
+"""
+Citations:
+[1] J. W. Spencer, "Fourier series representation of the sun," Search, vol. 2, p. 172, 1971.
+"""
 def get_bni_extra(times):
     """
-    Calculates extraterrestrial beam normal irradiance ($BNI_E$, $E_{0n}$).
-    计算地外法向辐照度 ($BNI_E$, $E_{0n}$)。
+    Calculates extraterrestrial beam normal irradiance ($BNI_E$, $E_{0n}$) using Spencer (1971).
+    使用 Spencer (1971) 方法计算地外法向辐照度 ($BNI_E$, $E_{0n}$)。
 
     Parameters
     ----------
@@ -57,7 +83,21 @@ def get_bni_extra(times):
         Extraterrestrial beam normal irradiance ($E_{0n}$) in W/m^2.
         地外法向辐照度 ($E_{0n}$)，单位 W/m^2。
     """
-    return pvlib.irradiance.get_extra_radiation(times)
+    # Day angle (radians) / 日角（弧度）
+    # Spencer (1971) uses (2*pi/365)*(doy - 1)
+    day_of_year = times.dayofyear
+    b = (2.0 * np.pi / 365.0) * (day_of_year - 1.0)
+    
+    # Eccentricity correction / 偏心率修正
+    # E0 = Isc * (1.00011 + 0.034221*cos(B) + 0.001280*sin(B) + 0.000719*cos(2B) + 0.000077*sin(2B))
+    r_r0_sq = (1.00011 + 0.034221 * np.cos(b) + 0.001280 * np.sin(b) + 
+               0.000719 * np.cos(2 * b) + 0.000077 * np.sin(2 * b))
+    
+    # Using the project defined solar constant / 使用项目定义的太阳常数
+    from bsrn.constants import solar_constant
+    bni_extra = solar_constant * r_r0_sq
+    
+    return pd.Series(bni_extra, index=times)
 
 
 def get_ghi_extra(times, zenith):

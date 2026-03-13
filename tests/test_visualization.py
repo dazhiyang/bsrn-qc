@@ -41,11 +41,8 @@ def main():
         
         # Save the plot
         output_file = "bsrn_availability_heatmap.png"
-        fig.savefig(output_file, dpi=300, bbox_inches='tight')
+        fig.save(output_file, dpi=300)
         print(f"Successfully generated heatmap: {output_file}")
-        
-        # If running in an interactive environment, show the plot
-        # plt.show()
         
     except Exception as e:
         print(f"An error occurred during execution: {e}")
