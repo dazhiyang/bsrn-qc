@@ -16,7 +16,7 @@ Gueymard, C. A. (2018). A reevaluation of the solar constant based on a
 42-year total solar irradiance time series and a reconciliation of 
 spaceborne observations. Solar Energy, 168, 2-9.
 """
-solar_constant = 1361.1
+solar_constant = 1366.1 # temporary for testing
 
 """
 Engerer2 separation model parameters (C, b0, b1, b2, b3, b4, b5).

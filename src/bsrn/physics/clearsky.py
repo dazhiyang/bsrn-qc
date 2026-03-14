@@ -19,8 +19,8 @@ def get_relative_airmass(zenith, model='kastenyoung1989'):
     Parameters
     ----------
     zenith : numeric
-        Zenith angle of the sun. [degrees]
-        太阳天顶角。[度]
+        Solar zenith angle ($Z$). [degrees]
+        太阳天顶角 ($Z$)。[度]
 
     model : string, default 'kastenyoung1989'
         Available models include:
@@ -42,18 +42,20 @@ def get_relative_airmass(zenith, model='kastenyoung1989'):
     .. [2] Kasten, F., & Young, A. T. (1989). Revised optical air mass
        tables and approximation formula. Applied Optics, 28(22), 4735-4738.
     """
-    # set zenith values greater than 90 to nans / 将大于 90 的天顶角设为 NaN
+    # Set zenith values greater than 90 to nans / 将大于 90 的天顶角设为 NaN
     zenith = np.where(zenith > 90, np.nan, zenith)
 
     model = model.lower()
 
-    if model == 'kastenyoung1989':
-        am = (1.0 / (np.cos(np.radians(zenith)) +
+    if 'kastenyoung1989' == model:
+        zenith_rad = np.radians(zenith)
+        am = (1.0 / (np.cos(zenith_rad) +
               0.50572*((6.07995 + (90 - zenith)) ** - 1.6364)))
-    elif model == 'kasten1966':
-        am = 1.0 / (np.cos(np.radians(zenith)) + 0.15*((93.885 - zenith) ** - 1.253))
+    elif 'kasten1966' == model:
+        zenith_rad = np.radians(zenith)
+        am = 1.0 / (np.cos(zenith_rad) + 0.15*((93.885 - zenith) ** - 1.253))
     else:
-        raise ValueError(f'{model} is not a valid Kasten model for relative airmass. Use "kastenyoung1989" or "kasten1966".')
+        raise ValueError(f'{model} is not a valid model for relative airmass.')
 
     if isinstance(zenith, pd.Series):
         am = pd.Series(am, index=zenith.index)
@@ -80,7 +82,7 @@ def get_absolute_airmass(airmass_relative, pressure=101325.0):
         Absolute optical air mass. [unitless]
         绝对光学大气质量。[无单位]
     """
-    return airmass_relative * (pressure / 101325.0)
+    return airmass_relative * pressure / 101325.
 
 def ineichen_model(apparent_zenith, airmass_absolute, lt, elev, bni_extra):
     """
@@ -90,14 +92,14 @@ def ineichen_model(apparent_zenith, airmass_absolute, lt, elev, bni_extra):
     Parameters
     ----------
     apparent_zenith : numeric
-        Apparent (refraction-corrected) solar zenith angle. [degrees]
-        表观（经折射校正的）太阳天顶角。[度]
+        Apparent (refraction-corrected) solar zenith angle ($Z$). [degrees]
+        表观（经折射校正的）太阳天顶角 ($Z$)。[度]
     airmass_absolute : numeric
-        Absolute (pressure-corrected) air mass. [unitless]
-        绝对（经气压校正的）大气质量。[无单位]
+        Absolute (pressure-corrected) air mass ($AM_a$). [unitless]
+        绝对（经气压校正的）大气质量 ($AM_a$)。[无单位]
     lt : numeric
-        Linke turbidity factor. [unitless]
-        Linke 浑浊因子。[无单位]
+        Linke turbidity factor ($T_L$). [unitless]
+        Linke 浑浊因子 ($T_L$)。[无单位]
     elev : float
         Elevation. [m]
         海拔。[米]
@@ -127,26 +129,27 @@ def ineichen_model(apparent_zenith, airmass_absolute, lt, elev, bni_extra):
     # Altitude-dependent coefficients / 与海拔相关的系数
     fh1 = np.exp(-elev / 8000.0)
     fh2 = np.exp(-elev / 1250.0)
-    cg1 = 0.0000509 * elev + 0.868
-    cg2 = 0.0000392 * elev + 0.0387
+    cg1 = 5.09e-05 * elev + 0.868
+    cg2 = 3.92e-05 * elev + 0.0387
     
     # GHI calculation / GHI 计算
-    ghi_clear = np.exp(-cg2 * airmass_absolute * (fh1 + fh2 * (lt - 1)))
-    # apply extraterrestrial scaling and protect against airmass NaNs creating negatives
-    ghi_clear = cg1 * bni_extra * mu0 * np.fmax(ghi_clear, 0)
+    # ghi_clear matches pvlib 'ghi' logic and NaN handling / ghi_clear 与 pvlib 'ghi' 逻辑及 NaN 处理匹配
+    ghi_exp = np.exp(-cg2 * airmass_absolute * (fh1 + fh2 * (lt - 1)))
+    ghi_clear = cg1 * bni_extra * mu0 * lt / lt * np.fmax(ghi_exp, 0)
     
-    # BNI calculation / BNI 计算 (Approximation based on Ineichen)
+    # BNI calculation / BNI 计算
+    # First component: direct beam attenuation / 第一分量：直接辐射衰减
     b = 0.664 + 0.163 / fh1
-    bni_clear = b * np.exp(-0.09 * airmass_absolute * (lt - 1))
-    bni_clear = bni_extra * np.fmax(bni_clear, 0)
+    bni_clear_1 = b * np.exp(-0.09 * airmass_absolute * (lt - 1))
+    bni_clear_1 = bni_extra * np.fmax(bni_clear_1, 0)
     
-    # "empirical correction"
+    # Second component: empirical correction / 第二分量：经验修正
     with np.errstate(divide='ignore', invalid='ignore'):
-        bni_clear_2 = ((1 - (0.1 - 0.2 * np.exp(-lt)) / (0.1 + 0.882 / fh1)) / mu0)
+        bni_multiplier = ((1.0 - (0.1 - 0.2 * np.exp(-lt)) / (0.1 + 0.882 / fh1)) /
+                       mu0)
+        bni_clear_2 = ghi_clear * np.fmin(np.fmax(bni_multiplier, 0), 1e20)
     
-    bni_clear_2 = ghi_clear * np.fmin(np.fmax(bni_clear_2, 0), 1e20)
-    
-    bni_clear = np.minimum(bni_clear, bni_clear_2)
+    bni_clear = np.minimum(bni_clear_1, bni_clear_2)
     
     # DHI by subtraction / 通过差值计算 DHI
     dhi_clear = ghi_clear - bni_clear * mu0
@@ -199,25 +202,25 @@ def threlkeld_jordan_model(zenith, day_of_year):
     ghi_clear = np.where(mu0 > 0, ghi_clear, 0.0)
     return ghi_clear
 
-def calculate_vapor_pressure(temp_c, rh):
+def calculate_vapor_pressure(temp, rh):
     """
     Calculates actual vapor pressure ($e_a$) in hPa using the Magnus-Tetens formula.
     使用 Magnus-Tetens 公式计算实际水汽压 ($e_a$)，单位为 hPa。
 
     Parameters
     ----------
-    temp_c : numeric
-        Air temperature. [°C]
-        气温。[摄氏度]
+    temp : numeric
+        Air temperature ($T$). [°C]
+        气温 ($T$)。[摄氏度]
     rh : numeric
-        Relative humidity. [%]
-        相对湿度。[百分比]
+        Relative humidity ($RH$). [%]
+        相对湿度 ($RH$)。[百分比]
 
     Returns
     -------
     ea : numeric
-        Actual vapor pressure. [hPa]
-        实际水汽压。[百帕]
+        Actual vapor pressure ($e_a$). [hPa]
+        实际水汽压 ($e_a$)。[百帕]
 
     References
     ----------
@@ -225,8 +228,8 @@ def calculate_vapor_pressure(temp_c, rh):
        pressure (Technical Report P3423). Santa Monica, CA: RAND Corp.
     """
     # 1. Calculate Saturation Vapor Pressure (es) / 计算饱和水汽压 (es)
-    # 6.112 is the saturation pressure at 0°C in hPa
-    es = 6.112 * np.exp((17.67 * temp_c) / (temp_c + 243.5))
+    # 6.112 is the saturation pressure at 0°C in hPa / 6.112 是 0°C 时饱和压，单位为 hPa
+    es = 6.112 * np.exp((17.67 * temp) / (temp + 243.5))
     
     # 2. Calculate Actual Vapor Pressure (ea) / 计算实际水汽压 (ea)
     ea = es * (rh / 100.0)
@@ -342,47 +345,40 @@ def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None,
     bni_extra = geometry.get_bni_extra(df.index)
     
     if model.lower() == "ineichen":
-        # Handle monthly LT values / 处理月度 LT 值
-        # Broadcast LT based on index months; default LT=3.0 for all months if no station / 无站点时默认 LT=3.0
+        # Handle monthly Linke turbidity values / 处理月度 Linke 浑浊度值
         month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         default_lt = {m: 3.0 for m in month_names}
         lt_mapping = LINKE_TURBIDITY.get(station_code, default_lt)
         
-        # Map months to LT / 将月份映射到 LT
+        # Map months to lt / 将月份映射至 lt
         months = df.index.month - 1
         lt_series = np.array([lt_mapping[month_names[m]] for m in months])
         
         # Airmass calculations / 大气质量计算
         am_rel = get_relative_airmass(zenith)
-        # Use standard atmosphere scale height for pressure at elevation
-        # 使用标准大气标高计算海拔处的测压
-        pressure = 101325.0 * np.exp(-elev / 8434.5)
+        # Use pvlib-equivalent elevation-to-pressure conversion in Pa / 使用与 pvlib 等价的海拔转气压公式，单位为 Pa
+        pressure = geometry.get_pressure_from_elevation(elev)
         am_abs = get_absolute_airmass(am_rel, pressure)
         
-        # Calculate components / 计算各分量
+        # Calculate clear-sky components / 计算晴空分量
         ghi_clear, bni_clear, dhi_clear = ineichen_model(apparent_zenith, am_abs, lt_series, elev, bni_extra)
     
     elif model.lower() == "mcclear":
         # Placeholder for McClear model / McClear 模型占位符
-        print("Warning: McClear model not yet implemented. Falling back to Ineichen.")
+        print("Warning: McClear model not yet implemented. Falling back to Ineichen. / 警告：McClear 模型尚未实现，回退至 Ineichen。")
         return add_clearsky_columns(
-            df, station_code=station_code, lat=lat, lon=lon, elev=elev,
-            model="ineichen"
+            df, station_code=station_code, lat=lat, lon=lon, elev=elev, model="ineichen"
         )
     
     elif model.lower() in ("threlkeld_jordan", "tj"):
-        # Threlkeld-Jordan (GHI only; for engerer2) / Threlkeld-Jordan（仅 GHI；用于 engerer2）
-        doy = df.index.dayofyear.values
-        ghi_clear = threlkeld_jordan_model(zenith, doy)
-        # BNI and DHI not standard in this simple TJ implementation / 在此简单 TJ 实现中不含 BNI 和 DHI
+        # Threlkeld-Jordan (GHI only; for engerer2) / Threlkeld-Jordan (仅 GHI；用于 engerer2)
+        ghi_clear = threlkeld_jordan_model(zenith, df.index.dayofyear.values)
         bni_clear = np.full_like(ghi_clear, np.nan)
         dhi_clear = np.full_like(ghi_clear, np.nan)
-    
     else:
-        print(f"Error: Unknown model {model}. Supported: 'ineichen', 'mcclear'.")
-        return df
-    
+        raise ValueError(f"Unknown model: {model} / 未知模型：{model}")
+
     df["ghi_clear"] = ghi_clear
     df["bni_clear"] = bni_clear
     df["dhi_clear"] = dhi_clear

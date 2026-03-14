@@ -10,7 +10,43 @@ import numpy as np
 from bsrn.physics import spa
 
 
-def get_solar_position(times, lat, lon, elev=0):
+def get_pressure_from_elevation(elev):
+    """
+    Calculates standard-atmosphere pressure from elevation using pvlib-equivalent formula.
+    使用与 pvlib 等价的公式，根据海拔计算标准大气压。
+
+    Parameters
+    ----------
+    elev : numeric
+        Elevation above sea level. [m]
+        海拔高度。[米]
+
+    Returns
+    -------
+    pressure : numeric
+        Surface pressure. [Pa]
+        地表气压。[帕]
+
+    References
+    ----------
+    .. [1] Holmgren, W. F., Hansen, C. W., & Mikofski, M. A. (2018). pvlib python:
+       A python package for modeling solar energy systems. Journal of Open Source Software,
+       3(29), 884.
+    """
+    elev_arr = np.asarray(elev, dtype=float)
+    if np.any(~np.isfinite(elev_arr)):
+        raise ValueError("elev must be finite. / elev 必须为有限值。")
+
+    # Keep real-valued output and fail early for out-of-range altitudes.
+    # 保持实数输出，并对超范围海拔提前报错。
+    if np.any(elev_arr >= 44331.514):
+        raise ValueError("elev must be < 44331.514 m for standard-atmosphere formula.")
+
+    pressure = 100.0 * ((44331.514 - elev_arr) / 11880.516) ** (1.0 / 0.1902632)
+    return float(pressure) if pressure.ndim == 0 else pressure
+
+
+def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
     r"""
     Calculates solar zenith angle ($Z$) and solar azimuth angle ($\phi$) using SPA.
     使用 SPA 算法计算太阳天顶角 ($Z$) 和太阳方位角 ($\phi$)。
@@ -29,6 +65,12 @@ def get_solar_position(times, lat, lon, elev=0):
     elev : float, default 0
         Elevation. [m]
         海拔。[米]
+    pressure : float, optional
+        Surface pressure. [hPa] If None, calculated from elevation.
+        地表气压。[百帕]。若为 None，则根据海拔计算。
+    temp : float, default 12.0
+        Air temperature ($T$). [°C]
+        气温 ($T$)。[摄氏度]
 
     Returns
     -------
@@ -47,10 +89,26 @@ def get_solar_position(times, lat, lon, elev=0):
     # Convert times to unix timestamp / 将时间转换为 unix 时间轴
     unixtime = times.view(np.int64) / 1e9
     
+    # Calculate pressure if not provided (standard atmosphere)
+    # 如果未提供气压，则根据标准大气压计算
+    if pressure is None:
+        # Use pvlib-equivalent alt2pres in Pa, then convert to hPa for SPA input.
+        # 使用与 pvlib 等价的 alt2pres（Pa），再转换为 SPA 需要的 hPa。
+        pressure = get_pressure_from_elevation(elev) / 100.0
+    else:
+        pressure_arr = np.asarray(pressure, dtype=float)
+        if np.any(~np.isfinite(pressure_arr)) or np.any(pressure_arr <= 0):
+            raise ValueError("pressure must be positive and finite. / pressure 必须为正且有限。")
+
+        # Robust unit handling: SPA expects hPa. If values look like Pa, convert.
+        # 稳健单位处理：SPA 需要 hPa。若数值看起来像 Pa，则自动转换。
+        pressure_hpa = np.where(pressure_arr > 2000.0, pressure_arr / 100.0, pressure_arr)
+        pressure = float(pressure_hpa) if pressure_hpa.ndim == 0 else pressure_hpa
+
     # Use fixed delta_t (69.1s for 2024) for simplicity
     # 为简便起见，使用固定的 delta_t（2024 年约为 69.1 秒）
     zenith, apparent_zenith, azimuth, _ = spa.solar_position(
-        unixtime, lat, lon, elev, delta_t=69.1
+        unixtime, lat, lon, elev, pressure=pressure, temp=temp, delta_t=69.1
     )
     
     solpos = pd.DataFrame({
