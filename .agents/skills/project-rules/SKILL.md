@@ -40,6 +40,33 @@ Code variables and documentation **MUST** strictly adhere to the following table
 
 ---
 
+## 🚩 Quality Control Flags
+- For the data points that do not pass **PPL test**, we **MUST** use the following flag names:
+    - `flagPPLGHI`: Flag for GHI physically possible limit test / GHI 物理可能范围测试标记
+    - `flagPPLBNI`: Flag for BNI physically possible limit test / BNI 物理可能范围测试标记
+    - `flagPPLDHI`: Flag for DHI physically possible limit test / DHI 物理可能范围测试标记
+    - `flagPPLLWD`: Flag for LWD physically possible limit test / LWD 物理可能范围测试标记
+- For the data points that do not pass **ERL test**, we **MUST** use the following flag names:
+    - `flagERLGHI`: Flag for GHI extremely rare limit test / GHI 极罕见范围测试标记
+    - `flagERLBNI`: Flag for BNI extremely rare limit test / BNI 极罕见范围测试标记
+    - `flagERLDHI`: Flag for DHI extremely rare limit test / DHI 极罕见范围测试标记
+    - `flagERLLWD`: Flag for LWD extremely rare limit test / LWD 极罕见范围测试标记
+- For the data points that do not pass **Closure test**, we **MUST** use the following flag names:
+    - `flag3lowSZA`: Flag for closure test at low SZA ($Z \le 75^\circ$) / 低太阳天顶角 ($\le 75^\circ$) 下的闭合测试标记
+    - `flag3highSZA`: Flag for closure test at high SZA ($Z > 75^\circ$) / 高太阳天顶角 ($> 75^\circ$) 下的闭合测试标记
+- For the data points that do not pass **Diffuse ratio (k) test**, we **MUST** use the following flag names:
+    - `flagKKt`: Flag for combined $k$ and $k_t$ test ($k < 0.96$) / $k$ 和 $k_t$ 结合测试标记 ($k < 0.96$)
+    - `flagKlowSZA`: Flag for diffuse ratio test at low SZA ($Z < 75^\circ$, $k < 1.05$) / 低太阳天顶角 ($Z < 75^\circ$) 下的散射分数测试标记 ($k < 1.05$)
+    - `flagKhighSZA`: Flag for diffuse ratio test at high SZA ($Z \ge 75^\circ$, $k < 1.1$) / 高太阳天顶角 ($Z \ge 75^\circ$) 下的散射分数测试标记 ($k < 1.1$)
+- For the data points that do not pass **k-index test**, we **MUST** use the following flag names:
+    - `flagKbKt`: Flag for $k_b < k_t$ test / $k_b$ 小于 $k_t$ 测试标记
+    - `flagKb`: Flag for $k_b$ physical limit test / $k_b$ 物理限值测试标记
+    - `flagKt`: Flag for $k_t$ physical limit test / $k_t$ 物理限值测试标记
+- For the data points that do not pass **Tracker-off test**, we **MUST** use the following flag name:
+    - `flagTracker`: Flag for solar tracker failure detection / 太阳跟踪器失准检测标记
+
+---
+
 ## 📝 Documentation & Coding Rules
 
 ### 1. Bilingual Comments
@@ -114,3 +141,4 @@ def function_name(param):
 - **Fonts**: **MUST** use 'Times New Roman' for all axis labels, titles, and legends.
 - **Size**: **MUST** set text size to 7pt and figure width to 160mm (for standard journal column width).
 - **Format**: All plots **MUST** be output in **PDF** format to ensure high-quality vector graphics.
+
