@@ -1,6 +1,6 @@
 # bsrn
 
-`bsrn` is a Python package for the Baseline Surface Radiation Network (BSRN). It provides automated quality control (QC), solar geometry, clear-sky modeling, data retrieval, and visualization tools for BSRN station-to-archive files.
+`bsrn` is a Python package for the Baseline Surface Radiation Network (BSRN). It provides automated quality control (QC), solar geometry, clear-sky modeling, clear-sky detection (CSD), irradiance separation, data retrieval, and visualization tools for BSRN station-to-archive files.
 
 ## 🚀 Getting Started
 
@@ -48,8 +48,10 @@ Based on the [BSRN Operations Manual (2018)](https://bsrn.awi.de/) and [Forsting
 - **Tracker Detection:** Identify tracking errors by comparing measured values with clear-sky benchmarks.
 - **Solar Geometry:** Native NREL SPA implementation for high-precision solar position calculations.
 - **Clear-Sky Models:** Ineichen model with monthly Linke turbidity for all BSRN stations.
+- **Clear-Sky Detection (CSD):** Reno, Ineichen, Lefevre, and BrightSun methods to identify clear-sky periods from irradiance time series.
+- **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
 - **Robust Retrieval:** High-level API for batch FTP downloads from BSRN-AWI with exponential backoff retries.
-- **Visualization:** Data availability heatmaps via `plotnine`.
+- **Visualization:** Data availability heatmaps and k vs kt separation plots via `plotnine`.
 
 ## 📂 File Structure
 
@@ -89,14 +91,16 @@ bsrn-qc/
 │       │   └── timeseries.py     # Time series plots
 │       ├── utils/
 │       │   ├── calculations.py   # Supporting math
-│       │   └── quality.py        # Quality utilities
+│       │   ├── quality.py       # Quality utilities
+│       │   └── cs_detection.py   # Clear-sky detection (Reno, Ineichen, Lefevre, BrightSun)
 │       └── modeling/
-│           └── separation.py     # Solar radiation separation (Engerer2, Yang4)
+│           └── separation.py    # Irradiance separation (Erbs, BRL, Engerer2, Yang4)
 ├── tests/
 │   ├── test_io.py
 │   ├── test_physics.py
 │   ├── test_visualization.py
-│   └── test_modeling.py
+│   ├── test_modeling.py
+│   └── test_cs_detection.py
 ├── notebooks/
 │   └── qc_demo.ipynb             # QC workflow demo
 └── data/
@@ -134,6 +138,17 @@ from bsrn.physics.clearsky import add_clearsky_columns
 
 df = add_clearsky_columns(df, "QIQ")
 # Adds columns: ghi_clear, bni_clear, dhi_clear
+```
+
+### Clear-Sky Detection
+
+```python
+from bsrn.utils import detect_clearsky
+
+# Requires GHI and clear-sky GHI (e.g. from add_clearsky_columns)
+out = detect_clearsky("reno", ghi=df["ghi"], ghi_clear=df["ghi_clear"], times=df.index)
+# out["is_clearsky"] is True/False/NA; out["cloud_flag"] is 0/1/NaN
+# Other methods: "ineichen", "lefevre", "brightsun" (different inputs)
 ```
 
 ### Data Availability Heatmap
