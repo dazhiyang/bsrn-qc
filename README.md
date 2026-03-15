@@ -80,9 +80,9 @@ bsrn-qc/
 │       │   ├── ppl.py            # Physically possible limits (Level 1)
 │       │   ├── erl.py            # Extremely rare limits (Level 2)
 │       │   ├── closure.py        # Internal consistency checks (Level 3)
-│       │   ├── k_index.py        # Radiometric index tests
-│       │   ├── diff_ratio.py     # Diffuse ratio checks
-│       │   ├── tracker.py        # Solar tracker status detection
+│       │   ├── diff_ratio.py     # Diffuse ratio checks (Level 4)
+│       │   ├── k_index.py        # Radiometric index tests (Level 5)
+│       │   ├── tracker.py        # Solar tracker off detection (Level 6)
 │       │   └── wrapper.py        # High-level QC pipeline
 │       ├── visualization/
 │       │   ├── availability.py   # File coverage heatmaps (plotnine)
@@ -91,10 +91,10 @@ bsrn-qc/
 │       │   └── timeseries.py     # Time series plots
 │       ├── utils/
 │       │   ├── calculations.py   # Supporting math
-│       │   ├── quality.py       # Quality utilities
+│       │   ├── quality.py        # Quality utilities
 │       │   └── cs_detection.py   # Clear-sky detection (Reno, Ineichen, Lefevre, BrightSun)
 │       └── modeling/
-│           └── separation.py    # Irradiance separation (Erbs, BRL, Engerer2, Yang4)
+│           └── separation.py     # Irradiance separation (Erbs, BRL, Engerer2, Yang4)
 ├── tests/
 │   ├── test_io.py
 │   ├── test_physics.py

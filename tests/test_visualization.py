@@ -1,6 +1,8 @@
 import os
 import sys
 
+import numpy as np
+import pandas as pd
 import pytest
 
 # Add src to python path to ensure bsrn is importable
@@ -10,6 +12,7 @@ try:
     from bsrn.visualization import plot_bsrn_availability, plot_k_vs_kt
     from bsrn.visualization.timeseries import plot_bsrn_timeseries_booklet
     from bsrn.visualization.qc_table import plot_qc_table
+    from bsrn.visualization.cspoints import plot_csd_booklet
     from bsrn.utils.quality import get_daily_stats
     from bsrn.physics.clearsky import add_clearsky_columns
     import bsrn.io.readers as readers
@@ -32,13 +35,15 @@ START_YEAR = 1992
 
 # Test for station QIQ, December 2024
 FILE_PATH = "data/QIQ/qiq1224.dat.gz"
+# CSD booklet: September (place qiq0924.dat.gz in data/QIQ for this test)
+FILE_PATH_CSD_BOOKLET = "data/QIQ/qiq0924.dat.gz"
 # Directory for full-year test: place 12 monthly files (qiq0124.dat.gz ... qiq1224.dat.gz) in data/QIQ
 DATA_DIR_YEAR = "data/QIQ"
 
 def test_availability():
     print(f"\n--- Testing Availability Heatmap ---")
     print(f"Initiating BSRN FTP search for: {STATIONS_TO_CHECK}")
-    
+
     try:
         output_file = "bsrn_availability_heatmap.pdf"
         plot_bsrn_availability(
@@ -52,10 +57,10 @@ def test_availability():
     except Exception as e:
         print(f"Availability heatmap failed: {e}")
 
-@pytest.mark.skip(reason="Run explicitly when needed; use: pytest tests/test_visualization.py::test_timeseries -v")
+
 def test_timeseries():
     print(f"\n--- Testing Timeseries Booklet ---")
-    
+
     if not os.path.exists(FILE_PATH):
         print(f"Skipping timeseries test: {FILE_PATH} not found.")
         return
@@ -64,16 +69,15 @@ def test_timeseries():
         output_file = "test_qiq_booklet.pdf"
         print(f"Generating booklet for {FILE_PATH}...")
         plot_bsrn_timeseries_booklet(
-            FILE_PATH, 
-            output_file, 
-            station_code="QIQ", 
+            FILE_PATH,
+            output_file,
+            station_code="QIQ",
             apply_qc=False
         )
         print(f"Successfully generated booklet: {output_file}")
     except Exception as e:
         print(f"Timeseries booklet failed: {e}")
 
-@pytest.mark.skip(reason="Run explicitly when needed; use: pytest tests/test_visualization.py::test_qc_table -v")
 def test_qc_table():
     print(f"\n--- Testing QC Table Heatmap ---")
     
@@ -154,14 +158,33 @@ def test_separation_k_vs_kt():
         traceback.print_exc()
 
 
+def test_csd_booklet():
+    """Test CSD booklet for full month (file data only; one page per day). Uses FILE_PATH_CSD_BOOKLET (e.g. December)."""
+    print("\n--- Testing CSD Booklet (Full Month) ---")
+    if not os.path.exists(FILE_PATH_CSD_BOOKLET):
+        pytest.skip(f"CSD booklet test requires data file: {FILE_PATH_CSD_BOOKLET}")
+    station_code = "QIQ"
+    df = readers.read_bsrn_station_to_archive(FILE_PATH_CSD_BOOKLET)
+    if df is None:
+        pytest.skip(f"Failed to read {FILE_PATH_CSD_BOOKLET}.")
+    n_days = df.index.normalize().nunique()
+    df = add_clearsky_columns(df, station_code)
+    output_file = "csd_booklet_test.pdf"
+    print(f"Generating {output_file} ({n_days} days) ...")
+    plot_csd_booklet(None, output_file, station_code, df=df)
+    print(f"Successfully generated {output_file}")
+
+
 def main():
     """Run when executing this file directly (python tests/test_visualization.py).
     When using pytest (e.g. pytest tests/test_visualization.py), pytest discovers
     all test_* functions and runs them; tests marked @pytest.mark.skip are skipped."""
     # test_availability()
-    # test_timeseries()  # skipped by default via @pytest.mark.skip
-    # test_qc_table()    # skipped by default via @pytest.mark.skip
-    test_separation_k_vs_kt()
+    # test_timeseries()
+    # test_qc_table()
+    #test_separation_k_vs_kt()
+    test_csd_booklet()
+
 
 if __name__ == "__main__":
     main()

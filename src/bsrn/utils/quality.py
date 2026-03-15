@@ -9,6 +9,7 @@ import bsrn.qc.ppl as ppl
 import bsrn.qc.erl as erl
 import bsrn.qc.closure as closure
 import bsrn.qc.k_index as k_index
+import bsrn.qc.diff_ratio as diff_ratio
 import bsrn.qc.tracker as tracker
 
 
@@ -64,10 +65,10 @@ def get_daily_stats(df, lat, lon, elev):
         # Combined L3 groups / 合并的 3 级分组
         'CMP_CLO': ((~closure.closure_low_sza_test(df["ghi"], df["bni"], df["dhi"], zenith)) |
                     (~closure.closure_high_sza_test(df["ghi"], df["bni"], df["dhi"], zenith))),
-        'CMP_DIF': ((~k_index.k_low_sza_test(df["ghi"], df["dhi"], zenith)) |
-                    (~k_index.k_high_sza_test(df["ghi"], df["dhi"], zenith))),
+        'CMP_DIF': ((~diff_ratio.k_low_sza_test(df["ghi"], df["dhi"], zenith)) |
+                    (~diff_ratio.k_high_sza_test(df["ghi"], df["dhi"], zenith))),
         'CMP_K': ((~k_index.kb_kt_test(df["ghi"], df["bni"], bni_extra, zenith)) |
-                  (~k_index.k_kt_combined_test(df["ghi"], df["dhi"], bni_extra, zenith)) |
+                  (~diff_ratio.k_kt_combined_test(df["ghi"], df["dhi"], bni_extra, zenith)) |
                   (~k_index.kb_limit_test(df["bni"], bni_extra, elev, df["ghi"])) |
                   (~k_index.kt_limit_test(df["ghi"], bni_extra, zenith))),
         'TRACKER': ~tracker.tracker_off_test(df["ghi"], df["bni"], zenith, ghi_extra=ghi_extra)

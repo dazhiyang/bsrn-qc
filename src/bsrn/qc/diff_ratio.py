@@ -1,6 +1,6 @@
 """
-bsrn level 3 (inter-comparison) checks - diffuse ratio tests (k-tests).
-BSRN 3 级（相互比较）检查 - 散射分数测试 (k-测试)。
+BSRN Level 4 checks - diffuse ratio tests (k-tests).
+BSRN 4 级检查 - 散射分数测试 (k-测试)。
 """
 
 import numpy as np

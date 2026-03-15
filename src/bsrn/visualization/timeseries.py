@@ -8,7 +8,7 @@ from plotnine import (
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
-from bsrn.constants import BSRN_STATIONS
+from bsrn.constants import BSRN_STATIONS, WONG_PALETTE
 from bsrn.physics.geometry import get_solar_position, get_bni_extra
 from bsrn.qc.ppl import ghi_ppl_test, bni_ppl_test, dhi_ppl_test
 
@@ -86,11 +86,12 @@ def plot_bsrn_timeseries_booklet(file_path, output_file, station_code=None, appl
 
     # 4. Figure Setup / 图表设置
     width_inch = 160 / 25.4
-    height_inch = width_inch * 1.0  # Taller for 3x3 grid / 3x3 网格需要更高
+    height_inch = width_inch / 1.4  # 3x3 grid / 3x3 网格
     
     plot_df = plot_df.sort_index()
-    measured_color = '#E69F00' # Wong Orange
-    clearsky_color = '#56B4E9' # Wong Sky Blue
+    # Wong palette: [0] Orange (measured), [1] Sky Blue (clearsky/ribbon)
+    measured_color = WONG_PALETTE[0]
+    clearsky_color = WONG_PALETTE[1]
     ribbon_color = clearsky_color
     
     # 5. Create PDF Booklet / 创建 PDF 手册

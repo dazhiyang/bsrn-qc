@@ -1,6 +1,6 @@
 """
-bsrn level 3 (inter-comparison) checks - radiometric index tests (k-tests).
-BSRN 3 级（相互比较）检查 - 辐射指数测试 (k-测试)。
+BSRN Level 5 checks - radiometric index tests (k-tests).
+BSRN 5 级检查 - 辐射指数测试 (k-测试)。
 """
 
 import numpy as np

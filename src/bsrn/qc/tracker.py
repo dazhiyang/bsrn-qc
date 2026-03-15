@@ -1,6 +1,6 @@
 """
-bsrn quality control - tracker-off detection.
-BSRN 质量控制 - 跟踪器失准检测。
+BSRN Level 6 checks - tracker-off detection.
+BSRN 6 级检查 - 跟踪器失准检测。
 """
 
 import numpy as np
