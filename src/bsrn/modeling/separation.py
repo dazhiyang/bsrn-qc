@@ -175,90 +175,6 @@ def _apparent_solar_time(times, lon):
     ast = np.where(ast < 0, np.abs(ast), ast)
     return ast
 
-def _engerer2_k_at_resolution(df, lat, lon, period_minutes, ghi_col="ghi",
-                              ghi_clear_col="ghi_clear"):
-    """
-    Compute Engerer2 diffuse fraction at a given temporal resolution by resampling.
-    通过重采样在给定的时间分辨率下计算 Engerer2 散射分数。
-
-    Requires a clear-sky GHI column in df (caller must provide it).
-    要求 df 中包含晴空 GHI 列（由调用方提供）。
-
-    Resamples the input to `period_minutes`, runs Engerer2 with the corresponding
-    coefficient set, and maps the resulting k back to the original index (forward fill
-    within each period). Use this when you need true period-averaged Engerer2 k
-    (e.g. k_60min for Yang4) rather than native-resolution k with period coefficients.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Input data with DatetimeIndex and a clear-sky GHI column.
-        包含 DatetimeIndex 与晴空 GHI 列的输入数据。
-    lat : float
-        Latitude. [degrees]
-        纬度。[度]
-    lon : float
-        Longitude. [degrees]
-        经度。[度]
-    period_minutes : int
-        Resampling resolution. [minutes]
-        重采样分辨率。[分钟]
-    ghi_col : str, default "ghi"
-        Column name for GHI. [W/m^2]
-        GHI 的列名。[瓦/平方米]
-    ghi_clear_col : str, default "ghi_clear"
-        Column name for clear-sky GHI. [W/m^2] Must be present in df.
-        晴空 GHI 的列名。[瓦/平方米] 必须存在于 df 中。
-
-    Returns
-    -------
-    k : np.ndarray
-        Diffuse fraction k aligned to `df.index`. [unitless]
-        与 `df.index` 对齐的散射分数 k。[无单位]
-    """
-    if ghi_clear_col not in df.columns:
-        raise ValueError(
-            f"DataFrame must contain clear-sky column '{ghi_clear_col}'. "
-            "Provide ghi_clear (e.g. from add_clearsky_columns) before calling. / "
-            f"数据框必须包含晴空列 '{ghi_clear_col}'。请先提供 ghi_clear（如通过 add_clearsky_columns）。"
-        )
-
-    resample_rule = {
-        1: "1min",
-        5: "5min",
-        10: "10min",
-        15: "15min",
-        30: "30min",
-        60: "1h",
-        1440: "1D",
-    }
-    if period_minutes not in resample_rule:
-        raise ValueError(
-            "period_minutes must be one of 1, 5, 10, 15, 30, 60, 1440."
-        )
-    if not isinstance(df.index, pd.DatetimeIndex):
-        raise ValueError("DataFrame must have a DatetimeIndex.")
-
-    rule = resample_rule[period_minutes]
-    cols = [ghi_col, ghi_clear_col]
-    # Compute counts of non-NA values per resampling bin
-    counts = df[cols].resample(rule).count()
-    bin_size = df.resample(rule).size()
-    # Keep only those periods where more than half the data points are present for ghi_col
-    enough_data = counts[ghi_col] > (bin_size / 2)
-    # Compute mean as usual, set mean to NaN where not enough data
-    df_rs = df[cols].resample(rule).mean()
-    df_rs.loc[~enough_data] = np.nan
-    df_rs = df_rs.dropna(subset=[ghi_col])
-
-    result = engerer2_separation(
-        df_rs.index, df_rs[ghi_col].values, lat, lon,
-        ghi_clear=df_rs[ghi_clear_col].values,
-        averaging_period=period_minutes
-    )
-    k_series = result["k"].reindex(df.index, method="ffill")
-    return np.asarray(k_series, dtype=float)
-
 def _brl_daily_clearness_index(times, ghi, ghi_extra, night):
     """
     Daily clearness index K_t = sum(ghi over day) / sum(ghi_extra over day).
@@ -379,7 +295,104 @@ def _brl_psi(kt, night, dates):
             both = np.array([k_prev, k_next])
             psi[i] = np.nanmean(both) if np.any(np.isfinite(both)) else np.nan
     return psi
-    
+
+
+def _engerer2_k_at_resolution(df, lat, lon, period_minutes, ghi_col="ghi",
+                              ghi_clear_col="ghi_clear"):
+    """
+    Compute Engerer2 diffuse fraction at a given temporal resolution by resampling.
+    通过重采样在给定的时间分辨率下计算 Engerer2 散射分数。
+
+    Requires a clear-sky GHI column in df (caller must provide it).
+    要求 df 中包含晴空 GHI 列（由调用方提供）。
+
+    Resamples the input to `period_minutes` using right-closed bins (e.g. (10:00, 11:00]
+    for the hour labeled 11:00), runs Engerer2 with the corresponding coefficient set,
+    and maps the resulting k back to the original index using first-future (backward fill):
+    each 1-min time t in (10:00, 11:00] gets the hourly k at 11:00. Use this when you
+    need true period-averaged Engerer2 k (e.g. k_60min for Yang4).
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input data with DatetimeIndex and a clear-sky GHI column.
+        包含 DatetimeIndex 与晴空 GHI 列的输入数据。
+    lat : float
+        Latitude. [degrees]
+        纬度。[度]
+    lon : float
+        Longitude. [degrees]
+        经度。[度]
+    period_minutes : int
+        Resampling resolution. [minutes]
+        重采样分辨率。[分钟]
+    ghi_col : str, default "ghi"
+        Column name for GHI. [W/m^2]
+        GHI 的列名。[瓦/平方米]
+    ghi_clear_col : str, default "ghi_clear"
+        Column name for clear-sky GHI. [W/m^2] Must be present in df.
+        晴空 GHI 的列名。[瓦/平方米] 必须存在于 df 中。
+
+    Returns
+    -------
+    k : np.ndarray
+        Diffuse fraction k aligned to `df.index`. [unitless]
+        与 `df.index` 对齐的散射分数 k。[无单位]
+    """
+    if ghi_clear_col not in df.columns:
+        raise ValueError(
+            f"DataFrame must contain clear-sky column '{ghi_clear_col}'. "
+            "Provide ghi_clear (e.g. from add_clearsky_columns) before calling. / "
+            f"数据框必须包含晴空列 '{ghi_clear_col}'。请先提供 ghi_clear（如通过 add_clearsky_columns）。"
+        )
+
+    resample_rule = {
+        1: "1min",
+        5: "5min",
+        10: "10min",
+        15: "15min",
+        30: "30min",
+        60: "1h",
+        1440: "1D",
+    }
+    if period_minutes not in resample_rule:
+        raise ValueError(
+            "period_minutes must be one of 1, 5, 10, 15, 30, 60, 1440."
+        )
+    if not isinstance(df.index, pd.DatetimeIndex):
+        raise ValueError("DataFrame must have a DatetimeIndex.")
+
+    rule = resample_rule[period_minutes]
+    cols = [ghi_col, ghi_clear_col]
+    # Right-closed bins: (t-1h, t] so the value at 11:00 is the mean over (10:00, 11:00]
+    resample_kw = {"rule": rule, "closed": "right", "label": "right"}
+    counts = df[cols].resample(**resample_kw).count()
+    bin_size = df.resample(**resample_kw).size()
+    # Keep only those periods where more than half the data points are present for ghi_col
+    enough_data = counts[ghi_col] > (bin_size / 2)
+    # Compute mean over each right-closed period, set to NaN where not enough data
+    df_rs = df[cols].resample(**resample_kw).mean()
+    df_rs.loc[~enough_data] = np.nan
+    df_rs = df_rs.dropna(subset=[ghi_col])
+
+    # Use mid-interval timestamps for solar position so zenith/AST are representative of the hour,
+    # avoiding systematic bias (e.g. end-of-hour sun making k trend monotonically through the day).
+    period_td = pd.Timedelta(minutes=period_minutes)
+    times_mid = df_rs.index - period_td / 2
+
+    result = engerer2_separation(
+        times_mid, df_rs[ghi_col].values, lat, lon,
+        ghi_clear=df_rs[ghi_clear_col].values,
+        averaging_period=period_minutes
+    )
+    # Align result back to hour-end index for assignment (result index is mid-interval).
+    result = result.set_index(df_rs.index)
+
+    # First-future assignment: for each 1-min t, use the hourly k at the end of the hour containing t
+    # e.g. 1-min in (10:00, 11:00] get the k at 11:00 (mean over (10:00, 11:00])
+    k_series = result["k"].reindex(df.index, method="bfill")
+    return np.asarray(k_series, dtype=float)
+
 def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065, max_zenith=87.0):
     """
     Erbs irradiance separation: diffuse fraction $k$ from clearness index $k_t$, then DHI and BNI.

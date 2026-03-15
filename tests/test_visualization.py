@@ -158,7 +158,7 @@ def main():
     """Run when executing this file directly (python tests/test_visualization.py).
     When using pytest (e.g. pytest tests/test_visualization.py), pytest discovers
     all test_* functions and runs them; tests marked @pytest.mark.skip are skipped."""
-    test_availability()
+    # test_availability()
     # test_timeseries()  # skipped by default via @pytest.mark.skip
     # test_qc_table()    # skipped by default via @pytest.mark.skip
     test_separation_k_vs_kt()
