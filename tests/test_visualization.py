@@ -1,6 +1,8 @@
 import os
 import sys
 
+import pytest
+
 # Add src to python path to ensure bsrn is importable
 sys.path.append(os.path.join(os.getcwd(), "src"))
 
@@ -19,8 +21,8 @@ except ImportError:
 
 # Users can change these variables to their own directory / 用户可以根据自己的情况更改目录
 # --- CONFIGURATION ---
-BSRN_USER = "your_username" # Replace with your BSRN FTP username / 替换为您的 BSRN FTP 用户名
-BSRN_PASSWORD = "your_password"  # Replace with your BSRN FTP password / 替换为您的 BSRN FTP 密码
+BSRN_USER = "bsrnftp" # Replace with your BSRN FTP username / 替换为您的 BSRN FTP 用户名
+BSRN_PASSWORD = "bsrn1"  # Replace with your BSRN FTP password / 替换为您的 BSRN FTP 密码
 
 # List of stations you want to check
 STATIONS_TO_CHECK = ['PAY', 'NYA', 'GVN', 'ILO', 'TAT', 'QIQ'] 
@@ -50,6 +52,7 @@ def test_availability():
     except Exception as e:
         print(f"Availability heatmap failed: {e}")
 
+@pytest.mark.skip(reason="Run explicitly when needed; use: pytest tests/test_visualization.py::test_timeseries -v")
 def test_timeseries():
     print(f"\n--- Testing Timeseries Booklet ---")
     
@@ -70,6 +73,7 @@ def test_timeseries():
     except Exception as e:
         print(f"Timeseries booklet failed: {e}")
 
+@pytest.mark.skip(reason="Run explicitly when needed; use: pytest tests/test_visualization.py::test_qc_table -v")
 def test_qc_table():
     print(f"\n--- Testing QC Table Heatmap ---")
     
@@ -151,9 +155,12 @@ def test_separation_k_vs_kt():
 
 
 def main():
-    # test_availability()
-    # test_timeseries()
-    # test_qc_table()
+    """Run when executing this file directly (python tests/test_visualization.py).
+    When using pytest (e.g. pytest tests/test_visualization.py), pytest discovers
+    all test_* functions and runs them; tests marked @pytest.mark.skip are skipped."""
+    test_availability()
+    # test_timeseries()  # skipped by default via @pytest.mark.skip
+    # test_qc_table()    # skipped by default via @pytest.mark.skip
     test_separation_k_vs_kt()
 
 if __name__ == "__main__":

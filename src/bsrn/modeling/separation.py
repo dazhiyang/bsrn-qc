@@ -11,7 +11,7 @@ from bsrn.constants import ENGERER2_PARAMS, YANG4_PARAMS
 from bsrn.utils.calculations import calc_kt
 
 
-def _get_solar_and_kt(times, ghi, lat, lon, min_mu0=0.065,
+def _get_solar_and_kt(times, ghi, lat, lon, elev=0, min_mu0=0.065,
                       max_clearness_index=1.0):
     """
     Get ghi_extra, zenith, mu0, kt, and night mask for separation.
@@ -34,6 +34,9 @@ def _get_solar_and_kt(times, ghi, lat, lon, min_mu0=0.065,
     lon : float
         Longitude. [degrees]
         经度。[度]
+    elev : float, default 0
+        Site elevation. [m] Used for topocentric solar position (matches pvlib when same elev).
+        站点海拔。[米]。用于站心太阳位置（与 pvlib 使用相同 elev 时一致）。
     min_mu0 : float, default 0.065
         Minimum cosine of solar zenith for ghi_extra and kt (equiv. ~86.3 deg).
         ghi_extra 与 kt 中余弦天顶角的最小值（相当于 ~86.3 度）。
@@ -58,7 +61,7 @@ def _get_solar_and_kt(times, ghi, lat, lon, min_mu0=0.065,
         raise ValueError("ghi must have the same length as times.")
 
     # Get the solar position. / 获取太阳位置。
-    solpos = geometry.get_solar_position(times, lat, lon)
+    solpos = geometry.get_solar_position(times, lat, lon, elev)
     zenith = solpos["zenith"].values
     mu0 = np.maximum(np.cos(np.radians(zenith)), 0.0)
 
@@ -129,7 +132,7 @@ def _k_to_dhi_bni(ghi, k, zenith, max_zenith=87.0, force_nan=None):
 def _apparent_solar_time(times, lon):
     """
     Calculate apparent solar time (AST, hours) from timestamps and longitude.
-    根据时间戳和经度计算地面太阳时 AST（小时）。
+    根据时间戳 and 经度计算地面太阳时 AST（小时）。
 
     Uses the equation of time formulation from Ridley et al. (2010), consistent
     with the BRL, Engerer2 and Yang4 models.
@@ -377,13 +380,13 @@ def _brl_psi(kt, night, dates):
             psi[i] = np.nanmean(both) if np.any(np.isfinite(both)) else np.nan
     return psi
     
-def erbs_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
+def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065, max_zenith=87.0):
     """
     Erbs irradiance separation: diffuse fraction $k$ from clearness index $k_t$, then DHI and BNI.
     Erbs 辐照分离：由晴朗指数 $k_t$ 得散射分数 $k$，再得 DHI 与 BNI。
 
-    Inputs are time, ghi, and location (lat, lon); zenith and clearness index are computed inside.
-    输入为时间、GHI 与位置（lat, lon）；天顶角与晴朗指数在函数内计算。
+    Inputs are time, ghi, and location (lat, lon, elev); zenith and clearness index are computed inside.
+    输入为时间、GHI 与位置（lat, lon, elev）；天顶角与晴朗指数在函数内计算。
 
     Piecewise formula (Erbs et al.):
     - $k_t \\leq 0.22$: $k = 1.0 - 0.09 k_t$
@@ -403,6 +406,9 @@ def erbs_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
     lon : float
         Longitude. [degrees] 
         经度。[度]
+    elev : float, default 0
+        Site elevation. [m] Use same value as for zenith when comparing to pvlib.
+        站点海拔。[米]。与 pvlib 比较时使用与 zenith 相同的值。
     min_mu0 : float, default 0.065
         Minimum $\\mu_0$ when computing $k_t$. 
         计算 $k_t$ 时 $\\mu_0$ 最小值。
@@ -423,7 +429,7 @@ def erbs_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
        global radiation. Solar Energy, 28(4), 293-302.
     """
     ghi, ghi_extra, zenith, mu0, kt, night = _get_solar_and_kt(
-        times, ghi, lat, lon, min_mu0=min_mu0, max_clearness_index=1.0
+        times, ghi, lat, lon, elev=elev, min_mu0=min_mu0, max_clearness_index=1.0
     )
 
     # Calculate diffuse fraction / 计算散射分数 
@@ -449,10 +455,8 @@ def erbs_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
     # Calculate DHI and BNI / 计算 DHI 与 BNI
     dhi, bni = _k_to_dhi_bni(ghi, k, zenith, max_zenith=max_zenith)
 
-    # Nighttime separation output as zero. / 夜间分离输出为零。
-    k = np.where(night, 0.0, k)
-    dhi = np.where(night, 0.0, dhi)
-    bni = np.where(night, 0.0, bni)
+    # Nighttime separation handled by _k_to_dhi_bni and zenith limits.
+    # 夜间处理由 _k_to_dhi_bni 和天顶角限制完成。
     return pd.DataFrame({"k": k, "dhi": dhi, "bni": bni}, index=times)
 
 def brl_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
@@ -537,10 +541,8 @@ def brl_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
     # Calculate DHI and BNI / 计算 DHI 与 BNI
     dhi, bni = _k_to_dhi_bni(ghi, k, zenith, max_zenith=max_zenith, force_nan=~good_day)
 
-    # Nighttime separation output as zero. / 夜间分离输出为零。
-    k = np.where(night, 0.0, k)
-    dhi = np.where(night, 0.0, dhi)
-    bni = np.where(night, 0.0, bni)
+    # Nighttime separation handled by _k_to_dhi_bni and zenith limits.
+    # 夜间处理由 _k_to_dhi_bni 和天顶角限制完成。
     return pd.DataFrame({"k": k, "dhi": dhi, "bni": bni}, index=times)
 
 def engerer2_separation(times, ghi, lat, lon, ghi_clear, averaging_period=1):
@@ -623,10 +625,9 @@ def engerer2_separation(times, ghi, lat, lon, ghi_clear, averaging_period=1):
     k = np.clip(k, 0.0, 1.0)
 
     dhi, bni = _k_to_dhi_bni(ghi, k, zenith, max_zenith=87.0)
-    # Nighttime separation output as zero.
-    k = np.where(night, 0.0, k)
-    dhi = np.where(night, 0.0, dhi)
-    bni = np.where(night, 0.0, bni)
+
+    # Nighttime separation handled by _k_to_dhi_bni and zenith limits.
+    # 夜间处理由 _k_to_dhi_bni 和天顶角限制完成。
     return pd.DataFrame({"k": k, "dhi": dhi, "bni": bni}, index=times)
 
 def yang4_separation(times, ghi, lat, lon, ghi_clear):
@@ -708,8 +709,7 @@ def yang4_separation(times, ghi, lat, lon, ghi_clear):
     k = np.clip(k, 0.0, 1.0)
 
     dhi, bni = _k_to_dhi_bni(ghi, k, zenith, max_zenith=87.0)
-    # Nighttime separation output as zero.
-    k = np.where(night, 0.0, k)
-    dhi = np.where(night, 0.0, dhi)
-    bni = np.where(night, 0.0, bni)
+
+    # Nighttime separation handled by _k_to_dhi_bni and zenith limits.
+    # 夜间处理由 _k_to_dhi_bni 和天顶角限制完成。
     return pd.DataFrame({"k": k, "dhi": dhi, "bni": bni}, index=times)

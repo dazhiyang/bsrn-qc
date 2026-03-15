@@ -167,4 +167,10 @@ def function_name(param):
 - **Fonts**: **MUST** use 'Times New Roman' for all axis labels, titles, and legends.
 - **Size**: **MUST** set text size to 7pt and figure width to 160mm (for standard journal column width).
 - **Format**: All plots **MUST** be output in **PDF** format to ensure high-quality vector graphics.
+- **Color bar (continuous legend)**:
+    - **MUST** match the setup used in `availability.py` for consistency across plots.
+    - Use `scale_fill_cmap(cmap_name='viridis', name="<Legend title>")` for continuous fill scales.
+    - In `theme()`: `legend_position="bottom"`, `legend_title=element_text(size=7)`, `legend_text=element_text(size=7)`, `legend_key_width=100`, `legend_key_height=5`, `legend_margin=-12`, `legend_box_spacing=0`. To add space between x-axis title and legend without shifting the legend, use `axis_title_x=element_text(size=7, margin={"b": 8})` (bottom margin in points).
+    - **Plot margin** (optional): `plot_margin_top`, `plot_margin_right`, `plot_margin_bottom`, `plot_margin_left` (each in `[0, 1]`; use 0 for no extra margin).
+    - 颜色条（连续图例）须与 availability.py 一致：图例置于底部，legend_box_spacing=0，图边距可设 plot_margin_* 为 0。
 

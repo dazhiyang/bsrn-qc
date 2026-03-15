@@ -5,6 +5,7 @@ BSRN文件可用性的可视化。
 
 import os
 import re
+import warnings
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -63,7 +64,15 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
     # Fetch data from FTP / 从 FTP 获取数据
     print(f"Searching BSRN FTP for stations: {', '.join(stations)}...")
     inventory = get_bsrn_file_inventory(stations, username, password)
-    
+    if not inventory or all(len(files) == 0 for files in inventory.values()):
+        warnings.warn(
+            "BSRN FTP connection failed or returned no data. Plot may be empty. "
+            "Check credentials (username/password) and network. / "
+            "BSRN FTP 未连接或未返回数据，图可能为空。请检查凭据与网络。",
+            UserWarning,
+            stacklevel=2,
+        )
+
     # Pattern: STNMMYY.dat.gz or STNMMYY.001 / 匹配模式：STNMMYY.dat.gz 或 STNMMYY.001
     pattern = re.compile(r"([A-Z]{3})(\d{2})(\d{2})\.(?:dat\.gz|\d{3}).*", re.IGNORECASE)
 
@@ -162,6 +171,12 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
         legend_key_width=100,
         legend_key_height=5,
         legend_margin=-12,
+        legend_box_spacing=0,
+        axis_title_x=element_text(size=7, margin={"t": 1, "b": 2}),  # space between x-title and legend
+        plot_margin_top=0,
+        plot_margin_right=0,
+        plot_margin_bottom=0,
+        plot_margin_left=0,
         panel_grid=element_line(color="white", size=0.5),
         figure_size=(width_inch, total_height_inch),
         axis_text_x=element_text(rotation=45, hjust=1)
