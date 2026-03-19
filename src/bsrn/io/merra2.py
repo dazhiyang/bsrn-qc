@@ -1,0 +1,190 @@
+"""
+MERRA-2 parquet loader for REST2 clear-sky inputs.
+用于 REST2 晴空输入的 MERRA-2 parquet 加载器。
+
+Fetches MERRA-2 parquet from Hugging Face (dazhiyang/bsrn-merra2) into RAM (no disk cache).
+从 Hugging Face (dazhiyang/bsrn-merra2) 获取 MERRA-2 parquet 到内存（无磁盘缓存）。
+"""
+
+import io
+import pandas as pd
+import requests
+
+from bsrn.constants import MERRA2_HF_REPO_ID, MERRA2_MAINTAINER_EMAIL
+
+
+def _hf_fetch_to_memory(repo_id, filename):
+    """
+    Fetch a file from Hugging Face into RAM (no disk cache).
+    Prints when accessing HF. Raises FileNotFoundError with maintainer contact if file is missing.
+    """
+    try:
+        from huggingface_hub import hf_hub_url
+    except ImportError:
+        raise ImportError(
+            "huggingface_hub is required for MERRA-2. Install with: pip install huggingface_hub"
+        )
+    print(f"Fetching MERRA-2 from Hugging Face: {filename}")
+    try:
+        url = hf_hub_url(
+            repo_id=repo_id, filename=filename, repo_type="dataset"
+        )
+        resp = requests.get(url, timeout=60)
+        resp.raise_for_status()
+        return resp.content
+    except requests.HTTPError as e:
+        if e.response is not None and e.response.status_code == 404:
+            raise FileNotFoundError(
+                f"{filename} is not yet on huggingface, please contact the maintainer "
+                f"Dazhi Yang at {MERRA2_MAINTAINER_EMAIL} for update."
+            ) from e
+        raise FileNotFoundError(
+            f"{filename} is not yet on huggingface, please contact the maintainer "
+            f"Dazhi Yang at {MERRA2_MAINTAINER_EMAIL} for update."
+        ) from e
+    except Exception as e:
+        raise FileNotFoundError(
+            f"{filename} is not yet on huggingface, please contact the maintainer "
+            f"Dazhi Yang at {MERRA2_MAINTAINER_EMAIL} for update."
+        ) from e
+
+
+def _fetch_merra2_from_hf(station_code, index):
+    """
+    Fetch MERRA-2 parquet files from Hugging Face for the given station and index.
+    Returns list of bytes (one per unique month in index). Data stays in RAM.
+    """
+    if index.empty:
+        raise ValueError("index must not be empty. / index 不能为空。")
+    stn = station_code.lower()
+    # Use (year, month) pairs to avoid PeriodIndex (which drops tz and triggers a warning)
+    unique_pairs = set(zip(index.year, index.month))
+    contents = []
+    for year, month in sorted(unique_pairs):
+        filename = f"{stn}{month:02d}{year % 100:02d}_merra2.parquet"
+        hf_filename = f"{stn}/{filename}"
+        content = _hf_fetch_to_memory(MERRA2_HF_REPO_ID, hf_filename)
+        contents.append(content)
+    return contents
+
+
+def load_merra2_parquet(path_or_bytes):
+    """
+    Load MERRA-2 parquet file and return DataFrame with DatetimeIndex.
+    加载 MERRA-2 parquet 文件并返回带 DatetimeIndex 的 DataFrame。
+
+    Parameters
+    ----------
+    path_or_bytes : str, path-like, bytes, or file-like
+        Path to the parquet file, or bytes content, or file-like object.
+        parquet 文件路径、字节内容或类文件对象。
+
+    Returns
+    -------
+    data : pd.DataFrame
+        MERRA-2 data with columns AOD55, ALPHA, ALBEDO, TQV, TO3, PS
+        and UTC DatetimeIndex.
+        含 AOD55、ALPHA、ALBEDO、TQV、TO3、PS 列及 UTC DatetimeIndex 的 MERRA-2 数据。
+    """
+    if isinstance(path_or_bytes, bytes):
+        path_or_bytes = io.BytesIO(path_or_bytes)
+    data = pd.read_parquet(path_or_bytes)
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError(
+            "MERRA-2 parquet must have DatetimeIndex. / MERRA-2 parquet 必须有 DatetimeIndex。"
+        )
+    if data.index.tz is None:
+        data.index = data.index.tz_localize("UTC")
+    else:
+        data.index = data.index.tz_convert("UTC")
+    return data
+
+
+def parse_merra2_for_rest2(raw, target_index):
+    """
+    Reindex MERRA-2 data to 1-min target index, interpolate, derive BETA, convert units.
+    将 MERRA-2 数据重索引到 1 分钟目标索引，插值，推导 BETA，并转换单位。
+
+    Parameters
+    ----------
+    raw : pd.DataFrame
+        MERRA-2 data with columns AOD55, ALPHA, ALBEDO, TQV, TO3, PS.
+        含 AOD55、ALPHA、ALBEDO、TQV、TO3、PS 列的 MERRA-2 数据。
+    target_index : pd.DatetimeIndex
+        Target 1-min index, typically the BSRN time index.
+        目标 1 分钟时间索引，通常为 BSRN 时间索引。
+
+    Returns
+    -------
+    rest2 : pd.DataFrame
+        REST2-ready DataFrame with columns PS, ALBEDO, ALPHA, BETA, TO3, TQV.
+        REST2 就绪的 DataFrame，含 PS、ALBEDO、ALPHA、BETA、TO3、TQV 列。
+    """
+    if not isinstance(target_index, pd.DatetimeIndex):
+        raise ValueError(
+            "target_index must be a DatetimeIndex. / target_index 必须为 DatetimeIndex。"
+        )
+
+    df = raw.copy()
+
+    # Reindex to 1-min target index and interpolate / 重索引到 1 分钟目标并插值
+    df = df.reindex(target_index)
+    num_cols = df.select_dtypes(include="number").columns
+    if len(num_cols) > 0:
+        df[num_cols] = df[num_cols].interpolate(method="time", limit_direction="both")
+
+    # Unit conversions / 单位换算
+    # PS: Pa → hPa (÷ 100)
+    if "PS" in df.columns:
+        df["PS"] = df["PS"] / 100.0
+    # TQV: kg/m² → atm.cm (÷ 10)
+    if "TQV" in df.columns:
+        df["TQV"] = df["TQV"] / 10.0
+    # TO3: Dobson → atm.cm (÷ 1000)
+    if "TO3" in df.columns:
+        df["TO3"] = df["TO3"] / 1000.0
+
+    # Derive BETA = AOD55 * 0.55^ALPHA; replace AOD55=0 with 0.001 before
+    # 推导 BETA = AOD55 * 0.55^ALPHA；计算前将 AOD55=0 替换为 0.001
+    if {"AOD55", "ALPHA"}.issubset(df.columns):
+        aod55 = df["AOD55"].replace(0.0, 0.001)
+        df["BETA"] = aod55 * (0.55 ** df["ALPHA"])
+        df = df.drop(columns=["AOD55"])
+
+    return df
+
+
+def fetch_rest2(index, station_code):
+    """
+    Fetch MERRA-2 from Hugging Face and return REST2-ready inputs aligned to target index.
+    Parallel to fetch_mcclear; both return aligned clear-sky inputs.
+    从 Hugging Face 获取 MERRA-2 并返回对齐到目标索引的 REST2 就绪输入。与 fetch_mcclear 对应。
+
+    Parameters
+    ----------
+    index : pd.DatetimeIndex
+        Target time index to align REST2 outputs to.
+        需要对齐的目标时间索引。
+    station_code : str
+        BSRN station code (e.g. "QIQ").
+        BSRN 站点代码（如 "QIQ"）。
+
+    Returns
+    -------
+    aligned : pd.DataFrame
+        REST2 inputs reindexed to `index` with columns PS, ALBEDO, ALPHA, BETA, TO3, TQV.
+        重新索引到 `index` 的 REST2 输入，含 PS、ALBEDO、ALPHA、BETA、TO3、TQV 列。
+    """
+    if not isinstance(index, pd.DatetimeIndex):
+        raise ValueError(
+            "index must be a pandas DatetimeIndex. / index 必须是 pandas DatetimeIndex。"
+        )
+    if index.empty:
+        raise ValueError("index must not be empty. / index 不能为空。")
+
+    contents = _fetch_merra2_from_hf(station_code, index)
+    dfs = [load_merra2_parquet(c) for c in contents]
+    raw = pd.concat(dfs).sort_index()
+    raw = raw[~raw.index.duplicated(keep="first")]
+    rest2 = parse_merra2_for_rest2(raw, index)
+    return rest2

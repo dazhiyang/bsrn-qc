@@ -1,0 +1,14 @@
+# Sphinx (docs build)
+sphinx
+pydata-sphinx-theme
+
+# bsrn package dependencies (core)
+pandas
+numpy
+requests
+huggingface_hub
+
+# bsrn package dependencies (viz, for notebooks)
+plotnine
+matplotlib
+scipy
