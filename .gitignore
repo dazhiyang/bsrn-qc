@@ -31,7 +31,8 @@ data/
 # Tests
 tests/
 
-# Sphinx 
+# Sphinx
+docs/_build/
 docs/sphinx/_build/
 docs/sphinx/generated/
 docs/sphinx/api/generated/

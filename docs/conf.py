@@ -1,17 +1,27 @@
-# Configuration file for the Sphinx documentation builder.
-# See https://www.sphinx-doc.org/en/master/usage/configuration.html
+# Sphinx configuration — lives in docs/ so the **source directory** is ``docs/``.
+# That way ``docs/tutorials/`` is a normal doc path (``tutorials/...``) with nothing under ``sphinx/``.
+#
+# Local build (from repo root):
+#   sphinx-build -b html docs docs/_build/html
+#
+# Read the Docs: ``.readthedocs.yaml`` points ``sphinx.configuration`` here.
+
+from __future__ import annotations
 
 import os
 import sys
 
-# Add project root to path so autodoc can import bsrn (Read the Docs runs from repo root)
-sys.path.insert(0, os.path.abspath('../../src'))
-sys.path.insert(0, os.path.abspath('../../'))
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(_ROOT, "src"))
+sys.path.insert(0, _ROOT)
 
 project = "bsrn"
 copyright = "Dazhi Yang"
 author = "Dazhi Yang"
 release = "0.1.2"
+
+# Master document is under sphinx/; tutorials live alongside as docs/tutorials/.
+root_doc = "sphinx/index"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -27,10 +37,15 @@ extensions = [
     "nbsphinx",
 ]
 
-templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+templates_path = [os.path.join("sphinx", "_templates")]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "sphinx/_build",
+    "**/.ipynb_checkpoints",
+]
 
-# Cross-reference other projects' docs
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
@@ -39,7 +54,6 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org/stable/", None),
 }
 
-# Shortcuts for GitHub links (e.g. :issue:`123`, :pull:`45`, :ghuser:`dazhiyang`)
 extlinks = {
     "issue": ("https://github.com/dazhiyang/bsrn/issues/%s", "GH%s"),
     "pull": ("https://github.com/dazhiyang/bsrn/pull/%s", "GH%s"),
@@ -52,8 +66,7 @@ autodoc_member_order = "bysource"
 pygments_style = "tango"
 pygments_dark_style = "monokai"
 
-# HTML theme
-html_theme = 'pydata_sphinx_theme'
+html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "github_url": "https://github.com/dazhiyang/bsrn",
     "header_links_before_dropdown": 6,
@@ -61,6 +74,6 @@ html_theme_options = {
     "footer_start": ["copyright"],
     "footer_end": ["sphinx-version", "theme-version"],
 }
-html_static_path = ["_static"]
-html_logo = "_static/logo.jpg"
-html_favicon = "_static/logo.jpg"
+html_static_path = [os.path.join("sphinx", "_static")]
+html_logo = os.path.join("sphinx", "_static", "logo.jpg")
+html_favicon = os.path.join("sphinx", "_static", "logo.jpg")

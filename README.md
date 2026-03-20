@@ -113,21 +113,20 @@ bsrn-qc/
 │           ├── clear_sky.py           # Ineichen clear-sky model
 │           └── separation.py          # Irradiance separation (Erbs, BRL, Engerer2, Yang4)
 ├── docs/
+│   ├── conf.py                        # Sphinx config; source dir = docs/ (tutorials + sphinx/ RST)
 │   ├── requirements.txt               # Sphinx / Read the Docs dependencies
-│   ├── examples/                      # Optional examples (may be empty)
-│   ├── tutorials/                     # Jupyter tutorials (working copies)
+│   ├── examples/                      # Examples landing page (index.rst) + optional scripts
+│   │   └── index.rst
+│   ├── tutorials/                     # Jupyter tutorials + index.rst (nbsphinx)
 │   │   ├── 1.data_downloading.ipynb
 │   │   ├── 2.quality_control.ipynb
 │   │   ├── 3.time_averaging.ipynb
 │   │   ├── 4.clear_sky_detection.ipynb
 │   │   └── 5.cloud_enhancement_event.ipynb
-│   └── sphinx/                        # Sphinx documentation site
-│       ├── conf.py
+│   └── sphinx/                        # RST site (home index, user_guide, api, _static)
 │       ├── index.rst
-│       ├── examples.rst
 │       ├── api/                       # API reference (io, qc, physics, …)
-│       ├── user_guide/                # installation, getting_started, package_overview, …
-│       └── tutorials/                 # Same notebooks + index.rst for nbsphinx
+│       └── user_guide/                # installation, getting_started, package_overview, …
 ```
 
 ## 📖 Examples

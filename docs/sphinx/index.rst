@@ -4,7 +4,7 @@ Welcome to bsrn documentation!
 .. raw:: html
 
    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-     <img src="_static/logo.jpg" alt="bsrn" style="height: 64px; width: auto;">
+     <img src="../_static/logo.jpg" alt="bsrn" style="height: 64px; width: auto;">
      <h1 style="margin: 0;">bsrn</h1>
    </div>
 
@@ -20,7 +20,7 @@ It supports multiple clear-sky models and detection methods, with seamless integ
     :gutter: 4
 
     .. grid-item-card::  User Guide
-        :link: user_guide/index
+        :link: sphinx/user_guide/index
         :link-type: doc
 
         Learn how to install and get started with bsrn. Includes a high-level overview of the library's capabilities.
@@ -32,13 +32,13 @@ It supports multiple clear-sky models and detection methods, with seamless integ
         Step-by-step tutorials in Jupyter notebooks for core bsrn workflows.
 
     .. grid-item-card::  API Reference
-        :link: api/index
+        :link: sphinx/api/index
         :link-type: doc
 
         Detailed documentation of all functions, classes, and modules in the bsrn package.
 
     .. grid-item-card::  Examples
-        :link: examples
+        :link: examples/index
         :link-type: doc
 
         Explore additional examples demonstrating bsrn in action.
@@ -52,10 +52,10 @@ It supports multiple clear-sky models and detection methods, with seamless integ
    :maxdepth: 2
    :hidden:
 
-   user_guide/index
+   sphinx/user_guide/index
    tutorials/index
-   api/index
-   examples
+   sphinx/api/index
+   examples/index
 
 Indices and tables
 ==================

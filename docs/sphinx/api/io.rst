@@ -20,3 +20,4 @@ Data Fetching
    bsrn.io.retrieval.download_bsrn_stn
    bsrn.io.mcclear.fetch_mcclear
    bsrn.io.merra2.fetch_rest2
+   bsrn.io.crs.download_crs
