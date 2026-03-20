@@ -9,7 +9,7 @@ import pandas as pd
 
 def ghi_erl_test(ghi, zenith, bni_extra):
     """
-    Check global horizontal irradiance (GHI, $G_h$) against extremely rare limits.
+    Check global horizontal irradiance (GHI, $G_h$) against extremely rare limits [1]_.
     检查水平总辐照度 (GHI, $G_h$) 是否在极罕见范围内。
 
     Parameters
@@ -49,7 +49,7 @@ def ghi_erl_test(ghi, zenith, bni_extra):
 
 def bni_erl_test(bni, zenith, bni_extra):
     """
-    Check beam normal irradiance (BNI, $B_n$) against extremely rare limits.
+    Check beam normal irradiance (BNI, $B_n$) against extremely rare limits [1]_.
     检查法向直接辐照度 (BNI, $B_n$) 是否在极罕见范围内。
 
     Parameters
@@ -89,7 +89,7 @@ def bni_erl_test(bni, zenith, bni_extra):
 
 def dhi_erl_test(dhi, zenith, bni_extra):
     """
-    Check diffuse horizontal irradiance (DHI, $D_h$) against extremely rare limits.
+    Check diffuse horizontal irradiance (DHI, $D_h$) against extremely rare limits [1]_.
     检查水平散射辐照度 (DHI, $D_h$) 是否在极罕见范围内。
 
     Parameters
@@ -129,7 +129,7 @@ def dhi_erl_test(dhi, zenith, bni_extra):
 
 def lwd_erl_test(lwd):
     """
-    Check downward longwave radiation (LWD, $L_d$) against extremely rare limits.
+    Check downward longwave radiation (LWD, $L_d$) against extremely rare limits [1]_.
     检查下行长波辐射 (LWD, $L_d$) 是否在极罕见范围内。
 
     Parameters

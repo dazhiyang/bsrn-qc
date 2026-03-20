@@ -96,7 +96,7 @@ def _cee_to_output(index, cee_flag, method, diagnostics=None, return_diagnostics
 
 def killinger_ced(ghi, ghi_clear, zenith, times, return_diagnostics=False):
     """
-    Detect cloud enhancement events using Killinger et al. (2017).
+    Detect cloud enhancement events using Killinger et al. (2017) [1]_.
     使用 Killinger 等 (2017) 方法检测云增强事件。
 
     Parameters
@@ -204,7 +204,7 @@ def killinger_ced(ghi, ghi_clear, zenith, times, return_diagnostics=False):
 
 def gueymard_ced(ghi, ghi_extra, times=None, return_diagnostics=False):
     """
-    Detect cloud enhancement events when GHI exceeds extraterrestrial GHI.
+    Detect cloud enhancement events when GHI exceeds extraterrestrial GHI [1]_.
     当 GHI 大于地外水平辐照度时检测云增强事件。
 
     Parameters

@@ -9,7 +9,7 @@ import pandas as pd
 
 def k_low_sza_test(ghi, dhi, zenith):
     r"""
-    Check diffuse fraction ($k$) for low solar zenith angles ($Z < 75^\circ$).
+    Check diffuse fraction ($k$) for low solar zenith angles ($Z < 75^\circ$) [1]_ [2]_.
     检查低太阳天顶角 ($Z < 75^\circ$) 下的散射分数 ($k$)。
 
     Parameters
@@ -54,7 +54,7 @@ def k_low_sza_test(ghi, dhi, zenith):
 
 def k_high_sza_test(ghi, dhi, zenith):
     r"""
-    Check diffuse fraction ($k$) for high solar zenith angles ($Z \ge 75^\circ$).
+    Check diffuse fraction ($k$) for high solar zenith angles ($Z \ge 75^\circ$) [1]_ [2]_.
     检查高太阳天顶角 ($Z \ge 75^\circ$) 下的散射分数 ($k$)。
 
     Parameters
@@ -99,7 +99,7 @@ def k_high_sza_test(ghi, dhi, zenith):
 
 def k_kt_combined_test(ghi, dhi, bni_extra, zenith):
     """
-    Combined check of diffuse fraction ($k$) and clearness index ($k_t$).
+    Combined check of diffuse fraction ($k$) and clearness index ($k_t$) [1]_.
     结合散射分数 ($k$) 和晴朗指数 ($k_t$) 的测试。
 
     Parameters

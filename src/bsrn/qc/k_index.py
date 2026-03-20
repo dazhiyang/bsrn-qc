@@ -8,7 +8,7 @@ import pandas as pd
 
 def kb_kt_test(ghi, bni, bni_extra, zenith):
     """
-    Check if beam transmittance ($k_b$) is less than clearness index ($k_t$).
+    Check if beam transmittance ($k_b$) is less than clearness index ($k_t$) [1]_.
     检查直射透射率 ($k_b$) 是否小于物理上限制的晴朗指数 ($k_t$)。
 
     Parameters
@@ -55,7 +55,7 @@ def kb_kt_test(ghi, bni, bni_extra, zenith):
 
 def kb_limit_test(bni, bni_extra, elevation, ghi):
     """
-    Check if beam transmittance ($k_b$) stays within absolute physical limits based on elevation.
+    Check if beam transmittance ($k_b$) stays within absolute physical limits based on elevation [1]_.
     根据海拔检查直射透射率 ($k_b$) 是否在绝对物理限值内。
 
     Parameters
@@ -99,7 +99,7 @@ def kb_limit_test(bni, bni_extra, elevation, ghi):
 
 def kt_limit_test(ghi, bni_extra, zenith):
     """
-    Check if clearness index ($k_t$) is within physically possible limits.
+    Check if clearness index ($k_t$) is within physically possible limits [1]_.
     检查晴朗指数 ($k_t$) 是否在物理可能范围内。
 
     Parameters

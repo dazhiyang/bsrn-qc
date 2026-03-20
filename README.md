@@ -16,6 +16,12 @@ From GitHub (latest development version):
 pip install git+https://github.com/dazhiyang/bsrn.git
 ```
 
+From a local clone (editable install — edits under `src/bsrn/` take effect without reinstalling):
+```bash
+cd /path/to/bsrn-qc
+pip install -e .
+```
+
 **Documentation:** [Read the Docs](https://bsrn.readthedocs.io) (when configured)
 
 ### Quick Example (Single-File Workflow)

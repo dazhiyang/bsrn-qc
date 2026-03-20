@@ -395,7 +395,7 @@ def _engerer2_k_at_resolution(df, lat, lon, period_minutes, ghi_col="ghi",
 
 def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065, max_zenith=87.0):
     """
-    Erbs irradiance separation: diffuse fraction $k$ from clearness index $k_t$, then DHI and BNI.
+    Erbs irradiance separation [1]_: diffuse fraction $k$ from clearness index $k_t$, then DHI and BNI.
     Erbs 辐照分离：由晴朗指数 $k_t$ 得散射分数 $k$，再得 DHI 与 BNI。
 
     Inputs are time, ghi, and location (lat, lon, elev); zenith and clearness index are computed inside.
@@ -474,7 +474,7 @@ def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065, max_zenith=87.0
 
 def brl_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
     """
-    BRL irradiance separation: diffuse fraction $k$ from logistic function of
+    BRL irradiance separation [1]_: diffuse fraction $k$ from logistic function of
     $k_t$, AST, $\\alpha$, $K_t$, $\\psi$.
     BRL 辐照分离：由 $k_t$、AST、$\\alpha$、$K_t$、$\\psi$ 的逻辑回归函数得散射分数 $k$。
 

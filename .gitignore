@@ -34,3 +34,4 @@ tests/
 # Sphinx 
 docs/sphinx/_build/
 docs/sphinx/generated/
+docs/sphinx/api/generated/

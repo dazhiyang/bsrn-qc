@@ -12,7 +12,7 @@ from bsrn.physics import spa
 
 def get_pressure_from_elevation(elev):
     """
-    Calculates standard-atmosphere pressure from elevation using pvlib-equivalent formula.
+    Calculates standard-atmosphere pressure from elevation using pvlib-equivalent formula [1]_.
     使用与 pvlib 等价的公式，根据海拔计算标准大气压。
 
     Parameters
@@ -48,7 +48,7 @@ def get_pressure_from_elevation(elev):
 
 def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
     r"""
-    Calculates solar zenith angle ($Z$) and solar azimuth angle ($\phi$) using SPA.
+    Calculates solar zenith angle ($Z$) and solar azimuth angle ($\phi$) using SPA [1]_ [2]_.
     使用 SPA 算法计算太阳天顶角 ($Z$) 和太阳方位角 ($\phi$)。
 
     Parameters
@@ -107,7 +107,7 @@ def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
 
     # Use fixed delta_t (69.1s for 2024) for simplicity
     # 为简便起见，使用固定的 delta_t（2024 年约为 69.1 秒）
-    zenith, apparent_zenith, azimuth, _ = spa.solar_position(
+    zenith, apparent_zenith, azimuth, _ = spa._solar_position(
         unixtime, lat, lon, elev, pressure=pressure, temp=temp, delta_t=69.1
     )
     
@@ -122,7 +122,7 @@ def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
 
 def get_bni_extra(times):
     """
-    Calculates extraterrestrial beam normal irradiance ($BNI_E$, $E_{0n}$) using Spencer (1971).
+    Calculates extraterrestrial beam normal irradiance ($BNI_E$, $E_{0n}$) using Spencer (1971) [1]_.
     使用 Spencer (1971) 方法计算地外法向辐照度 ($BNI_E$, $E_{0n}$)。
 
     Parameters

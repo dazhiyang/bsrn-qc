@@ -9,7 +9,7 @@ import pandas as pd
 
 def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear=None, bni_clear=None):
     """
-    Check if the solar tracker is off by comparing measured and clear-sky irradiances.
+    Check if the solar tracker is off by comparing measured and clear-sky irradiances [1]_.
     通过比较测量值和晴空值来检查太阳跟踪器是否失准。
 
     Parameters

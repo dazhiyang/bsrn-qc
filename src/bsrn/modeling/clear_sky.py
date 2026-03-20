@@ -91,7 +91,7 @@ def get_absolute_airmass(airmass_relative, pressure=101325.0):
 
 def ineichen_model(apparent_zenith, airmass_absolute, lt, elev, bni_extra):
     """
-    Implementation of Ineichen clear-sky model matching the formulation from pvlib.
+    Implementation of Ineichen clear-sky model [1]_ matching the formulation from pvlib.
     与 pvlib 匹配的 Ineichen 晴空模型直接实现。
 
     Parameters
@@ -164,7 +164,7 @@ def ineichen_model(apparent_zenith, airmass_absolute, lt, elev, bni_extra):
 
 def rest2_model(index, zenith, rest2_inputs, no2=0.0002):
     """
-    REST2 clear-sky model translated from the provided R implementation.
+    REST2 clear-sky model [1]_ translated from the provided R implementation.
     按照提供的 R 实现翻译的 REST2 晴空模型。
 
     Parameters
@@ -437,7 +437,7 @@ def rest2_model(index, zenith, rest2_inputs, no2=0.0002):
 
 def threlkeld_jordan_model(zenith, day_of_year):
     """
-    Threlkeld-Jordan clear-sky GHI model.
+    Threlkeld-Jordan clear-sky GHI model [1]_.
     The published Engerer2 reference uses this for the ktc predictor.
     Threlkeld-Jordan 晴空 GHI 模型；Engerer2 文献采用此模型计算 ktc。
 
@@ -515,7 +515,7 @@ def calculate_vapor_pressure(temp, rh):
 
 def brutsaert_model(temp_c, rh):
     """
-    Calculates clear-sky downward longwave radiation ($L_{dc}$) using Brutsaert (1975).
+    Calculates clear-sky downward longwave radiation ($L_{dc}$) using Brutsaert (1975) [1]_.
     使用 Brutsaert (1975) 模型计算晴空下行长波辐射 ($L_{dc}$)。
 
     Parameters

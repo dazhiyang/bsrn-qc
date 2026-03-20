@@ -191,29 +191,29 @@ NUTATION_YTERM_ARRAY = np.array([
     [2, -1, -1, 2, 2], [0, 0, 3, 2, 2], [2, -1, 0, 2, 2]
 ])
 
-def julian_day(unixtime):
+def _julian_day(unixtime):
     return unixtime / 86400.0 + 2440587.5
 
-def sum_mult_cos_add_mult(arr, x):
+def _sum_mult_cos_add_mult(arr, x):
     angles = arr[:, 1:2] + arr[:, 2:3] * x.reshape(1, -1)
     return np.sum(arr[:, 0:1] * np.cos(angles), axis=0)
 
-def mean_elongation(jce):
+def _mean_elongation(jce):
     return (297.85036 + 445267.111480 * jce - 0.0019142 * jce**2 + jce**3 / 189474)
 
-def mean_anomaly_sun(jce):
+def _mean_anomaly_sun(jce):
     return (357.52772 + 35999.050340 * jce - 0.0001603 * jce**2 - jce**3 / 300000)
 
-def mean_anomaly_moon(jce):
+def _mean_anomaly_moon(jce):
     return (134.96298 + 477198.867398 * jce + 0.0086972 * jce**2 + jce**3 / 56250)
 
-def moon_argument_latitude(jce):
+def _moon_argument_latitude(jce):
     return (93.27191 + 483202.017538 * jce - 0.0036825 * jce**2 + jce**3 / 327270)
 
-def moon_ascending_longitude(jce):
+def _moon_ascending_longitude(jce):
     return (125.04452 - 1934.136261 * jce + 0.0020708 * jce**2 + jce**3 / 450000)
 
-def longitude_obliquity_nutation(jce, x0, x1, x2, x3, x4):
+def _longitude_obliquity_nutation(jce, x0, x1, x2, x3, x4):
     args = np.radians(
         NUTATION_YTERM_ARRAY[:, 0:1] * x0 + NUTATION_YTERM_ARRAY[:, 1:2] * x1 +
         NUTATION_YTERM_ARRAY[:, 2:3] * x2 + NUTATION_YTERM_ARRAY[:, 3:4] * x3 +
@@ -223,29 +223,29 @@ def longitude_obliquity_nutation(jce, x0, x1, x2, x3, x4):
     delta_eps_sum = np.sum((NUTATION_ABCD_ARRAY[:, 2:3] + NUTATION_ABCD_ARRAY[:, 3:4] * jce) * np.cos(args), axis=0)
     return delta_psi_sum / 36000000.0, delta_eps_sum / 36000000.0
 
-def mean_ecliptic_obliquity(jme):
+def _mean_ecliptic_obliquity(jme):
     U = jme / 10.0
     return (84381.448 - 4680.93 * U - 1.55 * U**2 + 1999.25 * U**3 - 51.38 * U**4 - 
             249.67 * U**5 - 39.05 * U**6 + 7.12 * U**7 + 27.87 * U**8 + 
             5.79 * U**9 + 2.45 * U**10)
 
-def true_ecliptic_obliquity(e0, deleps):
+def _true_ecliptic_obliquity(e0, deleps):
     return e0 / 3600.0 + deleps
 
-def aberration_correction(R):
+def _aberration_correction(R):
     return -20.4898 / (3600.0 * R)
 
-def apparent_sun_longitude(theta, delta_psi, delta_tau):
+def _apparent_sun_longitude(theta, delta_psi, delta_tau):
     return theta + delta_psi + delta_tau
 
-def mean_sidereal_time(jd, jc):
+def _mean_sidereal_time(jd, jc):
     return (280.46061837 + 360.98564736629 * (jd - 2451545) + 
             0.000387933 * jc**2 - jc**3 / 38710000.0) % 360
 
-def apparent_sidereal_time(v0, delta_psi, epsilon):
+def _apparent_sidereal_time(v0, delta_psi, epsilon):
     return v0 + delta_psi * np.cos(np.radians(epsilon))
 
-def geocentric_sun_right_ascension(lamd, epsilon, beta):
+def _geocentric_sun_right_ascension(lamd, epsilon, beta):
     eps_rad = np.radians(epsilon)
     lamd_rad = np.radians(lamd)
     beta_rad = np.radians(beta)
@@ -253,7 +253,7 @@ def geocentric_sun_right_ascension(lamd, epsilon, beta):
     alpha = np.degrees(np.arctan2(num, np.cos(lamd_rad)))
     return alpha % 360
 
-def geocentric_sun_declination(lamd, epsilon, beta):
+def _geocentric_sun_declination(lamd, epsilon, beta):
     eps_rad = np.radians(epsilon)
     lamd_rad = np.radians(lamd)
     beta_rad = np.radians(beta)
@@ -261,22 +261,22 @@ def geocentric_sun_declination(lamd, epsilon, beta):
                                 np.cos(beta_rad) * np.sin(eps_rad) * np.sin(lamd_rad)))
     return delta
 
-def local_hour_angle(v, lon, alpha):
+def _local_hour_angle(v, lon, alpha):
     return (v + lon - alpha) % 360
 
-def equatorial_horizontal_parallax(r):
+def _equatorial_horizontal_parallax(r):
     return 8.794 / (3600.0 * r)
 
-def uterm(lat):
+def _uterm(lat):
     return np.arctan(0.99664719 * np.tan(np.radians(lat)))
 
-def xterm(u, lat, elev):
+def _xterm(u, lat, elev):
     return np.cos(u) + (elev / 6378140.0) * np.cos(np.radians(lat))
 
-def yterm(u, lat, elev):
+def _yterm(u, lat, elev):
     return 0.99664719 * np.sin(u) + (elev / 6378140.0) * np.sin(np.radians(lat))
 
-def parallax_sun_right_ascension(x, eq_hor_par, h, delta):
+def _parallax_sun_right_ascension(x, eq_hor_par, h, delta):
     eq_hor_par_rad = np.radians(eq_hor_par)
     h_rad = np.radians(h)
     delta_rad = np.radians(delta)
@@ -284,10 +284,10 @@ def parallax_sun_right_ascension(x, eq_hor_par, h, delta):
     denom = np.cos(delta_rad) - x * np.sin(eq_hor_par_rad) * np.cos(h_rad)
     return np.degrees(np.arctan2(num, denom))
 
-def topocentric_sun_right_ascension(alpha, delta_alpha):
+def _topocentric_sun_right_ascension(alpha, delta_alpha):
     return alpha + delta_alpha
 
-def topocentric_sun_declination(delta, x, y, eq_hor_par, delta_alpha, h):
+def _topocentric_sun_declination(delta, x, y, eq_hor_par, delta_alpha, h):
     delta_rad = np.radians(delta)
     eq_hor_par_rad = np.radians(eq_hor_par)
     delta_alpha_rad = np.radians(delta_alpha)
@@ -297,10 +297,10 @@ def topocentric_sun_declination(delta, x, y, eq_hor_par, delta_alpha, h):
     denom = np.cos(delta_rad) - x * np.sin(eq_hor_par_rad) * np.cos(h_rad)
     return np.degrees(np.arctan2(num, denom))
 
-def topocentric_local_hour_angle(h, delta_alpha):
+def _topocentric_local_hour_angle(h, delta_alpha):
     return h - delta_alpha
 
-def atmospheric_refraction_correction(pressure, temp, e0, atmos_refract=0.5667):
+def _atmospheric_refraction_correction(pressure, temp, e0, atmos_refract=0.5667):
     """
     Atmospheric refraction correction per NREL SPA (Reda & Andreas, 2004).
     大气折射校正，基于 NREL SPA (Reda & Andreas, 2004)。
@@ -312,60 +312,60 @@ def atmospheric_refraction_correction(pressure, temp, e0, atmos_refract=0.5667):
                    e0 + 10.3 / (e0 + 5.11))))) * switch
     return delta_e
 
-def solar_position(unixtime, lat, lon, elev, pressure=1013.25, temp=12, delta_t=69.0):
-    jd = julian_day(unixtime)
+def _solar_position(unixtime, lat, lon, elev, pressure=1013.25, temp=12, delta_t=69.0):
+    jd = _julian_day(unixtime)
     jde = jd + delta_t / 86400.0
     jc = (jd - 2451545) / 36525.0
     jce = (jde - 2451545) / 36525.0
     jme = jce / 10.0
     
-    R = (sum_mult_cos_add_mult(R0, jme) + sum_mult_cos_add_mult(R1, jme) * jme +
-         sum_mult_cos_add_mult(R2, jme) * jme**2 + sum_mult_cos_add_mult(R3, jme) * jme**3 +
-         sum_mult_cos_add_mult(R4, jme) * jme**4) / 1e8
+    R = (_sum_mult_cos_add_mult(R0, jme) + _sum_mult_cos_add_mult(R1, jme) * jme +
+         _sum_mult_cos_add_mult(R2, jme) * jme**2 + _sum_mult_cos_add_mult(R3, jme) * jme**3 +
+         _sum_mult_cos_add_mult(R4, jme) * jme**4) / 1e8
     
-    L = (sum_mult_cos_add_mult(L0, jme) + sum_mult_cos_add_mult(L1, jme) * jme +
-         sum_mult_cos_add_mult(L2, jme) * jme**2 + sum_mult_cos_add_mult(L3, jme) * jme**3 +
-         sum_mult_cos_add_mult(L4, jme) * jme**4 + sum_mult_cos_add_mult(L5, jme) * jme**5) / 1e8
+    L = (_sum_mult_cos_add_mult(L0, jme) + _sum_mult_cos_add_mult(L1, jme) * jme +
+         _sum_mult_cos_add_mult(L2, jme) * jme**2 + _sum_mult_cos_add_mult(L3, jme) * jme**3 +
+         _sum_mult_cos_add_mult(L4, jme) * jme**4 + _sum_mult_cos_add_mult(L5, jme) * jme**5) / 1e8
     L = np.rad2deg(L) % 360
     
-    B = (sum_mult_cos_add_mult(B0, jme) + sum_mult_cos_add_mult(B1, jme) * jme) / 1e8
+    B = (_sum_mult_cos_add_mult(B0, jme) + _sum_mult_cos_add_mult(B1, jme) * jme) / 1e8
     B = np.rad2deg(B)
     
     theta = (L + 180.0) % 360
     beta = -B
     
-    x0, x1, x2, x3, x4 = mean_elongation(jce), mean_anomaly_sun(jce), \
-                         mean_anomaly_moon(jce), moon_argument_latitude(jce), \
-                         moon_ascending_longitude(jce)
+    x0, x1, x2, x3, x4 = _mean_elongation(jce), _mean_anomaly_sun(jce), \
+                         _mean_anomaly_moon(jce), _moon_argument_latitude(jce), \
+                         _moon_ascending_longitude(jce)
     
-    delta_psi, delta_epsilon = longitude_obliquity_nutation(jce, x0, x1, x2, x3, x4)
-    epsilon0 = mean_ecliptic_obliquity(jme)
-    epsilon = true_ecliptic_obliquity(epsilon0, delta_epsilon)
-    delta_tau = aberration_correction(R)
-    lamd = apparent_sun_longitude(theta, delta_psi, delta_tau)
-    v0 = mean_sidereal_time(jd, jc)
-    v = apparent_sidereal_time(v0, delta_psi, epsilon)
-    alpha = geocentric_sun_right_ascension(lamd, epsilon, beta)
-    delta = geocentric_sun_declination(lamd, epsilon, beta)
-    H = local_hour_angle(v, lon, alpha)
+    delta_psi, delta_epsilon = _longitude_obliquity_nutation(jce, x0, x1, x2, x3, x4)
+    epsilon0 = _mean_ecliptic_obliquity(jme)
+    epsilon = _true_ecliptic_obliquity(epsilon0, delta_epsilon)
+    delta_tau = _aberration_correction(R)
+    lamd = _apparent_sun_longitude(theta, delta_psi, delta_tau)
+    v0 = _mean_sidereal_time(jd, jc)
+    v = _apparent_sidereal_time(v0, delta_psi, epsilon)
+    alpha = _geocentric_sun_right_ascension(lamd, epsilon, beta)
+    delta = _geocentric_sun_declination(lamd, epsilon, beta)
+    H = _local_hour_angle(v, lon, alpha)
     # Topocentric conversions / 站心坐标转换 (Parallax correction)
-    eq_hor_par = equatorial_horizontal_parallax(R)
-    u = uterm(lat)
-    x = xterm(u, lat, elev)
-    y = yterm(u, lat, elev)
+    eq_hor_par = _equatorial_horizontal_parallax(R)
+    u = _uterm(lat)
+    x = _xterm(u, lat, elev)
+    y = _yterm(u, lat, elev)
     
-    delta_alpha = parallax_sun_right_ascension(x, eq_hor_par, H, delta)
+    delta_alpha = _parallax_sun_right_ascension(x, eq_hor_par, H, delta)
     
-    alpha_prime = topocentric_sun_right_ascension(alpha, delta_alpha)
-    delta_prime = topocentric_sun_declination(delta, x, y, eq_hor_par, delta_alpha, H)
-    H_prime = topocentric_local_hour_angle(H, delta_alpha)
+    alpha_prime = _topocentric_sun_right_ascension(alpha, delta_alpha)
+    delta_prime = _topocentric_sun_declination(delta, x, y, eq_hor_par, delta_alpha, H)
+    H_prime = _topocentric_local_hour_angle(H, delta_alpha)
     
     LatR = np.radians(lat)
     HR = np.radians(H_prime)
     DR = np.radians(delta_prime)
     
     e0 = np.degrees(np.arcsin(np.sin(LatR) * np.sin(DR) + np.cos(LatR) * np.cos(DR) * np.cos(HR)))
-    delta_e = atmospheric_refraction_correction(pressure, temp, e0)
+    delta_e = _atmospheric_refraction_correction(pressure, temp, e0)
     e = e0 + delta_e
     
     zenith_true = 90.0 - e0

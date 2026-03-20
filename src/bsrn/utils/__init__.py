@@ -1,4 +1,5 @@
-from . import calculations, quality, clear_sky_detection, cee_detection
+from . import averaging, calculations, quality, clear_sky_detection, cee_detection
+from .averaging import pretty_average
 from .clear_sky_detection import (
     reno_csd,
     ineichen_csd,
@@ -8,6 +9,8 @@ from .clear_sky_detection import (
 )
 
 __all__ = [
+    "averaging",
+    "pretty_average",
     "calculations",
     "quality",
     "clear_sky_detection",

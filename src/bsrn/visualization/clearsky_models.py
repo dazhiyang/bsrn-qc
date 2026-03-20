@@ -33,7 +33,7 @@ def plot_clearsky_models_booklet(
     df=None,
 ):  # noqa: PLR0913
     """
-    Generate a monthly PDF booklet comparing measured irradiance with clear-sky models.
+    Generate a monthly PDF booklet comparing measured irradiance with clear-sky models [1]_ [2]_ [3]_.
     生成月度 PDF 手册，对比实测辐照度与晴空模型结果。
 
     One page is created per day. Each page has three panels for GHI, BNI, and DHI.

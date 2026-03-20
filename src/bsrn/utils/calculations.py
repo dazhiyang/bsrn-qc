@@ -10,7 +10,7 @@ import pandas as pd
 def calc_kt(ghi, zenith, bni_extra, min_mu0=0.065,
             max_clearness_index=2.0):
     """
-    Calculates clearness index ($k_t$) following pvlib conventions.
+    Calculates clearness index ($k_t$) following pvlib conventions [1]_ [2]_ [3]_.
     按照 pvlib 惯例计算晴朗指数 ($k_t$)。
 
     $k_t = G_h / (E_{0n} \\cdot \\max(\\mu_0,\\; \\text{min\\_mu0}))$
@@ -62,7 +62,7 @@ def calc_kt(ghi, zenith, bni_extra, min_mu0=0.065,
 def calc_kb(bni, zenith, bni_extra, min_mu0=0.065,
             max_beam_transmittance=1.0):
     """
-    Calculates beam transmittance ($k_b$) following pvlib conventions.
+    Calculates beam transmittance ($k_b$) following pvlib conventions [1]_ [2]_.
     按照 pvlib 惯例计算直射透射率 ($k_b$)。
 
     $k_b = B_n / E_{0n}$, floored at $\\mu_0 \\ge$ `min_mu0` for consistency,
@@ -114,7 +114,7 @@ def calc_kb(bni, zenith, bni_extra, min_mu0=0.065,
 def calc_kd(dhi, zenith, bni_extra, min_mu0=0.065,
             max_diffuse_transmittance=2.0):
     """
-    Calculates diffuse transmittance ($k_d$) following pvlib conventions.
+    Calculates diffuse transmittance ($k_d$) following pvlib conventions [1]_ [2]_.
     按照 pvlib 惯例计算散射透射率 ($k_d$)。
 
     $k_d = D_h / (E_{0n} \\cdot \\max(\\mu_0,\\; \\text{min\\_mu0}))$
@@ -163,7 +163,7 @@ def calc_kd(dhi, zenith, bni_extra, min_mu0=0.065,
 
 def calc_k(dhi, ghi, zenith, min_mu0=0.065, max_diffuse_fraction=1.0):
     """
-    Calculates diffuse fraction ($k$) following pvlib conventions.
+    Calculates diffuse fraction ($k$) following pvlib conventions [1]_ [2]_.
     按照 pvlib 惯例计算散射分数 ($k$)。
 
     $k = D_h / G_h$, with $\\mu_0$ guard and output clamping.
@@ -213,7 +213,7 @@ def calc_k(dhi, ghi, zenith, min_mu0=0.065, max_diffuse_fraction=1.0):
 
 def calc_kappa(ghi, ghi_clear, max_clearsky_index=2.0):
     """
-    Calculates clear-sky index ($\\kappa$) following pvlib conventions.
+    Calculates clear-sky index ($\\kappa$) following pvlib conventions [1]_ [2]_.
     按照 pvlib 惯例计算晴空指数 ($\\kappa$)。
 
     $\\kappa = G_h / G_{hc}$

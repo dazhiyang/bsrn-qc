@@ -140,11 +140,13 @@ def function_name(param):
 - **MUST** use sentence case for scientific paper titles in references.
 
 ### 5. Function Signature Style
-- **MUST** use compact signatures: required parameters first, then optional parameters with defaults on the same line.
-- If the signature exceeds the line length limit (110 characters), break after the opening parenthesis and indent continuation lines with 4 spaces; align optional parameters or use a single continuation line.
-- **DO NOT** put one parameter per line with trailing comma unless the list is very long or each parameter has a long default.
-- Example (short): `def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None, model="ineichen"):`
-- Example (wrapped): `def plot_k_vs_kt(df, model, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_col=None,\n                 min_ghi=50.0, output_file=None, title=None):`
+- **MUST** use compact signatures: required parameters first, then optional parameters with defaults.
+- **MUST NOT** put the entire signature on one line if that line would exceed **110 characters** (same limit as §4). Prefer **one line** only when the full `def …` fits within 110 characters.
+- If wrapping is needed, **MUST** split into **a few short lines** (typically **two** lines of parameters): group several parameters per line so **each line stays ≤ 110 characters**. **DO NOT** use an unnecessarily long single line; **DO NOT** default to one parameter per line unless the list is very long or each default is long.
+- For continuation lines after a trailing comma, **MUST** indent so the wrapped parameters align with the style used in this repo (see `run_qc` in `bsrn/qc/wrapper.py` or `pretty_average` in `bsrn/utils/averaging.py`: **11 spaces** before the first token on the continuation line).
+- Example (short, one line): `def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None, model="ineichen"):`
+- Example (wrapped, two lines): `def plot_k_vs_kt(df, model, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_col=None,\n                 min_ghi=50.0, output_file=None, title=None):`
+- Example (short, package pattern): `def pretty_average(df, rule, alignment="floor", aggfunc="mean", resolution=None, match_ceiling_labels=True):`
 
 ### 6. Output Directory
 - All generated plots and figures **MUST** be saved to the project root directory.
@@ -158,9 +160,6 @@ def function_name(param):
 - **Single-file workflow**: All high-level workflows (QC, clear-sky modeling, CSD, separation, visualization) **MUST** operate on **one BSRN station-to-archive file at a time** (for example, a single `XXXMMYY.dat.gz` monthly file).
 - **No implicit concatenation**: Library functions **MUST NOT** silently concatenate multiple months or years internally. If users need multi-month analyses, they **MUST** loop over files and combine results explicitly at the application level.
 - **Index scope**: Within a single run, functions **MUST** assume that the `DatetimeIndex` comes from a single contiguous BSRN monthly file; cross-file or cross-year assumptions are out of scope for the core package.
-- 单文件工作流：所有高级工作流（QC、晴空建模、晴空检测、直散分离、可视化）**必须**一次仅针对 **一个** BSRN 站点归档文件运行（例如单个 `XXXMMYY.dat.gz` 月度文件）。
-- 禁止隐式拼接：库函数 **不得** 在内部隐式拼接多个月或多年的数据。如需多月分析，**必须** 在应用层显式循环各文件并手动合并结果。
-- 索引范围：单次运行默认假定 `DatetimeIndex` 源自一个连续的月度 BSRN 文件；跨文件或跨年的假设不属于当前包的职责范围。
 
 ### 9. Visualization & Aesthetics
 - **Color Palettes**:
@@ -182,5 +181,4 @@ def function_name(param):
     - Use `scale_fill_cmap(cmap_name='viridis', name="<Legend title>")` for continuous fill scales.
     - In `theme()`: `legend_position="bottom"`, `legend_title=element_text(size=7)`, `legend_text=element_text(size=7)`, `legend_key_width=100`, `legend_key_height=5`, `legend_margin=-12`, `legend_box_spacing=0`. To add space between x-axis title and legend without shifting the legend, use `axis_title_x=element_text(size=7, margin={"b": 8})` (bottom margin in points).
     - **Plot margin** (optional): `plot_margin_top`, `plot_margin_right`, `plot_margin_bottom`, `plot_margin_left` (each in `[0, 1]`; use 0 for no extra margin).
-    - 颜色条（连续图例）须与 availability.py 一致：图例置于底部，legend_box_spacing=0，图边距可设 plot_margin_* 为 0。
 

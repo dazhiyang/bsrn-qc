@@ -43,7 +43,7 @@ def _get_metadata(station_code, lat, lon, elev):
 def run_qc(df, station_code=None, lat=None, lon=None, elev=None, 
            tests=('ppl', 'erl', 'closure', 'diff_ratio', 'k_index', 'tracker')):
     r"""
-    Run a suite of QC tests on a BSRN DataFrame with optimized geometry calculations.
+    Run a suite of QC tests on a BSRN DataFrame with optimized geometry calculations [1]_ [2]_.
     使用优化的几何计算对 BSRN DataFrame 运行一系列 QC 测试。
 
     Parameters

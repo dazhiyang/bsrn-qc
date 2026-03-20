@@ -283,7 +283,7 @@ def _brightsun_component_flag(meas, clear, zenith, window=10, is_ghi=True, retur
     Bright-Sun 分量级晴空判定，用于单一辐照分量。
 
     This helper implements the per-component criteria used inside the
-    Bright-Sun tri-component method [1] (for either GHI or DHI):
+    Bright-Sun tri-component method [1]_ (for either GHI or DHI):
     本函数实现 Bright-Sun 三分量方法 [1] 中对单个分量（GHI 或 DHI）的判据：
 
     - Sliding-window statistics (length ``window`` minutes) on measured and
@@ -606,7 +606,7 @@ def _reno_cloud_flag(ghi, ghi_clear, window=10, mean_lim=75.0, max_lim=75.0,
 def reno_csd(ghi, ghi_clear, times=None, return_diagnostics=False):
     """
     Reno2016 clear-sky detection.
-    Reno2016 晴空检测。
+    Reno2016 晴空检测 [1]_。
 
     MATLAB mapping: `Reno2016CSD(ghi, ghics, plot_figure)`.
     MATLAB 变量映射：`ghics -> ghi_clear`。
@@ -652,7 +652,7 @@ def reno_csd(ghi, ghi_clear, times=None, return_diagnostics=False):
 def ineichen_csd(ghi, ghi_extra, zenith, times=None, return_diagnostics=False):
     """
     Ineichen2009 clear-sky detection.
-    Ineichen2009 晴空检测。
+    Ineichen2009 晴空检测 [1]_。
 
     MATLAB mapping: `Ineichen2009CSD(ghi, exth, zen, plot_figure)`.
     MATLAB 变量映射：`exth -> ghi_extra`, `zen -> zenith`。
@@ -725,7 +725,7 @@ def ineichen_csd(ghi, ghi_extra, zenith, times=None, return_diagnostics=False):
 def lefevre_csd(ghi, dhi, ghi_extra, zenith, times=None, return_diagnostics=False):
     """
     Lefevre2013 clear-sky detection.
-    Lefevre2013 晴空检测。
+    Lefevre2013 晴空检测 [1]_。
 
     MATLAB mapping: `Lefevre2013CSD(ghi, dif, exth, zen, plot_figure)`.
     MATLAB 变量映射：`dif -> dhi`, `exth -> ghi_extra`, `zen -> zenith`。
@@ -828,7 +828,7 @@ def lefevre_csd(ghi, dhi, ghi_extra, zenith, times=None, return_diagnostics=Fals
 def brightsun_csd(zenith, ghi, ghi_clear, dhi, dhi_clear, times, return_diagnostics=False):
     """
     BrightSun2020CSDc clear-sky detection (tri-component style).
-    BrightSun2020CSDc 晴空检测（三分量风格）。
+    BrightSun2020CSDc 晴空检测（三分量风格） [1]_。
 
     MATLAB mapping:
     `BrightSun2020CSDc(zen, ghi, ghics, dif, difcs, LST, plot_figure)`.

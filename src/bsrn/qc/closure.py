@@ -9,7 +9,7 @@ import pandas as pd
 
 def closure_low_sza_test(ghi, bni, dhi, zenith):
     r"""
-    Check consistency between GHI, BNI, and DHI for low solar zenith angles ($Z \le 75^\circ$).
+    Check consistency between GHI, BNI, and DHI for low solar zenith angles ($Z \le 75^\circ$) [1]_.
     检查低太阳天顶角 ($Z \le 75^\circ$) 下 GHI、BNI 和 DHI 之间的一致性。
 
     Parameters
@@ -61,7 +61,7 @@ def closure_low_sza_test(ghi, bni, dhi, zenith):
 
 def closure_high_sza_test(ghi, bni, dhi, zenith):
     r"""
-    Check consistency between GHI, BNI, and DHI for high solar zenith angles ($Z > 75^\circ$).
+    Check consistency between GHI, BNI, and DHI for high solar zenith angles ($Z > 75^\circ$) [1]_.
     检查高太阳天顶角 ($Z > 75^\circ$) 下 GHI、BNI 和 DHI 之间的一致性。
 
     Parameters

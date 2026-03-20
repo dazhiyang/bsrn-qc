@@ -9,7 +9,7 @@ import pandas as pd
 
 def ghi_ppl_test(ghi, zenith, bni_extra):
     """
-    Check global horizontal irradiance (GHI, $G_h$) against physically possible limits.
+    Check global horizontal irradiance (GHI, $G_h$) against physically possible limits [1]_.
     检查水平总辐照度 (GHI, $G_h$) 是否在物理可能范围内。
 
     Parameters
@@ -49,7 +49,7 @@ def ghi_ppl_test(ghi, zenith, bni_extra):
 
 def bni_ppl_test(bni, bni_extra):
     """
-    Check beam normal irradiance (BNI, $B_n$) against physically possible limits.
+    Check beam normal irradiance (BNI, $B_n$) against physically possible limits [1]_.
     检查法向直接辐照度 (BNI, $B_n$) 是否在物理可能范围内。
 
     Parameters
@@ -83,7 +83,7 @@ def bni_ppl_test(bni, bni_extra):
 
 def dhi_ppl_test(dhi, zenith, bni_extra):
     """
-    Check diffuse horizontal irradiance (DHI, $D_h$) against physically possible limits.
+    Check diffuse horizontal irradiance (DHI, $D_h$) against physically possible limits [1]_.
     检查水平散射辐照度 (DHI, $D_h$) 是否在物理可能范围内。
 
     Parameters
@@ -123,7 +123,7 @@ def dhi_ppl_test(dhi, zenith, bni_extra):
 
 def lwd_ppl_test(lwd):
     """
-    Check downward longwave radiation (LWD, $L_d$) against physically possible limits.
+    Check downward longwave radiation (LWD, $L_d$) against physically possible limits [1]_.
     检查下行长波辐射 (LWD, $L_d$) 是否在物理可能范围内。
 
     Parameters
