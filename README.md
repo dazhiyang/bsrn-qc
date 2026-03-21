@@ -1,8 +1,16 @@
 # bsrn
 
-This **GitHub repository** is **`bsrn-qc`**: source code and development tooling for the **`bsrn`** Python package (published on [PyPI](https://pypi.org/project/bsrn/) from the same codebase).
+[![PyPI version](https://badge.fury.io/py/bsrn.svg)](https://pypi.org/project/bsrn/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/bsrn.svg)](https://pypi.org/project/bsrn/)
+[![Documentation Status](https://readthedocs.org/projects/bsrn/badge/?version=latest)](https://bsrn.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://static.pepy.tech/badge/bsrn)](https://pepy.tech/project/bsrn)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-`bsrn` is a Python package for the Baseline Surface Radiation Network (BSRN). It provides automated quality control (QC), solar geometry, clear-sky modeling, clear-sky detection (CSD), cloud enhancement event (CEE) detection, irradiance separation, data retrieval, and visualization tools for BSRN station-to-archive files.
+This **GitHub repository** is **`bsrn-qc`**: the source code and development tooling for the **`bsrn`** Python package.
+
+**`bsrn`** is a community-developed toolbox that provides a set of robust functions and classes for processing and analyzing solar radiation data. The core mission of **`bsrn`** is to provide an open, reliable, interoperable, and benchmark-standard set of tools tailored specifically for the **Baseline Surface Radiation Network (BSRN)**. 
+
+It features automated quality control (QC), high-precision solar geometry, clear-sky modeling, clear-sky detection (CSD), cloud enhancement event (CEE) detection, irradiance separation, and comprehensive data retrieval and visualization capabilities.
 
 ## 🚀 Getting Started
 
