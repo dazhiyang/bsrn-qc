@@ -14,11 +14,13 @@ import pandas as pd
 import requests
 from bsrn.constants import (
     CRS_API_HOST,
+    CRS_HF_REPO_ID,
     CRS_HIMAWARI_EARTH_DISK_RADIUS_DEG,
     CRS_HIMAWARI_MIN_START_UTC,
     CRS_HIMAWARI_SUBSATELLITE_LAT_DEG,
     CRS_HIMAWARI_SUBSATELLITE_LON_DEG,
     CRS_INTEGRATED_COLUMNS,
+    CRS_MAINTAINER_EMAIL,
     CRS_MSG_EARTH_DISK_RADIUS_DEG,
     CRS_MSG_MIN_START_UTC,
     CRS_MSG_SUBSATELLITE_LAT_DEG,
@@ -37,10 +39,10 @@ def _check_crs_coverage(latitude: float, longitude: float, start) -> None:
     Parameters
     ----------
     latitude : float
-        Site latitude [degrees].
+        Site latitude. [degrees]
         站点纬度 [度]。
     longitude : float
-        Site longitude [degrees].
+        Site longitude. [degrees]
         站点经度 [度]。
     start : datetime-like
         Request period start (naive or tz-aware; compared in UTC calendar sense for min-date check).
@@ -70,7 +72,7 @@ def _check_crs_coverage(latitude: float, longitude: float, start) -> None:
 
     def _central_angle_deg(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """
-        Great-circle central angle between two surface points [degrees].
+        Great-circle central angle between two surface points. [degrees]
         两点间大圆中心角 [度]。
         """
         rlat1 = math.radians(lat1)
@@ -175,7 +177,9 @@ def _parse_crs(raw_or_buffer):
     data = pd.read_csv(fbuf, sep=";", comment="#", header=None, names=names)
     # Interval bounds from first column / 从首列解析观测时段起止
     obs_period = data["Observation period"].str.split("/")
-    data.index = pd.to_datetime(obs_period.str[0], utc=True)
+    # Using the second part of the period (end-time) for ceiling-style labeling.
+    # 使用时段的第二部分（结束时间）进行向上对齐（ceiling）风格的标记。
+    data.index = pd.to_datetime(obs_period.str[1], utc=True)
 
     # SoDa integrated irradiance → mean irradiance over the step / 积分量转为步长内平均辐照度 [W/m²]
     integrated_cols = [c for c in CRS_INTEGRATED_COLUMNS if c in data.columns]
@@ -197,7 +201,7 @@ def _parse_crs(raw_or_buffer):
 def download_crs(latitude, longitude, start, end, email, elev=None, summarization="PT01H", timeout=30):
     """
     Download and parse CAMS Radiation Service (CRS) time series from SoDa.
-    从 SoDa 下载并解析 CAMS 辐射服务（CRS）时间序列。
+    从 SoDa 下载并解析 CAMS 辐射服务 (CRS) 时间序列。
 
     CRS provides **all-sky** satellite-derived irradiances (not a clear-sky model like McClear).
     Requests use ``time_ref=UT`` and ``verbose=false`` (fixed; not configurable).
@@ -211,10 +215,10 @@ def download_crs(latitude, longitude, start, end, email, elev=None, summarizatio
     ----------
     latitude : float
         Latitude in decimal degrees. [degrees]
-        十进制度纬度。[度]
+        十进制度纬度 [度]。
     longitude : float
         Longitude in decimal degrees. [degrees]
-        十进制度经度。[度]
+        十进制度经度 [度]。
     start : datetime.datetime or pandas.Timestamp
         Start date (inclusive) of requested period.
         请求时间段的起始日期（含）。
@@ -225,12 +229,11 @@ def download_crs(latitude, longitude, start, end, email, elev=None, summarizatio
         SoDa account email.
         SoDa 账户邮箱。
     elev : float, optional
-        Station elevation. [m] If None, use SoDa default terrain lookup (-999).
-        站点海拔高度。[米] 若为 None 则使用 SoDa 默认地形查找（-999）。
-    summarization : str, default ``\"PT01H\"``
-        ISO-8601 duration for temporal aggregation (e.g. ``\"PT01M\"``, ``\"PT15M\"``,
-        ``\"PT01H\"``, ``\"P01D\"``, ``\"P01M\"``).
-        时间聚合的 ISO-8601 时长（如 ``\"PT01M\"``、``\"PT15M\"``、``\"PT01H\"`` 等）。
+        Station elevation [m]. If None, use SoDa default terrain lookup (-999).
+        站点海拔高度 [米]。若为 None 则使用 SoDa 默认地形查找 (-999)。
+    summarization : str, default "PT01H"
+        ISO-8601 duration for temporal aggregation (e.g., "PT01M", "PT15M", "PT01H").
+        时间聚合的 ISO-8601 时长（如 "PT01M"、"PT15M"、"PT01H" 等）。
     timeout : int, default 30
         HTTP request timeout in seconds.
         HTTP 请求超时时间（秒）。
@@ -238,25 +241,22 @@ def download_crs(latitude, longitude, start, end, email, elev=None, summarizatio
     Returns
     -------
     data : pd.DataFrame
-        Columns ``ghi_crs``, ``bni_crs``, ``dhi_crs`` only; UTC :class:`~pandas.DatetimeIndex`.
-        仅列 ``ghi_crs``、``bni_crs``、``dhi_crs``；UTC :class:`~pandas.DatetimeIndex`。
+        Columns ghi_crs, bni_crs, dhi_crs only; UTC DatetimeIndex.
+        仅列 ghi_crs、bni_crs、dhi_crs；UTC DatetimeIndex。
 
     Raises
     ------
     requests.HTTPError
-        SoDa returned a non-success HTTP status (often with ``ows:ExceptionText`` in the body).
-        SoDa 返回非成功 HTTP 状态（响应体常含 ``ows:ExceptionText``）。
+        SoDa returned a non-success HTTP status (often with ows:ExceptionText in the body).
+        SoDa 返回非成功 HTTP 状态（响应体常含 ows:ExceptionText）。
     ValueError
-        Coverage or *start* failed :func:`_check_crs_coverage`, XML instead of CSV, parse error,
-        or empty data.
-        :func:`_check_crs_coverage`、XML 非 CSV、解析失败或无数据时。
-    requests.Timeout
-        Request exceeded *timeout*.
+        Coverage or start failed _check_crs_coverage, XML instead of CSV, parse error, or empty data.
+        _check_crs_coverage 校验、XML 非 CSV、解析失败或无数据时。
 
     References
     ----------
-    .. [1] CAMS radiation service — SoDa.
-       https://www.soda-pro.com/web-services/radiation/cams-radiation-service
+    .. [1] Schroedter-Homscheidt, M., et al. (2016). CAMS radiation service.
+       European Commission.
     """
     if elev is None:
         elev = -999
@@ -337,3 +337,207 @@ def download_crs(latitude, longitude, start, end, email, elev=None, summarizatio
             "SoDa CRS returned no data rows. / SoDa CRS 未返回数据行。"
         )
     return data
+
+
+def _hf_fetch_to_memory(repo_id, filename):
+    """
+    Fetch a file from Hugging Face Hub directly to memory (bytes).
+    从 Hugging Face Hub 直接获取文件到内存（字节）。
+
+    Parameters
+    ----------
+    repo_id : str
+        Hugging Face repository ID (e.g., "dazhiyang/bsrn-v1").
+        Hugging Face 仓库 ID。
+    filename : str
+        Path within the repository (e.g., "qiq/qiq0624_crs.parquet").
+        仓库内的文件路径。
+
+    Returns
+    -------
+    content : bytes
+        Raw file bytes.
+        原始文件字节。
+
+    Raises
+    ------
+    ImportError
+        If huggingface_hub is not installed.
+        未安装 huggingface_hub 时。
+    FileNotFoundError
+        On 404 or other fetch failure; message includes maintainer contact.
+        404 或其他获取失败时；信息含维护者联系方式。
+    """
+    try:
+        from huggingface_hub import hf_hub_url
+    except ImportError:
+        raise ImportError(
+            "huggingface_hub is required for CRS. Install with: pip install huggingface_hub"
+        )
+
+    print(f"Fetching CRS from Hugging Face: {filename}")
+    try:
+        url = hf_hub_url(
+            repo_id=repo_id, filename=filename, repo_type="dataset"
+        )
+        resp = requests.get(url, timeout=60)
+        resp.raise_for_status()
+        return resp.content
+    except requests.HTTPError as e:
+        if e.response is not None and e.response.status_code == 404:
+            raise FileNotFoundError(
+                f"{filename} is not yet on huggingface, please contact the maintainer "
+                f"Dazhi Yang at {CRS_MAINTAINER_EMAIL} for update."
+            ) from e
+        raise FileNotFoundError(
+            f"{filename} is not yet on huggingface, please contact the maintainer "
+            f"Dazhi Yang at {CRS_MAINTAINER_EMAIL} for update."
+        ) from e
+    except Exception as e:
+        raise FileNotFoundError(
+            f"{filename} is not yet on huggingface, please contact the maintainer "
+            f"Dazhi Yang at {CRS_MAINTAINER_EMAIL} for update."
+        ) from e
+
+
+def _fetch_crs_from_hf(station_code, index):
+    """
+    Fetch raw bytes from Hugging Face for the months required by the index.
+    从 Hugging Face 获取索引所需月份的原始字节。
+
+    Parameters
+    ----------
+    station_code : str
+        BSRN station code (case-insensitive).
+        BSRN 站点代码（大小写不敏感）。
+    index : pd.DatetimeIndex
+        Non-empty target index; months present determine which files are fetched.
+        非空目标索引；出现的月份决定拉取哪些文件。
+
+    Returns
+    -------
+    contents : list of bytes
+        One element per month, in sorted order.
+        每月一个元素，按日期排序。
+
+    Raises
+    ------
+    ValueError
+        If index is empty.
+        index 为空时。
+    """
+    if index.empty:
+        raise ValueError("index must not be empty. / index 不能为空。")
+    stn = station_code.lower()
+
+    # We use a shift to correctly handle ceiling-aligned labels at month boundaries.
+    # Labels at the exact start of a month (e.g. 00:00:00) belong to the PREVIOUS month.
+    # 使用偏移来正确处理月份边界处的向上对齐标签；整月起始点（如 00:00:00）属于前一个月。
+    shifted_index = index.shift(-1, freq="s")
+    unique_months = sorted(set(zip(shifted_index.year, shifted_index.month)))
+
+    contents = []
+    for year, month in unique_months:
+        yy = str(year)[2:]
+        mm = f"{month:02d}"
+        # Monthly filename format: qiq0124_crs.parquet / 月度文件格式：qiq0124_crs.parquet
+        filename = f"{stn}{mm}{yy}_crs.parquet"
+        hf_filename = f"{stn}/{filename}"
+        content = _hf_fetch_to_memory(CRS_HF_REPO_ID, hf_filename)
+        contents.append(content)
+    return contents
+
+
+def _load_crs_parquet(path_or_bytes):
+    """
+    Load one CRS parquet into a UTC-indexed DataFrame.
+    将单个 CRS parquet 加载为 UTC 索引的 DataFrame。
+
+    Parameters
+    ----------
+    path_or_bytes : str, path-like, bytes, or file-like
+        Path to the parquet file, or bytes content, or file-like object.
+        parquet 文件路径、字节内容或类文件对象。
+
+    Returns
+    -------
+    data : pd.DataFrame
+        CRS data with columns ghi_crs, bni_crs, dhi_crs and UTC DatetimeIndex.
+        含 ghi_crs、bni_crs、dhi_crs 列及 UTC DatetimeIndex 的 CRS 数据。
+    """
+    if isinstance(path_or_bytes, bytes):
+        path_or_bytes = io.BytesIO(path_or_bytes)
+    data = pd.read_parquet(path_or_bytes)
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError("CRS parquet must have DatetimeIndex. / CRS parquet 必须有 DatetimeIndex。")
+    if data.index.tz is None:
+        data.index = data.index.tz_localize("UTC")
+    else:
+        data.index = data.index.tz_convert("UTC")
+    return data
+
+
+def fetch_crs_hf(index, station_code):
+    """
+    Fetch CRS from Hugging Face and return inputs aligned to target index.
+    从 Hugging Face 获取 CRS 并返回对齐到目标索引的输入。
+
+    Parameters
+    ----------
+    index : pd.DatetimeIndex
+        Target time index to align CRS outputs to.
+        需要对齐的目标时间索引。
+    station_code : str
+        BSRN station code (e.g., "QIQ").
+        BSRN 站点代码（如 "QIQ"）。
+
+    Returns
+    -------
+    aligned : pd.DataFrame
+        CRS inputs reindexed to `index` with columns ghi_crs, bni_crs, dhi_crs.
+        重新索引到 `index` 的 CRS 输入，含 ghi_crs, bni_crs, dhi_crs 列。
+    """
+    if not isinstance(index, pd.DatetimeIndex):
+        raise ValueError(
+            "index must be a pandas DatetimeIndex. / index 必须是 pandas DatetimeIndex。"
+        )
+    if index.empty:
+        raise ValueError("index must not be empty. / index 不能为空。")
+
+    contents = _fetch_crs_from_hf(station_code, index)
+    dfs = [_load_crs_parquet(c) for c in contents]
+    raw = pd.concat(dfs).sort_index()
+    raw = raw[~raw.index.duplicated(keep="first")]
+
+    # By default, use direct reindexing.
+    # To align with ceiling average, we often need +1 hour shift here
+    # but I'm leaving it as-is for now based on user's 'revert'.
+    aligned = raw.reindex(index)
+    return aligned
+
+
+def add_crs_columns(df, station_code):
+    """
+    Adds CRS (CAMS Radiation Service) all-sky columns to a DataFrame.
+    Fetches data from Hugging Face automatically.
+    向 DataFrame 添加 CRS (CAMS 辐射服务) 全天空辐射列。自动从 Hugging Face 获取数据。
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame to which columns will be added. Index must be DatetimeIndex.
+        要添加列的 DataFrame。索引必须是 DatetimeIndex。
+    station_code : str
+        BSRN station code (e.g. "QIQ").
+        BSRN 站点代码（如 "QIQ"）。
+
+    Returns
+    -------
+    df : pd.DataFrame
+        The input DataFrame with added crs columns.
+        增加了 CRS 列的输入 DataFrame。
+    """
+    crs_data = fetch_crs_hf(df.index, station_code)
+    for col in crs_data.columns:
+        df[col] = crs_data[col]
+    return df

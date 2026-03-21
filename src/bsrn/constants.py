@@ -11,6 +11,11 @@ Contains physical constants, model parameters, and station metadata.
 MERRA2_HF_REPO_ID = "dazhiyang/bsrn-merra2"
 MERRA2_MAINTAINER_EMAIL = "yangdazhi.nus@gmail.com"
 
+# Hugging Face dataset for CAMS Radiation Service (CRS) parquet.
+# CAMS 辐射服务 (CRS) 使用的 parquet 同样从此 Hugging Face 数据集拉取。
+CRS_HF_REPO_ID = "dazhiyang/bsrn-crs"
+CRS_MAINTAINER_EMAIL = "yangdazhi.nus@gmail.com"
+
 """
 Solar constant (SC) [$E_{\text{sc}}$]. [W/m^2]
 太阳常数 (SC) [$E_{\text{sc}}$]。[瓦/平方米]

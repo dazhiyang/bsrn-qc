@@ -297,7 +297,7 @@ def _aggregate(part, aggfunc):
     return aggfunc(part)
 
 
-def pretty_average(df, rule, alignment="floor", aggfunc="mean", resolution=None, match_ceiling_labels=True):
+def pretty_average(df, rule, alignment="ceiling", aggfunc="mean", resolution=None, match_ceiling_labels=True):
     """
     Average ``df`` over explicit labeled windows (not pandas ``resample`` semantics).
     按显式标签窗聚合（非 ``resample``）。语义与示例见 ``docs/tutorials/3.time_averaging.ipynb``。
@@ -309,7 +309,7 @@ def pretty_average(df, rule, alignment="floor", aggfunc="mean", resolution=None,
         须为 :class:`~pandas.DatetimeIndex`，且含 ``zenith`` 列（$Z$，度）。
     rule : str
         Fixed bin frequency (e.g. ``'1h'``, ``'30min'``). / 固定分箱频率。
-    alignment : {'floor', 'ceiling', 'center'}, default ``'floor'``
+    alignment : {'floor', 'ceiling', 'center'}, default ``'ceiling'``
         **floor** ``[L, L+Δ)`` · **ceiling** ``(L-Δ, L]`` · **center** ``[L-Δ/2+res, L+Δ/2]``.
         定义见教程 ``docs/tutorials/3.time_averaging.ipynb``。
     aggfunc : str or callable, default ``'mean'``

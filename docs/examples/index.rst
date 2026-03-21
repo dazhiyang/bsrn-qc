@@ -4,8 +4,11 @@ Examples
 Additional examples for using ``bsrn`` beyond the notebooks in :doc:`tutorials/index`.
 更多示例见 :doc:`tutorials/index` 中的教程笔记本。
 
-External
---------
+Hugging Face
+------------
 
-- `BSRN Quality Control pipeline (GitHub) <https://github.com/dazhiyang/bsrn/tree/main/docs/examples>`_
-- `Visualization / tutorial notebooks (GitHub) <https://github.com/dazhiyang/bsrn/tree/main/docs/tutorials>`_
+Automated data retrieval from Hugging Face for MERRA-2 and CAMS CRS.
+从 Hugging Face 自动获取 MERRA-2 与 CAMS CRS 数据。
+
+- :download:`obtain_crs.ipynb <huggingface/obtain_crs.ipynb>`: Compare Ground Measurements with CAMS CRS Satellite Data (Interactive).
+- :download:`obtain_crs.py <huggingface/obtain_crs.py>`: Compare Ground Measurements with CAMS CRS Satellite Data (Script).
