@@ -35,7 +35,7 @@ def get_bsrn_file_inventory(stations, username, password, host=BSRN_FTP_HOST):
     password : str
         BSRN FTP password.
         BSRN FTP 密码。
-    host : str, default "ftp.bsrn.awi.de"
+    host : str, default BSRN_FTP_HOST
         FTP host address.
         FTP 主机地址。
 
@@ -99,7 +99,7 @@ def get_bsrn_file_inventory(stations, username, password, host=BSRN_FTP_HOST):
     return inventory
 
 
-def download_bsrn_single(station, year, month, local_dir, username, password, host="ftp.bsrn.awi.de"):
+def download_bsrn_single(station, year, month, local_dir, username, password, host=BSRN_FTP_HOST):
     """
     Download a single BSRN file by specifying station, year, and month.
     通过指定站点、年份和月份下载单个 BSRN 文件。
@@ -124,7 +124,7 @@ def download_bsrn_single(station, year, month, local_dir, username, password, ho
     password : str
         BSRN FTP password.
         BSRN FTP 密码。
-    host : str, default "ftp.bsrn.awi.de"
+    host : str, default BSRN_FTP_HOST
         FTP host address.
         FTP 主机地址。
 
@@ -142,7 +142,7 @@ def download_bsrn_single(station, year, month, local_dir, username, password, ho
     return download_bsrn_files([filename], local_dir, username, password, host=host)[0]
 
 
-def download_bsrn_stn(station, local_dir, username, password, host="ftp.bsrn.awi.de"):
+def download_bsrn_stn(station, local_dir, username, password, host=BSRN_FTP_HOST):
     """
     Download all available station-to-archive files for a specific station.
     下载特定站点的所有可用站点存档文件。
@@ -161,7 +161,7 @@ def download_bsrn_stn(station, local_dir, username, password, host="ftp.bsrn.awi
     password : str
         BSRN FTP password.
         BSRN FTP 密码。
-    host : str, default "ftp.bsrn.awi.de"
+    host : str, default BSRN_FTP_HOST
         FTP host address.
         FTP 主机地址。
 
@@ -176,7 +176,7 @@ def download_bsrn_stn(station, local_dir, username, password, host="ftp.bsrn.awi
     return download_bsrn_files(filenames, local_dir, username, password, host=host)
 
 
-def download_bsrn_mon(stations, year, month, local_dir, username, password, host="ftp.bsrn.awi.de"):
+def download_bsrn_mon(stations, year, month, local_dir, username, password, host=BSRN_FTP_HOST):
     """
     Download station-to-archive files for multiple stations for a specific month and year.
     下载特定月份和年份的多个站点的站点存档文件。
@@ -201,7 +201,7 @@ def download_bsrn_mon(stations, year, month, local_dir, username, password, host
     password : str
         BSRN FTP password.
         BSRN FTP 密码。
-    host : str, default "ftp.bsrn.awi.de"
+    host : str, default BSRN_FTP_HOST
         FTP host address.
         FTP 主机地址。
 
@@ -217,7 +217,7 @@ def download_bsrn_mon(stations, year, month, local_dir, username, password, host
     return download_bsrn_files(filenames, local_dir, username, password, host=host)
 
 
-def download_bsrn_files(filenames, local_dir, username, password, host="ftp.bsrn.awi.de", retries=3):
+def download_bsrn_files(filenames, local_dir, username, password, host=BSRN_FTP_HOST, retries=3):
     """
     Download many BSRN files efficiently using a single FTP connection with robust retries.
     使用单个 FTP 连接高效地下载多个 BSRN 文件，并带有稳健的重试机制。
@@ -236,7 +236,7 @@ def download_bsrn_files(filenames, local_dir, username, password, host="ftp.bsrn
     password : str
         BSRN FTP password.
         BSRN FTP 密码。
-    host : str, default "ftp.bsrn.awi.de"
+    host : str, default BSRN_FTP_HOST
         FTP host address.
         FTP 主机地址。
     retries : int, default 3

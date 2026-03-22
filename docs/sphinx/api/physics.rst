@@ -10,6 +10,7 @@ Solar Geometry
    bsrn.physics.geometry.get_bni_extra
    bsrn.physics.geometry.get_ghi_extra
    bsrn.physics.geometry.get_pressure_from_elevation
+   bsrn.physics.geometry.add_solpos_columns
 
 Solar Position Algorithm (SPA)
 ------------------------------

@@ -383,7 +383,7 @@ def check_crs_availability(stations, username, password):
             # Store metadata for station / 存储站点的元数据
             availability[stn_upper] = {
                 "years": unique_years,
-                "months": sorted_ym
+                "months": sorted(list(set(ym_filtered)))
             }
 
     return availability

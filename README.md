@@ -67,7 +67,7 @@ df.drop(columns=flag_cols, inplace=True)
 
 ## 🛠 Features
 
-The QC implementation is primarily based on the [BSRN Operations Manual (2018)](https://bsrn.awi.de/) and [Forstinger et al. (2021)](https://doi.org/10.18086/swc.2021.36). See code for other references.
+The QC features, of which the implementation is primarily based on the [BSRN Operations Manual (2018)](https://bsrn.awi.de/) and [Forstinger et al. (2021)](https://doi.org/10.18086/swc.2021.36). See code for other references.
 
 - **Level 1 (Physically Possible):** Absolute physical bounds for $G_h, B_n, D_h$, and $L_d$.
 - **Level 2 (Extremely Rare):** Climatological limits for specific regimes.
@@ -75,6 +75,9 @@ The QC implementation is primarily based on the [BSRN Operations Manual (2018)](
 - **Level 4 (Diffuse Ratio):** Diffuse-fraction and $k$–$k_t$ checks combining $G_h$, $D_h$, and extraterrestrial irradiance.
 - **Level 5 (K-Indices):** Advanced clearness-index and $k_b$/$k_t$ index tests using clear-sky benchmarks and site elevation.
 - **Level 6 (Tracker-Off Detection):** Identify tracking errors by comparing measured values with clear-sky and extraterrestrial irradiance.
+
+Other important features include:
+
 - **Solar Geometry:** Native NREL SPA implementation for high-precision solar position calculations.
 - **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API, from 2004 onward), and REST2 (MERRA-2 from Hugging Face).
 - **Satellite Data:** Load CAMS solar radiation service (CRS) and National Solar Radiation Database (NSRDB) all-sky irradiance directly from Hugging Face into memory.
@@ -82,7 +85,7 @@ The QC implementation is primarily based on the [BSRN Operations Manual (2018)](
 - **Cloud Enhancement Event (CEE) Detection:** Killinger, Gueymard-style, and Wang methods to detect periods when measured GHI significantly exceeds clear-sky or extraterrestrial references and to filter events by temporal duration.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
 - **Robust Retrieval:** High-level API for FTP downloads from BSRN-AWI with exponential backoff retries (analysis functions assume **one station-to-archive file at a time**).
-- **Visualization:** Data availability heatmaps and k vs kt separation plots via `plotnine`.
+- **Visualization:** Data availability heatmaps and k vs kt separation plots via the very pretty `plotnine` (which reminds me of the good old R days).
 
 ## 📂 File Structure
 
