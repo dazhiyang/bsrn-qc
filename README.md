@@ -84,13 +84,13 @@ The QC features, of which the implementation is primarily based on the [BSRN Ope
 Other important features include:
 
 - **Solar Geometry:** Native NREL SPA implementation for high-precision solar position calculations.
-- **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API), and REST2 (MERRA-2 atmospheric inputs from Hugging Face).
-- **Satellite & Model Data:** High-level APIs for CAMS solar radiation service (CRS), National Solar Radiation Database (NSRDB), and MERRA-2 all-sky irradiance.
+- **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API, from 2004 onward), and REST2 (MERRA-2 from Hugging Face).
+- **Satellite Data:** Load CAMS solar radiation service (CRS) and National Solar Radiation Database (NSRDB) all-sky irradiance directly from Hugging Face into memory.
 - **Clear-Sky Detection (CSD):** Reno, Ineichen, Lefevre, and BrightSun methods to identify clear-sky periods from irradiance time series.
 - **Cloud Enhancement Event (CEE) Detection:** Killinger, Gueymard-style, and Wang methods to detect events when measured GHI significantly exceeds references.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
-- **Robust Retrieval:** Comprehensive API for FTP downloads from BSRN-AWI with inventory management and exponential backoff retries.
-- **Visualization:** Data availability heatmaps, clear-sky model comparisons, and separation diagnostics via `plotnine` (ggplot2 for Python).
+- **Robust Retrieval:** High-level API for FTP downloads from BSRN-AWI with exponential backoff retries (analysis functions assume **one station-to-archive file at a time**).
+- **Visualization:** Data availability heatmaps and k vs kt separation plots via the very pretty `plotnine` (which reminds me of the good old R days).
 
 ## 📂 File Structure
 
@@ -256,31 +256,6 @@ out_cee_k = detect_cee(
     zenith=df["zenith"],
     times=df.index,
 )
-
-# Gueymard-style CEE detection: flags kt = G_h / E_0 > 1
-out_cee_g = detect_cee(
-    "gueymard",
-    ghi=df["ghi"],
-    ghi_extra=df["ghi_extra"],
-    times=df.index,
-)
-
-# Wang CEE detection: combines GHI, BNI, DHI masks and removes overly long events
-out_cee_w = detect_cee(
-    "wang",
-    ghi=df["ghi"],
-    ghi_clear=df["ghi_clear"],
-    bni=df["bni"],
-    bni_clear=df["bni_clear"],
-    dhi=df["dhi"],
-    dhi_clear=df["dhi_clear"],
-    times=df.index,
-    mag_threshold=1.10,
-    bni_fraction=0.8,
-    dhi_multiplier=1.5,
-    max_duration_minutes=15.0,
-)
-
 # out_cee_*["is_enhancement"] is True/False/NA; out_cee_*["cee_flag"] is 0/1/NaN
 ```
 
