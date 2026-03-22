@@ -58,11 +58,16 @@ df = add_solpos_columns(df, "QIQ")
 # 5. Add clear-sky reference columns (defaults to Ineichen)
 df = add_clearsky_columns(df, "QIQ")
 
-# 6. Run Quality Control (QC) & filter bad data
+# 6. Run Quality Control (QC)
 df = run_qc(df, "QIQ")
-flag_cols = [c for c in df.columns if c.startswith("flag")]
-df = df[df[flag_cols].sum(axis=1) == 0].copy()
-df.drop(columns=flag_cols, inplace=True)
+
+# 7. Add satellite-derived CAMS CRS all-sky columns
+from bsrn.io.crs import add_crs_columns
+df = add_crs_columns(df, "QIQ")
+
+# 8. Visualize with plotnine
+from bsrn.visualization.clearsky_models import plot_clearsky_models
+plot_clearsky_models(df, "QIQ", date="2024-06-20", save_path="clearsky_qiq.pdf")
 ```
 
 ## 🛠 Features
@@ -79,13 +84,13 @@ The QC features, of which the implementation is primarily based on the [BSRN Ope
 Other important features include:
 
 - **Solar Geometry:** Native NREL SPA implementation for high-precision solar position calculations.
-- **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API, from 2004 onward), and REST2 (MERRA-2 from Hugging Face).
-- **Satellite Data:** Load CAMS solar radiation service (CRS) and National Solar Radiation Database (NSRDB) all-sky irradiance directly from Hugging Face into memory.
+- **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API), and REST2 (MERRA-2 atmospheric inputs from Hugging Face).
+- **Satellite & Model Data:** High-level APIs for CAMS solar radiation service (CRS), National Solar Radiation Database (NSRDB), and MERRA-2 all-sky irradiance.
 - **Clear-Sky Detection (CSD):** Reno, Ineichen, Lefevre, and BrightSun methods to identify clear-sky periods from irradiance time series.
-- **Cloud Enhancement Event (CEE) Detection:** Killinger, Gueymard-style, and Wang methods to detect periods when measured GHI significantly exceeds clear-sky or extraterrestrial references and to filter events by temporal duration.
+- **Cloud Enhancement Event (CEE) Detection:** Killinger, Gueymard-style, and Wang methods to detect events when measured GHI significantly exceeds references.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
-- **Robust Retrieval:** High-level API for FTP downloads from BSRN-AWI with exponential backoff retries (analysis functions assume **one station-to-archive file at a time**).
-- **Visualization:** Data availability heatmaps and k vs kt separation plots via the very pretty `plotnine` (which reminds me of the good old R days).
+- **Robust Retrieval:** Comprehensive API for FTP downloads from BSRN-AWI with inventory management and exponential backoff retries.
+- **Visualization:** Data availability heatmaps, clear-sky model comparisons, and separation diagnostics via `plotnine` (ggplot2 for Python).
 
 ## 📂 File Structure
 
