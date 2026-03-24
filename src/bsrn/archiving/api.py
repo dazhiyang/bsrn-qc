@@ -7,9 +7,9 @@ classes (``LR0001``, …) and ``get_bsrn_format`` output live in ``formatter``.
 BSRN 站点存档基类（``1_utils.R`` 与 R6 泛型逻辑）。
 ``BSRNRecord`` 负责赋值校验与 Fortran 填充；具体 ``LR0001`` 等及 ``get_bsrn_format`` 在 ``formatter``。
 
-Field rules come from ``specs.LR_SPECS``. BSRN on-disk column names (e.g. ``global2_avg``)
+Field rules come from ``specs.LR_SPECS``. BSRN on-disk column names (e.g. ``ghi_avg``)
 are format identifiers, distinct from QC radiometry symbols elsewhere in ``bsrn``.
-字段规则见 ``specs.LR_SPECS``；磁盘列名（如 ``global2_avg``）为格式标识。
+字段规则见 ``specs.LR_SPECS``；磁盘列名（如 ``ghi_avg``）为格式标识。
 """
 
 import numpy as np

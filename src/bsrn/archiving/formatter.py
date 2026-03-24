@@ -270,14 +270,14 @@ class LR0100(BSRNRecord):
 
         line1 = (
             " " + df_days + " " + df_mins + "   "
-            + m("global2_avg") + " " + m("global2_std") + " " + m("global2_min") + " " + m("global2_max") + "   "
-            + m("direct_avg") + " " + m("direct_std") + " " + m("direct_min") + " " + m("direct_max")
+            + m("ghi_avg") + " " + m("ghi_std") + " " + m("ghi_min") + " " + m("ghi_max") + "   "
+            + m("bni_avg") + " " + m("bni_std") + " " + m("bni_min") + " " + m("bni_max")
         )
 
         line2 = (
             "           "
-            + m("diffuse_avg") + " " + m("diffuse_std") + " " + m("diffuse_min") + " " + m("diffuse_max") + "   "
-            + m("downward_avg") + " " + m("downward_std") + " " + m("downward_min") + " " + m("downward_max")
+            + m("dhi_avg") + " " + m("dhi_std") + " " + m("dhi_min") + " " + m("dhi_max") + "   "
+            + m("lwd_avg") + " " + m("lwd_std") + " " + m("lwd_min") + " " + m("lwd_max")
             + "    "
             + m("temperature") + " " + m("humidity") + " " + m("pressure")
         )
