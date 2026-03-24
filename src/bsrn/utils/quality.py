@@ -3,6 +3,7 @@ Quality control summary for BSRN data.
 BSRN 数据质量控制摘要。
 """
 
+import numpy as np
 import pandas as pd
 import bsrn.physics.geometry as geometry
 import bsrn.qc.ppl as ppl
@@ -11,6 +12,27 @@ import bsrn.qc.closure as closure
 import bsrn.qc.k_index as k_index
 import bsrn.qc.diff_ratio as diff_ratio
 import bsrn.qc.tracker as tracker
+
+_BSRN_MISSING_NUMERIC = (-999.0, -99.9, -99.99)
+_BSRN_MISSING_ATOL = 5e-3
+
+
+def _series_not_missing(s: pd.Series) -> pd.Series:
+    """True where ``s`` is a measured value (not NaN / not BSRN missing codes). / 非缺失测量。"""
+    x = pd.to_numeric(s, errors="coerce")
+    mask = x.notna().to_numpy(dtype=bool, copy=True)
+    vals = x.to_numpy(dtype=np.float64, copy=True)
+    for m in _BSRN_MISSING_NUMERIC:
+        mask &= ~np.isclose(vals, m, rtol=0.0, atol=_BSRN_MISSING_ATOL, equal_nan=False)
+    return pd.Series(mask, index=s.index)
+
+
+def _series_finite_numeric(s: pd.Series) -> pd.Series:
+    """True where ``s`` coerces to a finite float. / 有限浮点。"""
+    x = pd.to_numeric(s, errors="coerce")
+    v = x.to_numpy(dtype=np.float64, copy=False)
+    ok = x.notna().to_numpy(dtype=bool, copy=True) & np.isfinite(v)
+    return pd.Series(ok, index=s.index)
 
 
 def get_daily_stats(df, lat, lon, elev):
@@ -38,6 +60,14 @@ def get_daily_stats(df, lat, lon, elev):
     daily_df : pd.DataFrame
         Daily counts of flags and sunshine duration metrics.
         每日标记计数和日照时数指标。
+
+    Notes
+    -----
+    Minutes with BSRN missing codes (``-999``, ``-99.9``, ``-99.99``) or NaN in the
+    relevant input column do not add to per-test failure sums. ``is_sunshine`` only
+    counts minutes with a valid (non-missing) BNI value above the threshold.
+    各测试输入列为 BSRN 缺失码（``-999``、``-99.9``、``-99.99``）或 NaN 的分钟不计入该测试的失败累计；
+    ``is_sunshine`` 仅在 BNI 有效且超阈值时计数。
     """
     # Calculate solar geometry / 计算太阳几何参数
     solpos = geometry.get_solar_position(df.index, lat, lon, elev)
@@ -45,37 +75,64 @@ def get_daily_stats(df, lat, lon, elev):
     bni_extra = geometry.get_bni_extra(df.index)
     ghi_extra = geometry.get_ghi_extra(df.index, zenith)
 
+    nm = _series_not_missing
+    g, b, d, lwd = df["ghi"], df["bni"], df["dhi"], df["lwd"]
+    nm_g, nm_b, nm_d, nm_l = nm(g), nm(b), nm(d), nm(lwd)
+    bni_x = pd.Series(bni_extra, index=df.index)
+    geo_ok = _series_finite_numeric(zenith) & _series_finite_numeric(bni_x)
+
     # Sunshine duration (h) / 日照时数 (h)
     # ACT: BNI > 120 W/m^2 / 实际：BNI > 120 W/m^2
     # MAX: Zenith < 90 / 最大：太阳天顶角 < 90
-    df['is_sunshine'] = (df['bni'] > 120).astype(int)
-    df['is_daylight'] = (zenith < 90).astype(int)
-    
+    df["is_sunshine"] = ((df["bni"] > 120) & nm_b).astype(int)
+    df["is_daylight"] = (zenith < 90).astype(int)
+
     # QC Tests (True = Pass, False = Fail) / QC 测试（True = 通过，False = 失败）
-    # We create a dictionary of daily failure counts / 创建每日失败计数的字典
-    tests = {
-        'GHI_PPL': ~ppl.ghi_ppl_test(df["ghi"], zenith, bni_extra),
-        'GHI_ERL': ~erl.ghi_erl_test(df["ghi"], zenith, bni_extra),
-        'DHI_PPL': ~ppl.dhi_ppl_test(df["dhi"], zenith, bni_extra),
-        'DHI_ERL': ~erl.dhi_erl_test(df["dhi"], zenith, bni_extra),
-        'BNI_PPL': ~ppl.bni_ppl_test(df["bni"], bni_extra),
-        'BNI_ERL': ~erl.bni_erl_test(df["bni"], zenith, bni_extra),
-        'LWD_PPL': ~ppl.lwd_ppl_test(df["lwd"]),
-        'LWD_ERL': ~erl.lwd_erl_test(df["lwd"]),
-        # Combined L3 groups / 合并的 3 级分组
-        'CMP_CLO': ((~closure.closure_low_sza_test(df["ghi"], df["bni"], df["dhi"], zenith)) |
-                    (~closure.closure_high_sza_test(df["ghi"], df["bni"], df["dhi"], zenith))),
-        'CMP_DIF': ((~diff_ratio.k_low_sza_test(df["ghi"], df["dhi"], zenith)) |
-                    (~diff_ratio.k_high_sza_test(df["ghi"], df["dhi"], zenith))),
-        'CMP_K': ((~k_index.kb_kt_test(df["ghi"], df["bni"], bni_extra, zenith)) |
-                  (~diff_ratio.k_kt_combined_test(df["ghi"], df["dhi"], bni_extra, zenith)) |
-                  (~k_index.kb_limit_test(df["bni"], bni_extra, elev, df["ghi"])) |
-                  (~k_index.kt_limit_test(df["ghi"], bni_extra, zenith))),
-        'TRACKER': ~tracker.tracker_off_test(df["ghi"], df["bni"], zenith, ghi_extra=ghi_extra)
-    }
-    
-    for name, flags in tests.items():
-        df[name] = flags.astype(int)
+    # Failure sums exclude missing / NaN inputs for that test.
+    # 失败累计排除该测试相关列的缺失与 NaN。
+    df["GHI_PPL"] = (
+        (~ppl.ghi_ppl_test(g, zenith, bni_extra)) & nm_g & geo_ok
+    ).astype(int)
+    df["GHI_ERL"] = (
+        (~erl.ghi_erl_test(g, zenith, bni_extra)) & nm_g & geo_ok
+    ).astype(int)
+    df["DHI_PPL"] = (
+        (~ppl.dhi_ppl_test(d, zenith, bni_extra)) & nm_d & geo_ok
+    ).astype(int)
+    df["DHI_ERL"] = (
+        (~erl.dhi_erl_test(d, zenith, bni_extra)) & nm_d & geo_ok
+    ).astype(int)
+    df["BNI_PPL"] = ((~ppl.bni_ppl_test(b, bni_extra)) & nm_b & geo_ok).astype(int)
+    df["BNI_ERL"] = (
+        (~erl.bni_erl_test(b, zenith, bni_extra)) & nm_b & geo_ok
+    ).astype(int)
+    df["LWD_PPL"] = (~ppl.lwd_ppl_test(lwd) & nm_l).astype(int)
+    df["LWD_ERL"] = (~erl.lwd_erl_test(lwd) & nm_l).astype(int)
+
+    v3 = nm_g & nm_b & nm_d
+    low = closure.closure_low_sza_test(g, b, d, zenith)
+    high = closure.closure_high_sza_test(g, b, d, zenith)
+    df["CMP_CLO"] = (((~low) | (~high)) & v3).astype(int)
+
+    v2 = nm_g & nm_d
+    df["CMP_DIF"] = (
+        ((~diff_ratio.k_low_sza_test(g, d, zenith))
+         | (~diff_ratio.k_high_sza_test(g, d, zenith)))
+        & v2
+    ).astype(int)
+
+    fail_kbkt = ~k_index.kb_kt_test(g, b, bni_extra, zenith) & nm_g & nm_b & geo_ok
+    fail_kkt = (
+        ~diff_ratio.k_kt_combined_test(g, d, bni_extra, zenith) & nm_g & nm_d & geo_ok
+    )
+    fail_kbl = ~k_index.kb_limit_test(b, bni_extra, elev, g) & nm_b & nm_g & geo_ok
+    fail_ktl = ~k_index.kt_limit_test(g, bni_extra, zenith) & nm_g & geo_ok
+    df["CMP_K"] = (fail_kbkt | fail_kkt | fail_kbl | fail_ktl).astype(int)
+
+    vt = nm_g & nm_b & geo_ok
+    df["TRACKER"] = (
+        ~tracker.tracker_off_test(g, b, zenith, ghi_extra=ghi_extra) & vt
+    ).astype(int)
 
     # Aggregate by day / 按天汇总
     daily = df.groupby(df.index.date).agg({

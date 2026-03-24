@@ -305,9 +305,9 @@ STATION_METADATA = {
 # QUANTITIES: measured quantity label → WRMC ``radiationQuantityMeasured`` id for LR0008. R A3.
 # 辐射/气象量名称 → LR0008 中 ``radiationQuantityMeasured`` 的编号（R A3）。
 QUANTITIES = {
-    "global (pyranometer)": 2,
-    "direct (pyheliometer)": 3,
-    "diffuse (pyranometer)": 4,
+    "global 2 (pyranometer) ": 2,
+    "direct": 3,
+    "diffuse sky": 4,
     "long-wave downward": 5,
     "air temperature": 21,
     "relative humidity": 22,
@@ -320,7 +320,7 @@ QUANTITIES = {
     "short-wave reflected": 131,
     "long-wave upward": 132,
     "net radiation (net radiometer)": 141,
-    "global (pyranometer) secondary": 2000700,
+    "global 2 (pyranometer) secondary": 2000700,
     "short-wave reflected secondary": 131000700,
     "long-wave upward secondary": 132000700,
     "long-wave downward secondary": 5000700,

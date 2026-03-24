@@ -10,6 +10,7 @@ This page contains the detailed API documentation for the `bsrn` package.
    :caption: API Sections
 
    io
+   archive
    qc
    modeling
    physics
