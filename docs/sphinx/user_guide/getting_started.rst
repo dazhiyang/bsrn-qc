@@ -23,5 +23,5 @@ Key Features
 - **Automated Quality Control**: 6 levels of QC based on BSRN standards.
 - **Clear-sky Modeling**: Support for Ineichen, McClear, and REST2.
 - **Clear-sky Detection**: Multiple algorithms (Reno, Ineichen, etc.).
-- **Cloud Enhancement detection**: Killinger, Gueymard, Wang.
+- **Cloud Enhancement detection**: Killinger, Yang, Gueymard.
 - **Irradiance Separation**: Erbs, BRL, Engerer2, Yang4.

@@ -22,7 +22,7 @@ detection via :func:`~bsrn.utils.clear_sky_detection.detect_clearsky`, and CSD-p
 visualization (QIQ September example).
 
 **5.cloud_enhancement_event** — REST2 clear-sky (MERRA-2 via Hugging Face), QC
-(closure, diffuse ratio, tracker-off), and Wang-style cloud enhancement detection with
+(closure, diffuse ratio, tracker-off), and Killinger/Yang/Gueymard cloud enhancement detection with
 :func:`~bsrn.utils.cee_detection.detect_cee`.
 
 .. toctree::

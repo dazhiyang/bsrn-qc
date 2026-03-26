@@ -107,7 +107,7 @@ Other important features include:
 - **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API, from 2004 onward), and REST2 (MERRA-2 from Hugging Face).
 - **Satellite Data:** Load CAMS solar radiation service (CRS) and National Solar Radiation Database (NSRDB) all-sky irradiance directly from Hugging Face into memory.
 - **Clear-Sky Detection (CSD):** Reno, Ineichen, Lefevre, and BrightSun methods to identify clear-sky periods from irradiance time series.
-- **Cloud Enhancement Event (CEE) Detection:** Killinger, Gueymard-style, and Wang methods to detect events when measured GHI significantly exceeds references.
+- **Cloud Enhancement Event (CEE) Detection:** Killinger, Yang, and Gueymard methods to detect events when measured GHI significantly exceeds references.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
 - **Robust Retrieval:** High-level API for FTP downloads from BSRN-AWI with exponential backoff retries (analysis functions assume **one station-to-archive file at a time**).
 - **Station-to-archive formatting:** The `bsrn.archive` subpackage provides logical-record specifications (`LR_SPECS`), Fortran-style validation, and ASCII `get_bsrn_format` output for BSRN header and data records (`LR0001`–`LR4000`), with `BSRNRecord` in `api` and concrete `LR*` classes in `formatter`.
@@ -162,7 +162,7 @@ bsrn-qc/
 │       │   ├── calculations.py        # Supporting math
 │       │   ├── quality.py             # Quality utilities
 │       │   ├── clear_sky_detection.py # Clear-sky detection (Reno, Ineichen, Lefevre, BrightSun)
-│       │   └── cee_detection.py       # Cloud enhancement detection (Killinger, Gueymard, Wang)
+│       │   └── cee_detection.py       # Cloud enhancement detection (Killinger, Yang, Gueymard)
 │       └── modeling/
 │           ├── clear_sky.py           # Ineichen clear-sky model
 │           └── separation.py          # Irradiance separation (Erbs, BRL, Engerer2, Yang4)

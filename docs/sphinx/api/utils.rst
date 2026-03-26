@@ -33,8 +33,8 @@ Cloud Enhancement (CEE)
 
    bsrn.utils.cee_detection.detect_cee
    bsrn.utils.cee_detection.killinger_ced
+   bsrn.utils.cee_detection.yang_ced
    bsrn.utils.cee_detection.gueymard_ced
-   bsrn.utils.cee_detection.wang_ced
 
 Calculations
 ------------
