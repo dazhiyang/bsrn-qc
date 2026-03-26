@@ -12,7 +12,7 @@ from plotnine import (
     scale_fill_manual, theme_minimal,
 )
 
-def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
+def plot_qc_table(daily_stats, title=None, output_file=None):
     """
     Plot QC statistics in a table-like heatmap format.
     以类似于表格的热图格式绘制 QC 统计数据。
@@ -22,9 +22,9 @@ def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
     daily_stats : pd.DataFrame
         Daily QC statistics calculated by `get_daily_stats`.
         由 `get_daily_stats` 计算的每日 QC 统计数据。
-    title : str, default "BSRN Quality Audit"
-        Plot title.
-        图表标题。
+    title : str, optional
+        Plot title. If None (default), no title is drawn.
+        图表标题；默认 None 不显示。
     output_file : str, optional
         Path to save the plot (e.g., 'qc_table.png').
         保存图表的路径（例如 'qc_table.png'）。
@@ -117,7 +117,11 @@ def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
     # Figure dimensions: width 160mm; height scales with row count / 宽度 160 mm，高度随行数
     _font_pt = 9
     width_inch = 160 / 25.4
-    height_inch = (len(days_order) * 0.17) + 1.2
+    height_inch = (len(days_order) * 0.15) + 1.2
+
+    _labs = {"x": "", "y": "Date"}
+    if title is not None:
+        _labs["title"] = title
 
     p = (
         ggplot(melted, aes(x='Metric_Name', y='Day', fill='Category')) +
@@ -125,7 +129,7 @@ def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
         geom_text(aes(label='Label'), size=_font_pt, family='Times New Roman') +
         scale_fill_manual(values=fill_colors, guide=None) +
         scale_x_discrete() +
-        labs(title=title, x="", y="Date") +
+        labs(**_labs) +
         theme_minimal() +
         theme(
             text=element_text(family='Times New Roman', size=_font_pt),

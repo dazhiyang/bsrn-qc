@@ -31,7 +31,7 @@ from bsrn.utils import reno_csd, ineichen_csd, lefevre_csd, brightsun_csd
 CSD_METHOD_ORDER = ("Reno", "Ineichen", "Lefevre", "BrightSun")
 
 
-def plot_csd_booklet(file_path, output_file, station_code, df=None):
+def plot_csd_booklet(file_path, output_file, station_code, df=None, title=None):
     """
     Generate a PDF: one page per day, four rows (CSD methods) x three columns (GHI, BNI, DHI).
     生成 PDF：每天一页，四行（CSD 方法）× 三列（GHI、BNI、DHI）。
@@ -56,6 +56,9 @@ def plot_csd_booklet(file_path, output_file, station_code, df=None):
         If provided, use this DataFrame instead of reading from file_path (for testing).
         Must have one-month DatetimeIndex and columns ghi, bni, dhi.
         若提供，则使用此 DataFrame 而非从文件读取（用于测试）；须为单月且含 ghi, bni, dhi。
+    title : str, optional
+        Same title on every PDF page. If None (default), no plot title.
+        每页共用标题；默认 None 不显示。
     Returns
     -------
     None
@@ -176,11 +179,12 @@ def plot_csd_booklet(file_path, output_file, station_code, df=None):
             day_clear = clear_only.loc[
                 pd.to_datetime(clear_only["time"]).dt.date == date
             ]
-            title = f"{station_code} - {date.strftime('%Y %b %d')} (CSD)"
-
             # Wong palette: [1] Sky Blue (clearsky/ribbon), [0] Orange (measured), [2] Bluish Green (CSD points)
             # Wong 配色方案：[1] 天蓝色（晴空/色带），[0] 橙色（实测），[2] 蓝绿色（CSD 点）
             ribbon_color = WONG_PALETTE[1]
+            _lab = {"x": "Time (UTC)", "y": "[W/m²]"}
+            if title is not None:
+                _lab["title"] = title
             p = (
                 ggplot(day_df, aes(x="time"))
                 + geom_ribbon(
@@ -200,7 +204,7 @@ def plot_csd_booklet(file_path, output_file, station_code, df=None):
                     alpha=0.7,
                 )
                 + facet_grid("method ~ parameter", scales="free_y")
-                + labs(title=title, x="Time (UTC)", y="[W/m²]")
+                + labs(**_lab)
                 + theme_minimal()
                 + theme(
                     text=element_text(family="Times New Roman", size=9),

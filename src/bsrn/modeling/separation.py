@@ -622,7 +622,9 @@ def engerer2_separation(times, ghi, lat, lon, ghi_clear, averaging_period=1):
         ktc = ghi_clear / ghi_extra_safe
     dktc = ktc - kt
     cloud_enh = np.where(ghi - ghi_clear > 0.015, ghi - ghi_clear, 0.0)
-    k_de = np.where(ghi > 0, cloud_enh / ghi, 0.0)
+    # np.where evaluates both branches; divide(..., where=) skips ghi<=0 (no divide warning).
+    k_de = np.zeros_like(ghi, dtype=float)
+    np.divide(cloud_enh, ghi, out=k_de, where=ghi > 0)
 
     ktc = np.where(night, np.nan, ktc)
     dktc = np.where(night, np.nan, dktc)
@@ -707,7 +709,8 @@ def yang4_separation(times, ghi, lat, lon, ghi_clear):
         ktc = ghi_clear / ghi_extra_safe
     dktc = ktc - kt
     cloud_enh = np.where(ghi - ghi_clear > 0.015, ghi - ghi_clear, 0.0)
-    k_de = np.where(ghi > 0, cloud_enh / ghi, 0.0)
+    k_de = np.zeros_like(ghi, dtype=float)
+    np.divide(cloud_enh, ghi, out=k_de, where=ghi > 0)
 
     dktc = np.where(night, np.nan, dktc)
     ast = np.where(night, np.nan, ast)

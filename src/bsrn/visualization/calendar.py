@@ -56,8 +56,8 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
         [meas_col, clear_col] + other_cols. If None, column names are used.
         与 [实测, 晴空] + 其他列 对应的图例标签列表；为 None 时使用列名。
     title : str, optional
-        Custom plot title. If None, an automatic title is generated.
-        自定义标题；为 None 时自动生成。
+        Plot title. If None (default), no title is drawn.
+        图标题；默认 None 不显示。
     """
     if "zenith" not in df.columns:
         raise ValueError("df must contain a 'zenith' column. / df 必须包含 ``zenith`` 列。")
@@ -188,10 +188,6 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
         ordered=True,
     )
 
-    if title is None:
-        month_str = unique_months[0].strftime("%Y %b")
-        title = f"{station_code} – {month_str} Comparison"
-
     width_inch = 160 / 25.4
     height_inch = width_inch * (5 / 7)
     max_t = int(base["t_index"].max())
@@ -220,7 +216,13 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
         + scale_x_continuous(limits=(0, max_t), expand=(0, 0))
         + scale_y_continuous(expand=(0.05, 0.1))
         + scale_color_manual(values=full_color_map)
-        + labs(title=title, x="", y="Irradiance [W/m²]", color="")
+        + labs(
+            **(
+                {"title": title, "x": "", "y": "Irradiance [W/m²]", "color": ""}
+                if title is not None
+                else {"x": "", "y": "Irradiance [W/m²]", "color": ""}
+            )
+        )
         + theme_minimal()
         + theme(
             text=element_text(family="Times New Roman", size=9),

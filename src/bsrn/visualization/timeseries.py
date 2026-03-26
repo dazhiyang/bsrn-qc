@@ -189,7 +189,7 @@ def _load_month_archive_for_timeseries(file_path, station_code, apply_qc):
 
 
 def _ggplot_bsrn_timeseries_one_day(
-    day_df, day_zenith, title, station_code=None, show_qc_markers=True
+    day_df, day_zenith, title=None, station_code=None, show_qc_markers=True
 ):
     """
     Build the standard 3×3 facet times ggplot for one UTC day.
@@ -199,7 +199,7 @@ def _ggplot_bsrn_timeseries_one_day(
     clearsky_color = WONG_PALETTE[1]
     ribbon_color = clearsky_color
     width_inch = 160 / 25.4
-    height_inch = width_inch / 1.6
+    height_inch = width_inch / 1.8
 
     main_vars = ["ghi", "bni", "dhi"]
     if "lwd" in day_df.columns:
@@ -317,7 +317,7 @@ def _ggplot_bsrn_timeseries_one_day(
         )
         layers.append(
             scale_shape_manual(
-                name="QC fail",
+                name="QC level",
                 breaks=qc_levels,
                 values=[_QC_LEVEL_SHAPES[k] for k in qc_levels],
             )
@@ -354,7 +354,13 @@ def _ggplot_bsrn_timeseries_one_day(
                 data=hline_df, mapping=aes(yintercept="y"), color="#999999", size=0.2
             ),
             facet_wrap("~parameter", nrow=3, ncol=3, scales="free_y", drop=False),
-            labs(title=title, x="Time (UTC)", y="Value"),
+            labs(
+                **(
+                    {"x": "Time (UTC)", "y": "Value", "title": title}
+                    if title is not None
+                    else {"x": "Time (UTC)", "y": "Value"}
+                )
+            ),
             theme_minimal(),
             theme(
                 **(
@@ -407,6 +413,7 @@ def plot_bsrn_timeseries_day(
     apply_qc=False,
     show_qc_markers=True,
     output_file=None,
+    title=None,
 ):
     """
     Plot one UTC day from a single-month BSRN archive (same layout as each booklet page).
@@ -433,6 +440,9 @@ def plot_bsrn_timeseries_day(
     output_file : str, optional
         If set, save the figure (e.g. ``".pdf"`` or ``".png"``) via plotnine.
         若设置则保存图形（如 ``.pdf`` / ``.png``）。
+    title : str, optional
+        Plot title. If None (default), no title is drawn.
+        图标题；默认 None 不显示标题。
 
     Returns
     -------
@@ -462,12 +472,6 @@ def plot_bsrn_timeseries_day(
         )
 
     day_zenith = zenith.loc[day_df.index]
-    formatted_date = day_start.strftime("%Y %b %d")
-    title = formatted_date
-    if station_code:
-        title = f"{station_code} - {title}"
-    if apply_qc:
-        title += " (QC Applied)"
 
     p = _ggplot_bsrn_timeseries_one_day(
         day_df,
@@ -482,7 +486,12 @@ def plot_bsrn_timeseries_day(
 
 
 def plot_bsrn_timeseries_booklet(
-    file_path, output_file, station_code=None, apply_qc=False, show_qc_markers=True
+    file_path,
+    output_file,
+    station_code=None,
+    apply_qc=False,
+    show_qc_markers=True,
+    title=None,
 ):
     """
     Generate a multi-page PDF booklet where each day is one page from a BSRN archive file.
@@ -505,6 +514,9 @@ def plot_bsrn_timeseries_booklet(
     show_qc_markers : bool, default True
         If True and ``station_code`` is set, draw Level 1–6 QC failure markers per day.
         若为 True 且设置了 ``station_code``，为每日绘制 1–6 级 QC 失败标记。
+    title : str, optional
+        Plot title on every page. If None (default), no title.
+        每页图标题；默认 None 不显示。
 
     Returns
     -------
@@ -518,14 +530,8 @@ def plot_bsrn_timeseries_booklet(
 
     print(f"Generating PDF booklet: {output_file}...")
     with PdfPages(output_file) as pdf:
-        for date, day_df in plot_df.groupby(plot_df.index.date):
-            formatted_date = date.strftime("%Y %b %d")
+        for _, day_df in plot_df.groupby(plot_df.index.date):
             day_zenith = zenith.loc[day_df.index]
-            title = formatted_date
-            if station_code:
-                title = f"{station_code} - {title}"
-            if apply_qc:
-                title += " (QC Applied)"
             p = _ggplot_bsrn_timeseries_one_day(
                 day_df,
                 day_zenith,

@@ -176,11 +176,12 @@ def function_name(param):
 - **Fonts**: **MUST** use 'Times New Roman' for all axis labels, titles, and legends.
 - **Size**:
     - Figure width **MUST** be **160 mm** where a fixed journal column width applies.
-    - **9 pt** for **all** plotnine text (titles, axes, strip labels, legends, heatmap cell labels, etc.) across `src/bsrn/visualization/` unless a figure needs an explicit exception (document it in the module).
+    - **9 pt** for all text (titles, axes, legend, cell labels) in **faceted / tabular** plotnine figures: `timeseries.py` (day & booklet) and `qc_table.py` (`plot_qc_table`).
+    - **7 pt** remains the default for simpler layouts (e.g. `availability.py`, `calendar.py`) unless a figure is explicitly aligned with the 9 pt stack above.
 - **Format**: All plots **MUST** be output in **PDF** format to ensure high-quality vector graphics.
 - **Color bar (continuous legend)**:
     - **MUST** match the setup used in `availability.py` for consistency across plots.
     - Use `scale_fill_cmap(cmap_name='viridis', name="<Legend title>")` for continuous fill scales.
-    - In `theme()`: `legend_position="bottom"`, `legend_title=element_text(size=9)`, `legend_text=element_text(size=9)`, `legend_key_width=100`, `legend_key_height=5`, `legend_margin=-12`, `legend_box_spacing=0`. To add space between x-axis title and legend without shifting the legend, use `axis_title_x=element_text(size=9, margin={"b": 8})` (bottom margin in points).
+    - In `theme()`: `legend_position="bottom"`, `legend_title=element_text(size=7)`, `legend_text=element_text(size=7)`, `legend_key_width=100`, `legend_key_height=5`, `legend_margin=-12`, `legend_box_spacing=0`. To add space between x-axis title and legend without shifting the legend, use `axis_title_x=element_text(size=7, margin={"b": 8})` (bottom margin in points). Use **9 pt** in those `element_text` calls when editing **timeseries** legends to match §Size above.
     - **Plot margin** (optional): `plot_margin_top`, `plot_margin_right`, `plot_margin_bottom`, `plot_margin_left` (each in `[0, 1]`; use 0 for no extra margin).
 

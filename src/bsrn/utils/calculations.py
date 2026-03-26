@@ -53,7 +53,9 @@ def calc_kt(ghi, zenith, bni_extra, min_mu0=0.065,
     """
     mu0 = np.cos(np.radians(zenith))
     ghi_extra = bni_extra * np.maximum(mu0, min_mu0)
-    kt = ghi / ghi_extra
+    # ghi_extra can be 0 (e.g. bni_extra == 0); avoid RuntimeWarning on divide.
+    with np.errstate(divide="ignore", invalid="ignore"):
+        kt = ghi / ghi_extra
     kt = np.maximum(kt, 0)
     kt = np.minimum(kt, max_clearness_index)
     return kt

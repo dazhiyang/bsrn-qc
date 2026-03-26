@@ -18,7 +18,9 @@ from plotnine import (
 from bsrn.io.retrieval import get_bsrn_file_inventory
 
 
-def plot_bsrn_availability(stations, username, password, start_year=1992, end_year=None, output_file=None):
+def plot_bsrn_availability(
+    stations, username, password, start_year=1992, end_year=None, output_file=None, title=None
+):
     """
     Unified function to plot bsrn file availability from ftp.
     统一功能，用于绘制FTP中的BSRN文件可用性。
@@ -43,6 +45,9 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
     output_file : str, optional
         Path to the output file (e.g., 'availability.pdf').
         输出文件的路径（例如 'availability.pdf'）。
+    title : str, optional
+        Plot title. If None (default), no title is drawn.
+        图标题；默认 None 不显示。
 
     Returns
     -------
@@ -119,13 +124,14 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
         # Create mapping dictionary for ggplot axis labels
         month_labels = {str(m): name for m, name in zip(range(1, 13), month_names)}
         
+        _labs = {"y": f"Station: {stn}", "x": "Year"}
+        if title is not None:
+            _labs["title"] = title
         p = (
             ggplot(df_melt, aes(x='Year', y='Month', fill='Availability')) + 
             geom_tile(color='white', size=0.5) +
             scale_fill_cmap(cmap_name='viridis', name="Availability") +
-            labs(y=f"Station: {stn}", 
-                 x="Year", 
-                 title=f"BSRN File Availability ({start_year}-{end_year})") +
+            labs(**_labs) +
             scale_y_discrete(labels=lambda items: [month_labels.get(x, x) for x in items])
         )
     else:
@@ -147,13 +153,14 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
         df_melt['Station'] = pd.Categorical(df_melt['Station'], categories=reversed(stations), ordered=True)
         df_melt['Year'] = df_melt['Year'].astype(int)
         
+        _labs = {"y": "Stations", "x": "Year"}
+        if title is not None:
+            _labs["title"] = title
         p = (
             ggplot(df_melt, aes(x='Year', y='Station', fill='Months_Available')) + 
             geom_tile(color='white', size=0.5) +
             scale_fill_cmap(cmap_name='viridis', name="Months Available") +
-            labs(y="Stations", 
-                 x="Year", 
-                 title=f"BSRN File Availability ({start_year}-{end_year})") +
+            labs(**_labs) +
             scale_y_discrete()
         )
         

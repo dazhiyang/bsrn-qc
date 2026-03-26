@@ -31,6 +31,7 @@ def plot_clearsky_models_booklet(
     station_code,
     mcclear_email=None,
     df=None,
+    title=None,
 ):  # noqa: PLR0913
     """
     Generate a monthly PDF booklet comparing measured irradiance with clear-sky models [1]_ [2]_ [3]_.
@@ -58,6 +59,9 @@ def plot_clearsky_models_booklet(
     df : pd.DataFrame, optional
         If provided, use this DataFrame instead of reading from file_path.
         若提供，则使用该 DataFrame 而非读取 file_path。
+    title : str, optional
+        Same title on every PDF page. If None (default), no plot title.
+        每页共用标题；默认 None 不显示。
 
     Returns
     -------
@@ -185,9 +189,11 @@ def plot_clearsky_models_booklet(
             long_df["parameter"] = pd.Categorical(long_df["parameter"], categories=param_order, ordered=True)
             long_df["model"] = pd.Categorical(long_df["model"], categories=model_order, ordered=True)
 
-            title = f"{station_code} - {pd.Timestamp(date).strftime('%Y %b %d')}"
             used_colors = {m: color_map[m] for m in model_order if m in color_map}
             used_linetypes = {m: linetype_map[m] for m in model_order if m in linetype_map}
+            _lab = {"x": "Time (UTC)", "y": "[W/m²]", "color": "", "linetype": ""}
+            if title is not None:
+                _lab["title"] = title
             p = (
                 ggplot(long_df, aes(x="time", y="value", color="model", linetype="model"))
                 + geom_line(size=0.3)
@@ -195,7 +201,7 @@ def plot_clearsky_models_booklet(
                 + scale_color_manual(values=used_colors)
                 + scale_linetype_manual(values=used_linetypes)
                 + scale_x_datetime(date_labels="%H:%M")
-                + labs(title=title, x="Time (UTC)", y="[W/m²]", color="", linetype="")
+                + labs(**_lab)
                 + theme_minimal()
                 + theme(
                     text=element_text(family="Times New Roman", size=9),

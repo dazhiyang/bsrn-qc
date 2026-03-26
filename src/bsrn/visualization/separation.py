@@ -71,7 +71,9 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
     Returns
     -------
     p : plotnine.ggplot
-        The ggplot object. 返回的 ggplot 对象。
+        The ggplot object. If ``output_file`` was set, this is a **new** instance
+        (the one used for saving is not safe to draw again after ``plt.close``).
+        若传了 ``output_file``，返回的是**新**构建的对象（保存用的对象在 close 后不宜再次 draw）。
     """
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError("df must have a DatetimeIndex. / df 须为 DatetimeIndex。")
@@ -95,7 +97,12 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
     times = use.index
     ghi = np.asarray(use[ghi_col], dtype=float)
     dhi = np.asarray(use[dhi_col], dtype=float)
-    k_meas = np.clip(np.where(ghi > 0, dhi / ghi, np.nan), 0.0, 1.0)
+    k_meas = np.full_like(ghi, np.nan, dtype=float)
+    pos = ghi > 0
+    if np.any(pos):
+        # Only index-wise divide (not np.where / ufunc where=), avoids divide-by-zero warnings.
+        k_meas[pos] = dhi[pos] / ghi[pos]
+    k_meas = np.clip(k_meas, 0.0, 1.0)
 
     zenith = np.asarray(
         geometry.get_solar_position(times, lat, lon)["zenith"], dtype=float
@@ -183,50 +190,57 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
         mpl.rcParams["mathtext.fontset"] = "stix"
         cell_w = 1.0 / n_pixels
         cell_h = 1.0 / n_pixels
-        p = (
-            ggplot()
-            + geom_tile(
-                data=raster_meas,
-                mapping=aes(x="x", y="y"),
-                fill="#909090",
-                width=cell_w, height=cell_h
+
+        def _ggplot():
+            g = (
+                ggplot()
+                + geom_tile(
+                    data=raster_meas,
+                    mapping=aes(x="x", y="y"),
+                    fill="#909090",
+                    width=cell_w, height=cell_h
+                )
+                + geom_tile(
+                    data=raster_mod,
+                    mapping=aes(x="x", y="y", fill="value"),
+                    width=cell_w, height=cell_h
+                )
+                + facet_wrap("model", ncol=n_facets, scales="free")
+                + scale_fill_cmap(cmap_name="viridis", name="density")
+                + labs(
+                    x=r"$k_t$ (clearness index)",
+                    y=r"$k$ (diffuse fraction)"
+                )
+                + scale_x_continuous(limits=(0, 1), breaks=np.arange(0, 1.1, 0.2))
+                + scale_y_continuous(limits=(0, 1), breaks=np.arange(0, 1.1, 0.2))
+                + coord_fixed(ratio=1)
+                + theme_minimal()
+                + theme(
+                    text=element_text(family="Times New Roman", size=9),
+                    plot_title=element_text(size=9),
+                    axis_title=element_text(size=9),
+                    axis_text=element_text(size=9),
+                    legend_position="bottom",
+                    legend_title=element_text(size=9),
+                    legend_text=element_text(size=9),
+                    legend_key_width=100,
+                    legend_key_height=5,
+                    legend_margin=-12,
+                    legend_box_spacing=0,
+                    axis_title_x=element_text(size=9, margin={"t": 1, "b": 2}),
+                    plot_margin_top=0,
+                    plot_margin_right=0,
+                    plot_margin_bottom=0,
+                    plot_margin_left=0,
+                    panel_grid_minor=element_blank(),
+                    figure_size=(width_inch, fig_h)
+                )
             )
-            + geom_tile(
-                data=raster_mod,
-                mapping=aes(x="x", y="y", fill="value"),
-                width=cell_w, height=cell_h
-            )
-            + facet_wrap("model", ncol=n_facets, scales="free")
-            + scale_fill_cmap(cmap_name="viridis", name="density")
-            + labs(
-                x=r"$k_t$ (clearness index)",
-                y=r"$k$ (diffuse fraction)"
-            )
-            + scale_x_continuous(limits=(0, 1), breaks=np.arange(0, 1.1, 0.2))
-            + scale_y_continuous(limits=(0, 1), breaks=np.arange(0, 1.1, 0.2))
-            + coord_fixed(ratio=1)
-            + theme_minimal()
-            + theme(
-                text=element_text(family="Times New Roman", size=9),
-                plot_title=element_text(size=9),
-                axis_title=element_text(size=9),
-                axis_text=element_text(size=9),
-                legend_position="bottom",
-                legend_title=element_text(size=9),
-                legend_text=element_text(size=9),
-                legend_key_width=100,
-                legend_key_height=5,
-                legend_margin=-12,
-                legend_box_spacing=0,
-                axis_title_x=element_text(size=9, margin={"t": 1, "b": 2}),  # space between x-title and legend
-                plot_margin_top=0,
-                plot_margin_right=0,
-                plot_margin_bottom=0,
-                plot_margin_left=0,
-                panel_grid_minor=element_blank(),
-                figure_size=(width_inch, fig_h)
-            )
-        )
+            if title is not None:
+                g = g + labs(title=title)
+            return g
+
+        p = _ggplot()
         if output_file:
             # Rasterize tile layers so PDF stores them as bitmaps (KB not MB).
             # 将瓦片层栅格化，使 PDF 以位图存储，体积为 KB 级。
@@ -236,6 +250,9 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
                     col.set_rasterized(True)
             fig.savefig(output_file, dpi=300, bbox_inches="tight")
             mpl.pyplot.close(fig)
+            # Fresh ggplot: draw()+close leaves plotnine layout state invalid for a second draw
+            # (e.g. Jupyter _repr_mimebundle_ → save → IndexError in layout.get_scales).
+            p = _ggplot()
         return p
     finally:
         if prev_fontset is not None:
