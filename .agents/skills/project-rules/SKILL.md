@@ -72,6 +72,39 @@ Code variables and documentation **MUST** strictly adhere to the following table
 
 ## 📝 Documentation & Coding Rules
 
+> ### **REQUIRED — Public function docstrings (NumPy style)**
+>
+> Every **function** and **public method** (including module-level callables and class methods that form the API) **MUST** use NumPy-style docstrings with **bilingual** English / 中文 lines as elsewhere in this skill.
+>
+> **Required sections (in order):**
+>
+> 1. **Summary** — one English line + one 中文 line (or the length rule from §1 if longer).
+> 2. **`Parameters`** — always present if the callable has parameters (use `None` / optional wording where needed).
+> 3. **`Returns`** — always present unless the callable returns `None` *and* that is obvious; prefer an explicit ``None`` description when the function exists only for side effects.
+> 4. **`Raises`** — **whenever** the body can raise a documented exception (typically `ValueError`, `TypeError`, `KeyError`, etc.). Omit the section only if truly no exception is part of the contract.
+>
+> **`References`** — still **MUST** appear when the implementation follows a paper or external spec (see §3).
+>
+> Data-only modules (e.g. large static dicts with no functions) are exempt from per-function docstrings.
+
+> ### **REQUIRED — Function signature layout (no `->`, wrap at 80)**
+>
+> - **MUST NOT** use PEP 484 **return** annotations on definitions: do **not** write `-> SomeType` after the closing `)` of `def` (e.g. forbid `def f(x) -> str:`). Describe return types in the **`Returns`** section of the docstring instead.
+> - **MUST** keep each **line of the `def` signature** to **≤ 80 characters** (indent + `def` name + parameters). If wrapping is needed, **continue on the next line** and **group several parameters per line** so that **each line stays ≤ 80 characters**.
+> - **MUST NOT** end the first signature line immediately after `(` with **no parameters** on that line — i.e. do **not** write:
+>   ```python
+>   def long_function_name(
+>       arg1, arg2, ...
+>   ):
+>   ```
+>   **MUST** break **after a comma** so the opening line still contains parameters, then align the continuation with the `(` that opens the parameter list (first parameter on the next line starts in the same column as parameters on the first line):
+>   ```python
+>   def long_function_name(arg1, arg2, arg3,
+>                          arg4, arg5):
+>   ```
+> - **MUST NOT** default to **one parameter per line** (vertical “arg list”) when a compact multi-parameter line still fits the 80-character rule. Use a vertical list only when unavoidable (e.g. many parameters or long default expressions), still grouping parameters to minimize line count.
+> - The same **80-character, grouped** idea applies to **long function calls** when you must break them across lines: avoid one argument per line unless necessary; prefer breaking after a comma with **multiple arguments on the continuation line** where possible.
+
 ### 1. Bilingual Comments
 - **MUST** follow the length-dependent format:
     - If the combined line is shorter than 80 characters: Use `# English / 中文` format on a single line.
@@ -87,6 +120,7 @@ Code variables and documentation **MUST** strictly adhere to the following table
 ### 2. Docstring Structure
 - **MUST** use NumPy/SciPy style with bilingual descriptions.
 - **MUST** include both English and Chinese in the summary and parameter descriptions.
+- **MUST** include **`Parameters`**, **`Returns`**, and **`Raises`** (when applicable); see the **highlighted box above**.
 - **MUST** include a `References` section at the end of the docstring for functions based on literature.
 
 ```python
@@ -99,13 +133,19 @@ def function_name(param):
     ----------
     param : type
         English description.
-        中文描述集。
+        中文描述。
 
     Returns
     -------
     result : type
         English description.
         中文描述。
+
+    Raises
+    ------
+    ValueError
+        When validation fails.
+        校验失败时。
 
     References
     ----------
@@ -136,17 +176,16 @@ def function_name(param):
 - **DO NOT** use generic terms like "Direct" or "Global" in isolation.
 - **MUST** use LaTeX symbols ($G_h, B_n$, etc.) in READMEs and technical docs.
 - **DO NOT** capitalize the long form of abbreviations (e.g., use "global horizontal irradiance").
-- **MUST** limit line length to a maximum of 110 characters.
+- **MUST** limit general line length to a maximum of **110 characters** (docstrings and comments included), **except** that **`def` signature lines** follow the **80-character** rule in the highlighted box above.
 - **MUST** use sentence case for scientific paper titles in references.
 
 ### 5. Function Signature Style
+- **MUST** follow the **highlighted box** in §Documentation: **no `->` return annotations**, **≤ 80 characters per signature line**, **group parameters** on wrapped lines (avoid one-parameter-per-line unless necessary).
 - **MUST** use compact signatures: required parameters first, then optional parameters with defaults.
-- **MUST NOT** put the entire signature on one line if that line would exceed **110 characters** (same limit as §4). Prefer **one line** only when the full `def …` fits within 110 characters.
-- If wrapping is needed, **MUST** split into **a few short lines** (typically **two** lines of parameters): group several parameters per line so **each line stays ≤ 110 characters**. **DO NOT** use an unnecessarily long single line; **DO NOT** default to one parameter per line unless the list is very long or each default is long.
-- For continuation lines after a trailing comma, **MUST** indent so the wrapped parameters align with the style used in this repo (see `run_qc` in `bsrn/qc/wrapper.py` or `pretty_average` in `bsrn/utils/averaging.py`: **11 spaces** before the first token on the continuation line).
+- If wrapping is needed, **MUST** split into **a few short lines**: group several parameters per line so **each line stays ≤ 80 characters** for the `def` line(s).
+- For continuation lines after a trailing comma, **MUST** indent continuation lines consistently with this repo (see `run_qc` in `bsrn/qc/wrapper.py` or `pretty_average` in `bsrn/utils/averaging.py` where 110-char wrapping was used historically; new code should prefer **80** for `def` lines as above).
 - Example (short, one line): `def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None, model="ineichen"):`
-- Example (wrapped, two lines): `def plot_k_vs_kt(df, model, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_col=None,\n                 min_ghi=50.0, output_file=None, title=None):`
-- Example (short, package pattern): `def pretty_average(df, rule, alignment="floor", aggfunc="mean", resolution=None, match_ceiling_labels=True):`
+- Example (wrapped, two lines, ≤80 chars each): break after a comma so the next line holds **multiple** parameters, not one per line; **do not** put only `def name(` on the first line (see highlighted box above).
 
 ### 6. Output Directory
 - All generated plots and figures **MUST** be saved to the project root directory.

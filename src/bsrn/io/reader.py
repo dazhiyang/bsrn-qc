@@ -159,6 +159,12 @@ def read_lr0300(file_path):
     df : pd.DataFrame or None
         Parsed data with columns: swu, lwu, net [W/m^2].
         解析后的数据，列包含：swu, lwu, net [瓦/平方米]。
+
+    References
+    ----------
+    .. [1] Driemel, A., et al. (2018). Baseline Surface Radiation Network (BSRN):
+       structure and data description (1992–2017). Earth System Science Data,
+       10(3), 1491-1501.
     """
     if not os.path.exists(file_path):
         print(f"Error: File not found: {file_path}")
@@ -285,9 +291,15 @@ def read_lr4000(file_path):
     Returns
     -------
     df : pd.DataFrame or None
-        Parsed data with columns for downward (``td_``) and upward (``tu_``) 
+        Parsed data with columns for downward (``td_``) and upward (``tu_``)
         pyrgeometer dome, body, and thermopile (tp) measurements.
         解析后的数据，包含下行 (``td_``) 和上行 (``tu_``) 长波辐射表罩温、体温和热电堆 (tp) 测量值。
+
+    References
+    ----------
+    .. [1] Driemel, A., et al. (2018). Baseline Surface Radiation Network (BSRN):
+       structure and data description (1992–2017). Earth System Science Data,
+       10(3), 1491-1501.
     """
     if not os.path.exists(file_path):
         print(f"Error: File not found: {file_path}")

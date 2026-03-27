@@ -75,12 +75,14 @@ def _parse_nsrdb(raw_text):
     Parameters
     ----------
     raw_text : str
-        CSV response from NLR API.
+        CSV response body from the NLR API.
+        NLR API 返回的 CSV 响应正文。
 
     Returns
     -------
     data : pd.DataFrame
-        UTC index and project-standard columns.
+        UTC :class:`~pandas.DatetimeIndex` and project-standard irradiance columns.
+        UTC DatetimeIndex 及项目标准辐照度列。
     """
     # NSRDB CSV has metadata on line 0, header on line 1, data starts on line 2
     # NSRDB CSV 第 0 行为元数据，第 1 行为表头，第 2 行起为数据
@@ -114,6 +116,16 @@ def _hf_fetch_to_memory(repo_id, filename):
     -------
     content : bytes
         Raw file bytes.
+        原始文件字节。
+
+    Raises
+    ------
+    FileNotFoundError
+        If the dataset file is missing (HTTP 404) on the Hub.
+        Hub 上数据集文件缺失（HTTP 404）时。
+    requests.HTTPError
+        On other non-success HTTP statuses.
+        其他非成功 HTTP 状态时。
     """
     print(f"Fetching NSRDB from Hugging Face: {filename}")
     try:
@@ -130,7 +142,28 @@ def _hf_fetch_to_memory(repo_id, filename):
 
 
 def _fetch_nsrdb_from_hf(station_code, index, variant="conus"):
-    """Fetch monthly parquets from HF based on required months in index."""
+    """
+    Fetch monthly NSRDB parquet blobs from Hugging Face for months in *index*.
+    按 *index* 所需月份从 Hugging Face 拉取月度 NSRDB parquet 字节块。
+
+    Parameters
+    ----------
+    station_code : str
+        BSRN station code (case-insensitive).
+        BSRN 站点代码（大小写不敏感）。
+    index : pd.DatetimeIndex
+        Non-empty target index; shifted month boundaries select files.
+        非空目标索引；经边界平移后的月份决定文件。
+    variant : str, default ``"conus"``
+        NSRDB variant key in :data:`~bsrn.constants.NSRDB_VARIANTS`.
+        :data:`~bsrn.constants.NSRDB_VARIANTS` 中的 NSRDB 变体键。
+
+    Returns
+    -------
+    contents : list of bytes
+        Raw parquet bytes per successfully fetched month (missing months skipped).
+        每个成功获取的月份对应原始字节（缺失月份跳过）。
+    """
     if index.empty:
         raise ValueError("index must not be empty.")
     stn = station_code.lower()
@@ -161,7 +194,25 @@ def _fetch_nsrdb_from_hf(station_code, index, variant="conus"):
 
 
 def _load_nsrdb_parquet(path_or_bytes, target_index=None):
-    """Load single NSRDB parquet and optionally interpolate to target index."""
+    """
+    Load one NSRDB parquet and optionally interpolate to *target_index*.
+    加载单个 NSRDB parquet，并可选择插值到 *target_index*。
+
+    Parameters
+    ----------
+    path_or_bytes : str, path-like, bytes, or file-like
+        Parquet path, bytes, or readable buffer.
+        parquet 路径、字节或可读缓冲区。
+    target_index : pd.DatetimeIndex or None
+        If given, reindex and time-interpolate to this index.
+        若给定则重索引并按时间插值到该索引。
+
+    Returns
+    -------
+    data : pd.DataFrame
+        UTC-indexed NSRDB columns (possibly interpolated).
+        UTC 索引的 NSRDB 列（可能已插值）。
+    """
     if isinstance(path_or_bytes, bytes):
         path_or_bytes = io.BytesIO(path_or_bytes)
     data = pd.read_parquet(path_or_bytes)
@@ -273,7 +324,8 @@ def check_nsrdb_availability(stations, username, password, variant="conus"):
     return availability
 
 
-def download_nsrdb(latitude, longitude, year, api_key, email, variant="conus", timeout=120):
+def download_nsrdb(latitude, longitude, year, api_key, email,
+                   variant="conus", timeout=120):
     """
     Download NSRDB data from NLR API.
     从 NLR API 下载 NSRDB 数据。
@@ -281,24 +333,32 @@ def download_nsrdb(latitude, longitude, year, api_key, email, variant="conus", t
     Parameters
     ----------
     latitude : float
-        Stn latitude.
+        Site latitude [degrees].
+        站点纬度 [度]。
     longitude : float
-        Stn longitude.
+        Site longitude [degrees].
+        站点经度 [度]。
     year : int
-        Year to download.
+        Calendar year to download.
+        要下载的公历年份。
     api_key : str
         NLR developer API key.
+        NLR 开发者 API 密钥。
     email : str
-        User email.
-    variant : str, default "conus"
-        NSRDB variant name.
+        User email registered with the API.
+        在 API 注册的用户邮箱。
+    variant : str, default ``"conus"``
+        NSRDB variant name (see :data:`~bsrn.constants.NSRDB_VARIANTS`).
+        NSRDB 变体名称（见 :data:`~bsrn.constants.NSRDB_VARIANTS`）。
     timeout : int, default 120
-        Request timeout.
+        HTTP request timeout [s].
+        HTTP 请求超时 [秒]。
 
     Returns
     -------
     df : pd.DataFrame
-        NSRDB data for the requested year.
+        NSRDB irradiance columns for the requested *year*.
+        所请求 *year* 的 NSRDB 辐照度列。
 
     Raises
     ------
@@ -361,6 +421,24 @@ def fetch_nsrdb_hf(index, station_code, variant="conus"):
     """
     Fetch NSRDB from Hugging Face aligned to target index.
     从 Hugging Face 获取 NSRDB 并对齐到目标索引。
+
+    Parameters
+    ----------
+    index : pd.DatetimeIndex
+        Target grid (typically 1-minute BSRN timestamps).
+        目标时间网格（通常为 BSRN 一分钟时间戳）。
+    station_code : str
+        BSRN station code for parquet naming on the Hub.
+        Hub 上 parquet 命名所用的 BSRN 站点代码。
+    variant : str, default ``"conus"``
+        NSRDB variant (folder and filename suffix).
+        NSRDB 变体（目录与文件名后缀）。
+
+    Returns
+    -------
+    aligned : pd.DataFrame
+        Columns from :data:`~bsrn.constants.NSRDB_OUTPUT_COLUMNS`, reindexed to *index*.
+        来自 :data:`~bsrn.constants.NSRDB_OUTPUT_COLUMNS` 的列，重索引到 *index*。
     """
     contents = _fetch_nsrdb_from_hf(station_code, index, variant)
     if not contents:
@@ -374,7 +452,8 @@ def fetch_nsrdb_hf(index, station_code, variant="conus"):
     return aligned.reindex(index)
 
 
-def add_nsrdb_columns(df, station_code=None, lat=None, lon=None, elev=None, variant="conus"):
+def add_nsrdb_columns(df, station_code=None, lat=None,
+                      lon=None, elev=None, variant="conus"):
     """
     Adds NSRDB all-sky columns to a DataFrame.
     Fetches data from Hugging Face automatically.

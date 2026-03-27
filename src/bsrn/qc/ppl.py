@@ -1,6 +1,6 @@
 """
-bsrn level 1 (physically possible) checks.
-BSRN 1 级（物理可能）检查。
+BSRN Level 1 (physically possible) quality tests.
+BSRN 1 级（物理可能）质量检查。
 """
 
 import numpy as np

@@ -40,9 +40,11 @@ def _crs_min_start_utc(latitude, longitude):
     Parameters
     ----------
     latitude : float
-        Site latitude. [degrees]
+        Site latitude [degrees].
+        站点纬度 [度]。
     longitude : float
-        Site longitude. [degrees]
+        Site longitude [degrees].
+        站点经度 [度]。
 
     Returns
     -------
@@ -76,16 +78,20 @@ def _check_crs_coverage(latitude, longitude, start):
     Parameters
     ----------
     latitude : float
-        Site latitude. [degrees]
+        Site latitude [degrees].
+        站点纬度 [度]。
     longitude : float
-        Site longitude. [degrees]
+        Site longitude [degrees].
+        站点经度 [度]。
     start : datetime-like
         Request period start.
+        请求时段起始时间。
 
     Raises
     ------
     ValueError
         If the site is outside both satellite disks or *start* is before the required minimum.
+        站点不在任一颗卫星圆盘内，或起始时间早于允许的最小日期时。
     """
     min_start = _crs_min_start_utc(latitude, longitude)
     if min_start is None:
@@ -194,6 +200,12 @@ def _hf_fetch_to_memory(repo_id, filename):
     content : bytes
         Raw file bytes.
         原始文件字节。
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file is missing on the Hub or the HTTP request fails.
+        Hub 上无文件或 HTTP 请求失败时。
     """
     print(f"Fetching CRS from Hugging Face: {filename}")
     try:
@@ -389,7 +401,8 @@ def check_crs_availability(stations, username, password):
     return availability
 
 
-def download_crs(latitude, longitude, start, end, email, elev=None, summarization="PT01H", timeout=30):
+def download_crs(latitude, longitude, start, end, email, elev=None,
+                 summarization="PT01H", timeout=30):
     """
     Download and parse CAMS Radiation Service (CRS) time series from SoDa.
     从 SoDa 下载并解析 CAMS 辐射服务 (CRS) 时间序列。
@@ -549,6 +562,15 @@ def fetch_crs_hf(index, station_code):
     aligned : pd.DataFrame
         CRS inputs reindexed to `index` with columns ghi_crs, bni_crs, dhi_crs.
         重新索引到 `index` 的 CRS 输入，含 ghi_crs, bni_crs, dhi_crs 列。
+
+    Raises
+    ------
+    ValueError
+        If ``index`` is not a :class:`~pandas.DatetimeIndex` or is empty.
+        ``index`` 非 DatetimeIndex 或为空时。
+    FileNotFoundError
+        From Hugging Face fetch helpers when a monthly parquet is unavailable.
+        月度 parquet 在 Hub 上不可用时的底层抛出。
     """
     if not isinstance(index, pd.DatetimeIndex):
         raise ValueError(

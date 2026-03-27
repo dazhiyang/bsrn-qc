@@ -1,6 +1,6 @@
 """
-bsrn level 2 (extremely rare) checks.
-BSRN 2 级（极罕见）检查。
+BSRN Level 2 (extremely rare) quality tests.
+BSRN 2 级（极罕见）质量检查。
 """
 
 import numpy as np

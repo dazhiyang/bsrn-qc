@@ -1,6 +1,6 @@
 """
-bsrn level 3 (inter-comparison) checks - closure test.
-BSRN 3 级（相互比较）检查 - 闭合测试。
+BSRN Level 3 inter-comparison checks: GHI–BNI–DHI closure.
+BSRN 3 级相互比较检查：GHI–BNI–DHI 闭合。
 """
 
 import numpy as np

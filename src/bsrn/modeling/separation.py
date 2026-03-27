@@ -49,6 +49,12 @@ def _get_solar_and_kt(times, ghi, lat, lon, elev=0, min_mu0=0.065,
     ghi, ghi_extra, zenith, mu0, kt, night : tuple
         Solar and clearness index components.
         太阳和晴朗指数分量。
+
+    Raises
+    ------
+    ValueError
+        If ``times`` is not a :class:`~pandas.DatetimeIndex` or ``ghi`` length mismatches.
+        ``times`` 非 DatetimeIndex 或 ``ghi`` 长度不一致时。
     """
 
     # Check if times is a pd.DatetimeIndex.
@@ -338,6 +344,13 @@ def _engerer2_k_at_resolution(df, lat, lon, period_minutes, ghi_col="ghi",
     k : np.ndarray
         Diffuse fraction k aligned to `df.index`. [unitless]
         与 `df.index` 对齐的散射分数 k。[无单位]
+
+    Raises
+    ------
+    ValueError
+        If ``ghi_clear_col`` is missing, ``period_minutes`` is unsupported, or
+        ``df.index`` is not a :class:`~pandas.DatetimeIndex`.
+        缺少 ``ghi_clear_col``、``period_minutes`` 不支持或 ``df.index`` 非 DatetimeIndex 时。
     """
     if ghi_clear_col not in df.columns:
         raise ValueError(
@@ -393,7 +406,8 @@ def _engerer2_k_at_resolution(df, lat, lon, period_minutes, ghi_col="ghi",
     k_series = result["k"].reindex(df.index, method="bfill")
     return np.asarray(k_series, dtype=float)
 
-def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065, max_zenith=87.0):
+def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065,
+                    max_zenith=87.0):
     """
     Erbs irradiance separation [1]_: diffuse fraction $k$ from clearness index $k_t$, then DHI and BNI.
     Erbs 辐照分离：由晴朗指数 $k_t$ 得散射分数 $k$，再得 DHI 与 BNI。
@@ -434,6 +448,12 @@ def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065, max_zenith=87.0
     out : pd.DataFrame
         DataFrame with index=times and columns ``k``, ``dhi``, ``bni`` (modeled).
         索引为 times、列为 k/dhi/bni（模型结果）的 DataFrame。
+
+    Raises
+    ------
+    ValueError
+        Propagated from :func:`_get_solar_and_kt` if ``times`` or ``ghi`` are invalid.
+        由 :func:`_get_solar_and_kt` 在 ``times`` 或 ``ghi`` 无效时抛出。
 
     References
     ----------
@@ -509,6 +529,12 @@ def brl_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
     out : pd.DataFrame
         DataFrame with index=times and columns ``k``, ``dhi``, ``bni`` (modeled).
         索引为 times、列为 k/dhi/bni（模型结果）的 DataFrame。
+
+    Raises
+    ------
+    ValueError
+        Propagated from :func:`_get_solar_and_kt` if ``times`` or ``ghi`` are invalid.
+        由 :func:`_get_solar_and_kt` 在 ``times`` 或 ``ghi`` 无效时抛出。
 
     References
     ----------
@@ -588,6 +614,13 @@ def engerer2_separation(times, ghi, lat, lon, ghi_clear, averaging_period=1):
     out : pd.DataFrame
         DataFrame with index=times and columns ``k``, ``dhi``, ``bni`` (modeled).
         索引为 times、列为 k/dhi/bni（模型结果）的 DataFrame。
+
+    Raises
+    ------
+    ValueError
+        If ``averaging_period`` is not in the supported set, ``times`` is not a
+        :class:`~pandas.DatetimeIndex`, or ``ghi`` / ``ghi_clear`` lengths mismatch.
+        ``averaging_period`` 不在支持集合、``times`` 非 DatetimeIndex 或 ``ghi``/``ghi_clear`` 长度不一致时。
 
     References
     ----------
@@ -673,6 +706,13 @@ def yang4_separation(times, ghi, lat, lon, ghi_clear):
     out : pd.DataFrame
         DataFrame with index=times and columns ``k``, ``dhi``, ``bni`` (modeled).
         索引为 times、列为 k/dhi/bni（模型结果）的 DataFrame。
+
+    Raises
+    ------
+    ValueError
+        If ``times`` is not a :class:`~pandas.DatetimeIndex`, lengths mismatch, or
+        :func:`_engerer2_k_at_resolution` rejects inputs (e.g. missing ``ghi_clear``).
+        ``times`` 非 DatetimeIndex、长度不一致或 :func:`_engerer2_k_at_resolution` 拒绝输入（如缺 ``ghi_clear``）时。
 
     References
     ----------

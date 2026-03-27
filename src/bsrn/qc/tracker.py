@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 
 
-def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear=None, bni_clear=None):
+def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None,
+                     dhi_clear=None, bni_clear=None):
     """
     Check if the solar tracker is off by comparing measured and clear-sky irradiances [1]_.
     通过比较测量值和晴空值来检查太阳跟踪器是否失准。
@@ -41,6 +42,12 @@ def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear
     flags : Series or ndarray
         Boolean flags (True = Pass). [bool]
         布尔标记（True = 通过）。[布尔值]
+
+    Raises
+    ------
+    ValueError
+        If ``ghi_clear`` is not provided and ``ghi_extra`` is also missing.
+        未提供 ``ghi_clear`` 且 ``ghi_extra`` 也为空时。
 
     References
     ----------

@@ -85,7 +85,8 @@ def _cee_to_output(index, cee_flag, method):
 
 
 def _cee_sliding_triplet(ghi, ghi_clear, zenith, times, *,
-                           window_minutes, sdev_threshold, kappa_threshold, zenith_max, method):
+                         window_minutes, sdev_threshold, kappa_threshold,
+                         zenith_max, method):
     """
     Three-sample rolling window with clear-sky index, relative SD, and zenith gate.
     三点滑动窗口：结合晴空指数 κ、相对标准差与太阳天顶角门限。
@@ -111,8 +112,8 @@ def _cee_sliding_triplet(ghi, ghi_clear, zenith, times, *,
         Minimum relative standard deviation of the three-point window.
         三点窗口相对标准差下限。
     kappa_threshold : float
-        Minimum clear-sky index $\kappa = G_h / G_{hc}$.
-        晴空指数 $\kappa = G_h / G_{hc}$ 下限。
+        Minimum clear-sky index $\\kappa = G_h / G_{hc}$.
+        晴空指数 $\\kappa = G_h / G_{hc}$ 下限。
     zenith_max : float
         Maximum solar zenith angle for valid detection. [degrees]
         有效检测允许的最大太阳天顶角。[度]

@@ -18,11 +18,58 @@ from .api import BSRNRecord, get_azimuth_elevation
 
 
 class LR0001(BSRNRecord):
+    """LR0001 station header (sensor list + id line). / LR0001 台站头（传感器列表与标识行）。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0001 from keyword fields (see ``specs.LR_SPECS["LR0001"]``).
+
+        Translates from R6 ``LR0001`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR0001`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0001.
+            LR0001 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0001", **kwargs)
 
     def get_bsrn_format(self, listSensor=["2", "3", "4", "5", "21", "22", "23"]):
-        """Translates lr0001GetBsrnFormat"""
+        """
+        Emit ``*C0001`` block.
+
+        Translates from R function ``lr0001GetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr0001GetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        listSensor : list of str, optional
+            Sensor slot codes (default matches WRMC example list).
+            传感器槽位代码（默认同 WRMC 示例列表）。
+
+        Returns
+        -------
+        str
+            LR0001 ASCII block.
+            LR0001 ASCII 块。
+
+        Raises
+        ------
+        ValueError
+            If mandatory fields are missing.
+            必填字段缺失时。
+        """
         self.stop_if_values_missing("LR0001")
 
         ls = [int(x) for x in listSensor]
@@ -43,11 +90,52 @@ class LR0001(BSRNRecord):
 
 
 class LR0002(BSRNRecord):
+    """LR0002 scientist / deputy contact block. / LR0002 科学家与副手联系信息块。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0002 from keyword fields.
+
+        Translates from R6 ``LR0002`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR0002`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0002.
+            LR0002 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0002", **kwargs)
 
     def get_bsrn_format(self):
-        """Translates lr0002GetBsrnFormat"""
+        """
+        Emit LR0002 contact block.
+
+        Translates from R function ``lr0002GetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr0002GetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Returns
+        -------
+        str
+            LR0002 ASCII block.
+            LR0002 ASCII 块。
+
+        Raises
+        ------
+        ValueError
+            If mandatory fields are missing.
+            必填字段缺失时。
+        """
         self.stop_if_values_missing("LR0002")
         v = {name: self.get_format_value(name) for name in self._params.keys()}
 
@@ -68,11 +156,58 @@ class LR0002(BSRNRecord):
 
 
 class LR0003(BSRNRecord):
+    """LR0003 free-text / non-database message block. / LR0003 自由文本块。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0003 from keyword fields.
+
+        Translates from R6 ``LR0003`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR0003`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0003.
+            LR0003 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0003", **kwargs)
 
     def get_bsrn_format(self, *args):
-        """Translates lr0003GetBsrnFormat"""
+        """
+        Emit LR0003 message block with optional appended lines.
+
+        Translates from R function ``lr0003GetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr0003GetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        *args : str
+            Extra lines after ``message``.
+            ``message`` 之后的附加行。
+
+        Returns
+        -------
+        str
+            LR0003 ASCII block.
+            LR0003 ASCII 块。
+
+        Raises
+        ------
+        ValueError
+            If mandatory fields are missing.
+            必填字段缺失时。
+        """
         self.stop_if_values_missing("LR0003")
         v = {name: self.get_format_value(name) for name in self._params.keys()}
         res = "*U0003\n" + v['message']
@@ -82,11 +217,52 @@ class LR0003(BSRNRecord):
 
 
 class LR0004(BSRNRecord):
+    """LR0004 station description and horizon metadata. / LR0004 台站描述与地平线元数据。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0004 from keyword fields.
+
+        Translates from R6 ``LR0004`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR0004`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0004.
+            LR0004 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0004", **kwargs)
 
     def get_bsrn_format(self):
-        """Translates lr0004GetBsrnFormat"""
+        """
+        Emit LR0004 block including formatted azimuth/elevation lists.
+
+        Translates from R function ``lr0004GetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr0004GetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Returns
+        -------
+        str
+            LR0004 ASCII block.
+            LR0004 ASCII 块。
+
+        Raises
+        ------
+        ValueError
+            If mandatory fields are missing.
+            必填字段缺失时。
+        """
         self.stop_if_values_missing("LR0004")
         v = {name: self.get_format_value(name) for name in self._params.keys()}
 
@@ -107,11 +283,52 @@ class LR0004(BSRNRecord):
 
 
 class LR0005(BSRNRecord):
+    """LR0005 radiosonde equipment metadata. / LR0005 探空设备元数据。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0005 from keyword fields.
+
+        Translates from R6 ``LR0005`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR0005`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0005.
+            LR0005 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0005", **kwargs)
 
     def get_bsrn_format(self):
-        """Translates lr0005GetBsrnFormat"""
+        """
+        Emit LR0005 radiosonde block.
+
+        Translates from R function ``lr0005GetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr0005GetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Returns
+        -------
+        str
+            LR0005 ASCII block.
+            LR0005 ASCII 块。
+
+        Raises
+        ------
+        ValueError
+            If mandatory fields are missing.
+            必填字段缺失时。
+        """
         self.stop_if_values_missing("LR0005")
         v = {name: self.get_format_value(name) for name in self._params.keys()}
 
@@ -127,11 +344,52 @@ class LR0005(BSRNRecord):
 
 
 class LR0006(BSRNRecord):
+    """LR0006 ozone instrumentation metadata. / LR0006 臭氧仪器元数据。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0006 from keyword fields.
+
+        Translates from R6 ``LR0006`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR0006`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0006.
+            LR0006 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0006", **kwargs)
 
     def get_bsrn_format(self):
-        """Translates lr0006GetBsrnFormat"""
+        """
+        Emit LR0006 ozone block.
+
+        Translates from R function ``lr0006GetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr0006GetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Returns
+        -------
+        str
+            LR0006 ASCII block.
+            LR0006 ASCII 块。
+
+        Raises
+        ------
+        ValueError
+            If mandatory fields are missing.
+            必填字段缺失时。
+        """
         self.stop_if_values_missing("LR0006")
         v = {name: self.get_format_value(name) for name in self._params.keys()}
 
@@ -147,11 +405,58 @@ class LR0006(BSRNRecord):
 
 
 class LR0007(BSRNRecord):
+    """LR0007 station history / cloud methods metadata. / LR0007 台站历史与云方法元数据。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0007 from keyword fields.
+
+        Translates from R6 ``LR0007`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR0007`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0007.
+            LR0007 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0007", **kwargs)
 
     def get_bsrn_format(self, synop=None):
-        """Translates lr0007GetBsrnFormat"""
+        """
+        Emit LR0007 block with optional SYNOP flag.
+
+        Translates from R function ``lr0007GetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr0007GetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        synop : str or None, optional
+            If not ``None``, first trailing flag becomes ``Y`` (SYNOP linkage).
+            非 ``None`` 时尾部标志行首项为 ``Y``（SYNOP 关联）。
+
+        Returns
+        -------
+        str
+            LR0007 ASCII block.
+            LR0007 ASCII 块。
+
+        Raises
+        ------
+        ValueError
+            If mandatory fields are missing.
+            必填字段缺失时。
+        """
         self.stop_if_values_missing("LR0007")
         v = {name: self.get_format_value(name) for name in self._params.keys()}
 
@@ -178,11 +483,64 @@ class LR0007(BSRNRecord):
 
 
 class LR0008(BSRNRecord):
+    """LR0008 radiation instrument metadata (full or LR0009-style line). / LR0008 辐射仪器元数据。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0008 from keyword fields.
+
+        Translates from R6 ``LR0008`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR0008`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0008.
+            LR0008 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0008", **kwargs)
 
     def get_bsrn_format(self, anyChange=False, printLr=False, LR0009Format=False):
-        """Translates lr0008GetBsrnFormat"""
+        """
+        Emit LR0008 text or compact LR0009-style layout.
+
+        Translates from R function ``lr0008GetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr0008GetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        anyChange : bool, optional
+            With ``printLr``, selects ``*C`` vs ``*U`` header prefix.
+            与 ``printLr`` 配合选择 ``*C``/``*U`` 头前缀。
+        printLr : bool, optional
+            If True, prefix with ``*C0008``/``*U0008`` (or 0009 when ``LR0009Format``).
+            为 True 时加 ``*C0008``/``*U0008``（或 0009）。
+        LR0009Format : bool, optional
+            If True, emit the short single-line instrument header layout.
+            为 True 时输出单行仪器头布局。
+
+        Returns
+        -------
+        str
+            LR0008 or LR0009-style ASCII fragment.
+            LR0008 或 LR0009 式 ASCII 片段。
+
+        Raises
+        ------
+        ValueError
+            If mandatory fields are missing.
+            必填字段缺失时。
+        """
         self.stop_if_values_missing("LR0008")
         v = {name: self.get_format_value(name) for name in self._params.keys()}
 
@@ -218,11 +576,58 @@ class LR0008(BSRNRecord):
 
 
 class LR4000CONST(BSRNRecord):
+    """LR4000CONST calibration certificate constants line. / LR4000CONST 校准常数行。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR4000CONST from keyword fields.
+
+        Translates from R6 ``LR4000CONST`` constructor (``2_R6Class_headers.R``).
+        对应 R6 ``LR4000CONST`` 构造函数（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR4000CONST.
+            LR4000CONST 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR4000CONST", **kwargs)
 
     def get_bsrn_format(self, method=1):
-        """Translates lr4000constGetBsrnFormat"""
+        """
+        Emit ``@LR4000CONST`` wrapped line.
+
+        Translates from R function ``lr4000constGetBsrnFormat`` (``2_R6Class_headers.R``).
+        对应 R 函数 ``lr4000constGetBsrnFormat``（``2_R6Class_headers.R``）。
+
+        Parameters
+        ----------
+        method : int, optional
+            ``1`` uses ``certificateCodeID``; ``2`` builds id from calibration metadata.
+            ``1`` 用 ``certificateCodeID``；``2`` 由校准元数据拼证书编号。
+
+        Returns
+        -------
+        str
+            Wrapped ``@LR4000CONST`` text.
+            折行后的 ``@LR4000CONST`` 文本。
+
+        Raises
+        ------
+        ValueError
+            If ``method`` is invalid, mandatory fields are missing, or certificate id is empty.
+            ``method`` 非法、必填缺失或证书编号为空时。
+        """
         self.stop_if_values_missing("LR4000CONST")
         if method not in [1, 2]:
             raise ValueError("method must be 1 or 2")
@@ -249,11 +654,58 @@ class LR4000CONST(BSRNRecord):
 
 
 class LR0100(BSRNRecord):
+    """LR0100 one-minute radiation / met data block. / LR0100 分钟辐射与气象数据块。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR0100 from keyword fields (includes ``yearMonth`` and minute columns).
+
+        Translates from R6 ``LR0100`` constructor (``2_R6Class_datas.R``).
+        对应 R6 ``LR0100`` 构造函数（``2_R6Class_datas.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR0100.
+            LR0100 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR0100", **kwargs)
 
     def get_bsrn_format(self, changed=True):
-        """Translates lr0100GetBsrnFormat"""
+        """
+        Emit full LR0100 minute table.
+
+        Translates from R function ``lr0100GetBsrnFormat`` (``2_R6Class_datas.R``).
+        对应 R 函数 ``lr0100GetBsrnFormat``（``2_R6Class_datas.R``）。
+
+        Parameters
+        ----------
+        changed : bool, optional
+            If True, ``*C0100`` header; else ``*U0100``.
+            为 True 用 ``*C0100``，否则 ``*U0100``。
+
+        Returns
+        -------
+        str
+            LR0100 data block.
+            LR0100 数据块。
+
+        Raises
+        ------
+        ValueError
+            If vector fields cannot be formatted (unsupported format in ``_format_series_field``).
+            向量字段无法格式化时（``_format_series_field`` 不支持）。
+        """
         res = "*C0100" if changed else "*U0100"
         m = self._format_series_field
 
@@ -287,11 +739,58 @@ class LR0100(BSRNRecord):
 
 
 class LR4000(BSRNRecord):
+    """LR4000 one-minute long-wave dome/body block. / LR4000 分钟长波数据块。"""
+
     def __init__(self, **kwargs):
+        """
+        Build LR4000 from keyword fields.
+
+        Translates from R6 ``LR4000`` constructor (``2_R6Class_datas.R``).
+        对应 R6 ``LR4000`` 构造函数（``2_R6Class_datas.R``）。
+
+        Parameters
+        ----------
+        **kwargs
+            Field values for LR4000.
+            LR4000 字段。
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            When any field fails ``BSRNRecord`` validation.
+            ``BSRNRecord`` 字段校验失败时。
+        """
         super().__init__("LR4000", **kwargs)
 
     def get_bsrn_format(self, changed=True):
-        """Translates lr4000GetBsrnFormat"""
+        """
+        Emit full LR4000 minute table.
+
+        Translates from R function ``lr4000GetBsrnFormat`` (``2_R6Class_datas.R``).
+        对应 R 函数 ``lr4000GetBsrnFormat``（``2_R6Class_datas.R``）。
+
+        Parameters
+        ----------
+        changed : bool, optional
+            If True, ``*C4000`` header; else ``*U4000``.
+            为 True 用 ``*C4000``，否则 ``*U4000``。
+
+        Returns
+        -------
+        str
+            LR4000 data block.
+            LR4000 数据块。
+
+        Raises
+        ------
+        ValueError
+            If vector fields cannot be formatted.
+            向量字段无法格式化时。
+        """
         res = "*C4000" if changed else "*U4000"
         m = self._format_series_field
 
@@ -321,7 +820,10 @@ class LR4000(BSRNRecord):
 
 def lr0001_format(v, listSensor=None):
     """
-    Format LR0001 header lines (R ``lr0001GetBsrnFormat``).
+    Format LR0001 header lines.
+
+    Translates from R function ``lr0001GetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr0001GetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     Parameters
     ----------
@@ -337,6 +839,12 @@ def lr0001_format(v, listSensor=None):
     str
         BSRN-formatted LR0001 text block.
         BSRN 格式的 LR0001 文本块。
+
+    Raises
+    ------
+    ValueError
+        When LR0001 mandatory fields are missing or invalid.
+        LR0001 必填字段缺失或无效时。
     """
     if listSensor is None:
         listSensor = ["2", "3", "4", "5", "21", "22", "23"]
@@ -345,7 +853,10 @@ def lr0001_format(v, listSensor=None):
 
 def lr0002_format(v, _scientistChange, _deputyChange):
     """
-    Format LR0002 header lines (R ``lr0002GetBsrnFormat``).
+    Format LR0002 header lines.
+
+    Translates from R function ``lr0002GetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr0002GetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     Parameters
     ----------
@@ -361,13 +872,22 @@ def lr0002_format(v, _scientistChange, _deputyChange):
     str
         BSRN-formatted LR0002 text block.
         BSRN 格式的 LR0002 文本块。
+
+    Raises
+    ------
+    ValueError
+        When LR0002 mandatory fields are missing or invalid.
+        LR0002 必填字段缺失或无效时。
     """
     return LR0002(**v).get_bsrn_format()
 
 
 def lr0003_format(v, *extra_blocks):
     """
-    Format LR0003 free-text / comment block (R ``lr0003GetBsrnFormat``).
+    Format LR0003 free-text / comment block.
+
+    Translates from R function ``lr0003GetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr0003GetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     Parameters
     ----------
@@ -383,13 +903,22 @@ def lr0003_format(v, *extra_blocks):
     str
         BSRN-formatted LR0003 text block.
         BSRN 格式的 LR0003 文本块。
+
+    Raises
+    ------
+    ValueError
+        When LR0003 mandatory fields are missing or invalid.
+        LR0003 必填字段缺失或无效时。
     """
     return LR0003(**v).get_bsrn_format(*extra_blocks)
 
 
 def lr0004_format(v, _stationDescChange, _horizonChange, azimuth, elevation):
     """
-    Format LR0004 station-description block (R ``lr0004GetBsrnFormat``).
+    Format LR0004 station-description block.
+
+    Translates from R function ``lr0004GetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr0004GetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     Uses ``stationDescChangeMinute`` / ``horizonChangeMinute`` keys in ``v`` (R ``...Minute``).
 
@@ -413,6 +942,12 @@ def lr0004_format(v, _stationDescChange, _horizonChange, azimuth, elevation):
     str
         BSRN-formatted LR0004 text block.
         BSRN 格式的 LR0004 文本块。
+
+    Raises
+    ------
+    ValueError
+        When LR0004 mandatory fields are missing or invalid.
+        LR0004 必填字段缺失或无效时。
     """
     # Merge horizon fields with station metadata. / 合并台站元数据与地平线向量。
     merged = {**v, "azimuth": azimuth, "elevation": elevation}
@@ -421,7 +956,10 @@ def lr0004_format(v, _stationDescChange, _horizonChange, azimuth, elevation):
 
 def lr0005_format(v):
     """
-    Format LR0005 radiosonde metadata (R ``lr0005GetBsrnFormat``).
+    Format LR0005 radiosonde metadata.
+
+    Translates from R function ``lr0005GetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr0005GetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     Parameters
     ----------
@@ -434,13 +972,22 @@ def lr0005_format(v):
     str
         BSRN-formatted LR0005 text block.
         BSRN 格式的 LR0005 文本块。
+
+    Raises
+    ------
+    ValueError
+        When LR0005 mandatory fields are missing or invalid.
+        LR0005 必填字段缺失或无效时。
     """
     return LR0005(**v).get_bsrn_format()
 
 
 def lr0006_format(v):
     """
-    Format LR0006 ozone instrumentation metadata (R ``lr0006GetBsrnFormat``).
+    Format LR0006 ozone instrumentation metadata.
+
+    Translates from R function ``lr0006GetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr0006GetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     Parameters
     ----------
@@ -453,13 +1000,22 @@ def lr0006_format(v):
     str
         BSRN-formatted LR0006 text block.
         BSRN 格式的 LR0006 文本块。
+
+    Raises
+    ------
+    ValueError
+        When LR0006 mandatory fields are missing or invalid.
+        LR0006 必填字段缺失或无效时。
     """
     return LR0006(**v).get_bsrn_format()
 
 
 def lr0007_format(v, synop=None):
     """
-    Format LR0007 station history / methods metadata (R ``lr0007GetBsrnFormat``).
+    Format LR0007 station history / methods metadata.
+
+    Translates from R function ``lr0007GetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr0007GetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     Parameters
     ----------
@@ -475,13 +1031,22 @@ def lr0007_format(v, synop=None):
     str
         BSRN-formatted LR0007 text block.
         BSRN 格式的 LR0007 文本块。
+
+    Raises
+    ------
+    ValueError
+        When LR0007 mandatory fields are missing or invalid.
+        LR0007 必填字段缺失或无效时。
     """
     return LR0007(**v).get_bsrn_format(synop=synop)
 
 
 def lr0008_format(v, anyChange=False, printLr=False, LR0009Format=False):
     """
-    Format LR0008 radiation instrument metadata (R ``lr0008GetBsrnFormat``).
+    Format LR0008 radiation instrument metadata.
+
+    Translates from R function ``lr0008GetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr0008GetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     When ``LR0009Format`` is True, emits the compact LR0009-style layout used inside
     stacked records.
@@ -506,6 +1071,12 @@ def lr0008_format(v, anyChange=False, printLr=False, LR0009Format=False):
     str
         BSRN-formatted LR0008 (or LR0009-style) text block.
         BSRN 格式的 LR0008（或 LR0009 式）文本块。
+
+    Raises
+    ------
+    ValueError
+        When LR0008 mandatory fields are missing or invalid.
+        LR0008 必填字段缺失或无效时。
     """
     return LR0008(**v).get_bsrn_format(
         anyChange=anyChange, printLr=printLr, LR0009Format=LR0009Format
@@ -514,7 +1085,10 @@ def lr0008_format(v, anyChange=False, printLr=False, LR0009Format=False):
 
 def lr4000const_format(v, method=1):
     """
-    Format ``@LR4000CONST`` calibration certificate line(s) (R ``lr4000constGetBsrnFormat``).
+    Format ``@LR4000CONST`` calibration certificate line(s).
+
+    Translates from R function ``lr4000constGetBsrnFormat`` (``0_bsrnFormats_headers.R``).
+    对应 R 函数 ``lr4000constGetBsrnFormat``（``0_bsrnFormats_headers.R``）。
 
     Parameters
     ----------
@@ -530,6 +1104,12 @@ def lr4000const_format(v, method=1):
     str
         Wrapped ``@LR4000CONST`` line(s) for the archive.
         存档用 ``@LR4000CONST`` 折行文本。
+
+    Raises
+    ------
+    ValueError
+        When ``LR4000CONST.get_bsrn_format`` rejects inputs (method or certificate fields).
+        ``LR4000CONST.get_bsrn_format`` 因 method 或证书字段拒绝输入时。
     """
     return LR4000CONST(**v).get_bsrn_format(method=method)
 
@@ -542,7 +1122,10 @@ def lr4000const_format(v, method=1):
 
 def lr0100_data_format(df, changed, yearMonth):
     """
-    Format LR0100 minute-resolution data from a columnar ``DataFrame`` (R ``lr0100GetBsrnFormat``).
+    Format LR0100 minute-resolution data from a columnar ``DataFrame``.
+
+    Translates from R function ``lr0100GetBsrnFormat`` (``0_bsrnFormats_datas.R``).
+    对应 R 函数 ``lr0100GetBsrnFormat``（``0_bsrnFormats_datas.R``）。
 
     Parameters
     ----------
@@ -561,6 +1144,12 @@ def lr0100_data_format(df, changed, yearMonth):
     str
         BSRN-formatted LR0100 data block.
         BSRN 格式的 LR0100 数据块。
+
+    Raises
+    ------
+    ValueError
+        When LR0100 construction or minute formatting fails.
+        LR0100 构造或分钟行格式化失败时。
     """
     # Column dict plus yearMonth for LR0100. / 列字典并附加 yearMonth。
     kwargs = {c: df[c] for c in df.columns}
@@ -570,7 +1159,10 @@ def lr0100_data_format(df, changed, yearMonth):
 
 def lr4000_data_format(df, changed, yearMonth):
     """
-    Format LR4000 minute-resolution data from a columnar ``DataFrame`` (R ``lr4000GetBsrnFormat``).
+    Format LR4000 minute-resolution data from a columnar ``DataFrame``.
+
+    Translates from R function ``lr4000GetBsrnFormat`` (``0_bsrnFormats_datas.R``).
+    对应 R 函数 ``lr4000GetBsrnFormat``（``0_bsrnFormats_datas.R``）。
 
     Parameters
     ----------
@@ -589,6 +1181,12 @@ def lr4000_data_format(df, changed, yearMonth):
     str
         BSRN-formatted LR4000 data block.
         BSRN 格式的 LR4000 数据块。
+
+    Raises
+    ------
+    ValueError
+        When LR4000 construction or minute formatting fails.
+        LR4000 构造或分钟行格式化失败时。
     """
     # Column dict plus yearMonth for LR4000. / 列字典并附加 yearMonth。
     kwargs = {c: df[c] for c in df.columns}

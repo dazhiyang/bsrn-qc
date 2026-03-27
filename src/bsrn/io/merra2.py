@@ -219,6 +219,15 @@ def fetch_rest2(index, station_code):
     aligned : pd.DataFrame
         REST2 inputs reindexed to `index` with columns PS, ALBEDO, ALPHA, BETA, TO3, TQV.
         重新索引到 `index` 的 REST2 输入，含 PS、ALBEDO、ALPHA、BETA、TO3、TQV 列。
+
+    Raises
+    ------
+    ValueError
+        If ``index`` is not a :class:`~pandas.DatetimeIndex` or is empty.
+        ``index`` 非 DatetimeIndex 或为空时。
+    FileNotFoundError
+        If a required monthly parquet is missing on Hugging Face.
+        Hugging Face 上缺少所需月度 parquet 时。
     """
     if not isinstance(index, pd.DatetimeIndex):
         raise ValueError(

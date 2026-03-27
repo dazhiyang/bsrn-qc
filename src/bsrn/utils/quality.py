@@ -18,8 +18,23 @@ _BSRN_MISSING_NUMERIC = (-999.0, -99.9, -99.99)
 _BSRN_MISSING_ATOL = 5e-3
 
 
-def _series_not_missing(s: pd.Series) -> pd.Series:
-    """True where ``s`` is a measured value (not NaN / not BSRN missing codes). / 非缺失测量。"""
+def _series_not_missing(s):
+    """
+    True where ``s`` is a measured value (not NaN / not BSRN missing codes).
+    非缺失测量。
+
+    Parameters
+    ----------
+    s : pandas.Series
+        Input column.
+        输入列。
+
+    Returns
+    -------
+    pandas.Series
+        Boolean mask aligned to ``s.index``.
+        与 ``s.index`` 对齐的布尔掩码。
+    """
     x = pd.to_numeric(s, errors="coerce")
     mask = x.notna().to_numpy(dtype=bool, copy=True)
     vals = x.to_numpy(dtype=np.float64, copy=True)
@@ -28,8 +43,23 @@ def _series_not_missing(s: pd.Series) -> pd.Series:
     return pd.Series(mask, index=s.index)
 
 
-def _series_finite_numeric(s: pd.Series) -> pd.Series:
-    """True where ``s`` coerces to a finite float. / 有限浮点。"""
+def _series_finite_numeric(s):
+    """
+    True where ``s`` coerces to a finite float.
+    有限浮点。
+
+    Parameters
+    ----------
+    s : pandas.Series
+        Input column.
+        输入列。
+
+    Returns
+    -------
+    pandas.Series
+        Boolean mask aligned to ``s.index``.
+        与 ``s.index`` 对齐的布尔掩码。
+    """
     x = pd.to_numeric(s, errors="coerce")
     v = x.to_numpy(dtype=np.float64, copy=False)
     ok = x.notna().to_numpy(dtype=bool, copy=True) & np.isfinite(v)

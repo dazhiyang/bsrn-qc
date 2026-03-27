@@ -71,7 +71,8 @@ def _parse_mcclear(raw_or_buffer):
     return data
 
 
-def _download_mcclear(latitude, longitude, start, end, email, elev=None, timeout=30):
+def _download_mcclear(latitude, longitude, start, end, email, elev=None,
+                      timeout=30):
     """
     Download and parse CAMS McClear from SoDa (used by ``fetch_mcclear`` only).
     从 SoDa 下载并解析 CAMS McClear（仅由 ``fetch_mcclear`` 调用）。
@@ -105,6 +106,18 @@ def _download_mcclear(latitude, longitude, start, end, email, elev=None, timeout
     data : pd.DataFrame
         Parsed McClear data.
         解析后的 McClear 数据。
+
+    Raises
+    ------
+    ValueError
+        If the request starts before 2004-01-01 or the response is not valid CSV.
+        起始日期早于 2004-01-01，或响应非有效 CSV 时。
+    requests.Timeout
+        If the HTTP request exceeds *timeout*.
+        HTTP 请求超过 *timeout* 时。
+    requests.HTTPError
+        If SoDa returns a non-success status after ``raise_for_status``.
+        SoDa 返回非成功 HTTP 状态时。
 
     References
     ----------
@@ -235,6 +248,19 @@ def fetch_mcclear(index, latitude, longitude, elev, email, timeout=30):
         `ghi_clear`, `bni_clear`, and `dhi_clear`.
         重新索引到 `index` 的 McClear 数据，包含
         `ghi_clear`、`bni_clear` 与 `dhi_clear` 列。
+
+    Raises
+    ------
+    ValueError
+        If ``index`` is not a DatetimeIndex, McClear columns are missing, or the
+        downloaded frame has an invalid index.
+        ``index`` 非 DatetimeIndex、McClear 缺列或下载数据索引无效时。
+    requests.Timeout
+        Propagated from :func:`_download_mcclear` when the HTTP call times out.
+        由 :func:`_download_mcclear` 在 HTTP 超时时向上传递。
+    requests.HTTPError
+        Propagated from SoDa on HTTP failure.
+        SoDa HTTP 失败时向上传递。
     """
     if not isinstance(index, pd.DatetimeIndex):
         raise ValueError(

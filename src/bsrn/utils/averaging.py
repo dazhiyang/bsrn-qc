@@ -98,7 +98,8 @@ def _label_grid(index, rule):
     return pd.date_range(lo, hi, freq=rule, inclusive="both", tz=index.tz)
 
 
-def _trim_labels_for_alignment(labels, index, rule, alignment, match_ceiling_labels=True):
+def _trim_labels_for_alignment(labels, index, rule, alignment,
+                               match_ceiling_labels=True):
     """
     Drop edge labels that would mix months (align with floor / ceiling / center grids).
     去掉跨月边界的标签，使与 floor / ceiling / center 网格一致。
@@ -297,7 +298,8 @@ def _aggregate(part, aggfunc):
     return aggfunc(part)
 
 
-def pretty_average(df, rule, alignment="ceiling", aggfunc="mean", resolution=None, match_ceiling_labels=True):
+def pretty_average(df, rule, alignment="ceiling",
+                   aggfunc="mean", resolution=None, match_ceiling_labels=True):
     """
     Average ``df`` over explicit labeled windows (not pandas ``resample`` semantics).
     按显式标签窗聚合（非 ``resample``）。语义与示例见 ``docs/tutorials/3.time_averaging.ipynb``。

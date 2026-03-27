@@ -230,7 +230,8 @@ def _nanstd_no_warn(arr, axis, ddof=0):
     return out
 
 
-def _csd_to_output(index, cloud_flag, method, diagnostics=None, return_diagnostics=False):
+def _csd_to_output(index, cloud_flag, method, diagnostics=None,
+                   return_diagnostics=False):
     """
     Standardize CSD outputs.
     标准化 CSD 输出。
@@ -277,7 +278,8 @@ def _csd_to_output(index, cloud_flag, method, diagnostics=None, return_diagnosti
     return out
 
 
-def _brightsun_component_flag(meas, clear, zenith, window=10, is_ghi=True, return_diagnostics=False):
+def _brightsun_component_flag(meas, clear, zenith, window=10, is_ghi=True,
+                              return_diagnostics=False):
     """
     Bright-Sun component-level clear-sky test for one irradiance component.
     Bright-Sun 分量级晴空判定，用于单一辐照分量。
@@ -494,7 +496,8 @@ def _brightsun_component_flag(meas, clear, zenith, window=10, is_ghi=True, retur
 
 
 def _reno_cloud_flag(ghi, ghi_clear, window=10, mean_lim=75.0, max_lim=75.0,
-                    lower_L_lim=-5.0, upper_L_lim=10.0, sigma_lim=0.005, X_lim=8.0):
+                     lower_L_lim=-5.0, upper_L_lim=10.0, sigma_lim=0.005,
+                     X_lim=8.0):
     """
     Core Reno-style five-criteria cloud flag with an additional valid-clear
     criterion, following csd-library Reno2016CSD logic.
@@ -722,7 +725,8 @@ def ineichen_csd(ghi, ghi_extra, zenith, times=None, return_diagnostics=False):
     return _csd_to_output(idx, cloud_flag, "ineichen", diagnostics, return_diagnostics)
 
 
-def lefevre_csd(ghi, dhi, ghi_extra, zenith, times=None, return_diagnostics=False):
+def lefevre_csd(ghi, dhi, ghi_extra, zenith, times=None,
+                return_diagnostics=False):
     """
     Lefevre2013 clear-sky detection.
     Lefevre2013 晴空检测 [1]_。
@@ -825,7 +829,8 @@ def lefevre_csd(ghi, dhi, ghi_extra, zenith, times=None, return_diagnostics=Fals
     return _csd_to_output(idx, cloud_flag, "lefevre", diagnostics, return_diagnostics)
 
 
-def brightsun_csd(zenith, ghi, ghi_clear, dhi, dhi_clear, times, return_diagnostics=False):
+def brightsun_csd(zenith, ghi, ghi_clear, dhi, dhi_clear, times,
+                  return_diagnostics=False):
     """
     BrightSun2020CSDc clear-sky detection (tri-component style).
     BrightSun2020CSDc 晴空检测（三分量风格） [1]_。

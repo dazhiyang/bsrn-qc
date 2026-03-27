@@ -1,6 +1,6 @@
 """
-Centralized wrappers for BSRN quality control tests.
-BSRN 质量控制测试的集中包装函数。
+High-level QC runners and metadata helpers for BSRN DataFrames.
+面向 BSRN DataFrame 的高层次 QC 运行器与元数据辅助函数。
 """
 
 import numpy as np
@@ -11,7 +11,31 @@ from . import ppl, erl, closure, diff_ratio, k_index, tracker
 
 
 def _get_metadata(station_code, lat, lon, elev):
-    """Internal helper to retrieve station metadata with BSRN lookup fallback."""
+    """
+    Resolve lat/lon/elev from explicit values and/or BSRN station registry.
+    由显式坐标与/或 BSRN 站点注册表解析纬度、经度、海拔。
+
+    Parameters
+    ----------
+    station_code : str or None
+        BSRN station abbreviation, if used for lookup.
+        若用于查找，则为 BSRN 站点缩写。
+    lat, lon, elev : float or None
+        Explicit coordinates; missing pieces may be filled from the registry.
+        显式坐标；缺失项可由注册表补全。
+
+    Returns
+    -------
+    tuple of float
+        ``(lat, lon, elev)`` in degrees and meters.
+        度与米为单位的 ``(lat, lon, elev)``。
+
+    Raises
+    ------
+    ValueError
+        If the station is unknown or coordinates are insufficient.
+        站点未知或坐标不足时。
+    """
     # Case 1: User provided explicit coordinates / 情况 1：用户提供了明确的坐标
     if lat is not None and lon is not None and elev is not None:
         return lat, lon, elev
@@ -40,7 +64,7 @@ def _get_metadata(station_code, lat, lon, elev):
     )
 
 
-def run_qc(df, station_code=None, lat=None, lon=None, elev=None, 
+def run_qc(df, station_code=None, lat=None, lon=None, elev=None,
            tests=('ppl', 'erl', 'closure', 'diff_ratio', 'k_index', 'tracker')):
     r"""
     Run a suite of QC tests on a BSRN DataFrame with optimized geometry calculations [1]_ [2]_.
@@ -70,6 +94,16 @@ def run_qc(df, station_code=None, lat=None, lon=None, elev=None,
     df : pd.DataFrame
         DataFrame with added QC flag columns (0 = Pass, 1 = Fail).
         增加了 QC 标记列的 DataFrame（0 = 通过，1 = 失败）。
+
+    Raises
+    ------
+    TypeError
+        If ``df`` is not a :class:`~pandas.DataFrame`.
+        ``df`` 非 DataFrame 时。
+    ValueError
+        If the index is not a :class:`~pandas.DatetimeIndex` or metadata resolution fails
+        (see :func:`_get_metadata`).
+        索引非 DatetimeIndex，或元数据解析失败（见 :func:`_get_metadata`）时。
 
     References
     ----------
@@ -147,7 +181,8 @@ def run_qc(df, station_code=None, lat=None, lon=None, elev=None,
     return df
 
 
-def test_physically_possible(df, station_code=None, lat=None, lon=None, elev=None):
+def test_physically_possible(df, station_code=None, lat=None,
+                             lon=None, elev=None):
     """
     Run all Phase 1 (Physically Possible) checks on a DataFrame.
     对 DataFrame 运行所有 1 级（物理可能）检查。
@@ -166,11 +201,18 @@ def test_physically_possible(df, station_code=None, lat=None, lon=None, elev=Non
     df : pd.DataFrame
         DataFrame with added 'flagPPL*' flag columns.
         增加了 'flagPPL*' 标记列的 DataFrame。
+
+    Raises
+    ------
+    TypeError, ValueError
+        Same as :func:`run_qc` for the ``ppl`` test subset.
+        与 :func:`run_qc` 在仅运行 ``ppl`` 时相同。
     """
     return run_qc(df, station_code, lat, lon, elev, tests=('ppl',))
 
 
-def test_extremely_rare(df, station_code=None, lat=None, lon=None, elev=None):
+def test_extremely_rare(df, station_code=None, lat=None,
+                        lon=None, elev=None):
     """
     Run all Phase 2 (Extremely Rare) checks on a DataFrame.
     对 DataFrame 运行所有 2 级（极罕见）检查。
@@ -189,11 +231,18 @@ def test_extremely_rare(df, station_code=None, lat=None, lon=None, elev=None):
     df : pd.DataFrame
         DataFrame with added 'flagERL*' flag columns.
         增加了 'flagERL*' 标记列的 DataFrame。
+
+    Raises
+    ------
+    TypeError, ValueError
+        Same as :func:`run_qc` for the ``erl`` test subset.
+        与 :func:`run_qc` 在仅运行 ``erl`` 时相同。
     """
     return run_qc(df, station_code, lat, lon, elev, tests=('erl',))
 
 
-def test_closure(df, station_code=None, lat=None, lon=None, elev=None):
+def test_closure(df, station_code=None, lat=None,
+                 lon=None, elev=None):
     """
     Run all Phase 3 (Closure) consistency checks on a DataFrame.
     对 DataFrame 运行所有 3 级（闭合）一致性检查。
@@ -212,11 +261,18 @@ def test_closure(df, station_code=None, lat=None, lon=None, elev=None):
     df : pd.DataFrame
         DataFrame with added 'flag3lowSZA' and 'flag3highSZA' flag columns.
         增加了 'flag3lowSZA' 和 'flag3highSZA' 标记列的 DataFrame。
+
+    Raises
+    ------
+    TypeError, ValueError
+        Same as :func:`run_qc` for the ``closure`` test subset.
+        与 :func:`run_qc` 在仅运行 ``closure`` 时相同。
     """
     return run_qc(df, station_code, lat, lon, elev, tests=('closure',))
 
 
-def test_diff_ratio(df, station_code=None, lat=None, lon=None, elev=None):
+def test_diff_ratio(df, station_code=None, lat=None,
+                    lon=None, elev=None):
     """
     Run all Phase 3 Diffuse Ratio (k) consistency checks on a DataFrame.
     对 DataFrame 运行所有 3 级散射分数 (k) 一致性检查。
@@ -235,11 +291,18 @@ def test_diff_ratio(df, station_code=None, lat=None, lon=None, elev=None):
     df : pd.DataFrame
         DataFrame with added 'flagKKt', 'flagKlowSZA', 'flagKhighSZA' flag columns.
         增加了 'flagKKt'、'flagKlowSZA'、'flagKhighSZA' 标记列的 DataFrame。
+
+    Raises
+    ------
+    TypeError, ValueError
+        Same as :func:`run_qc` for the ``diff_ratio`` test subset.
+        与 :func:`run_qc` 在仅运行 ``diff_ratio`` 时相同。
     """
     return run_qc(df, station_code, lat, lon, elev, tests=('diff_ratio',))
 
 
-def test_k_index(df, station_code=None, lat=None, lon=None, elev=None):
+def test_k_index(df, station_code=None, lat=None,
+                 lon=None, elev=None):
     """
     Run all Phase 3 Radiometric Index (k-index) checks on a DataFrame.
     对 DataFrame 运行所有 3 级辐射指数 (k-index) 检查。
@@ -258,11 +321,18 @@ def test_k_index(df, station_code=None, lat=None, lon=None, elev=None):
     df : pd.DataFrame
         DataFrame with added 'flagKbKt', 'flagKb', 'flagKt' flag columns.
         增加了 'flagKbKt'、'flagKb'、'flagKt' 标记列的 DataFrame。
+
+    Raises
+    ------
+    TypeError, ValueError
+        Same as :func:`run_qc` for the ``k_index`` test subset.
+        与 :func:`run_qc` 在仅运行 ``k_index`` 时相同。
     """
     return run_qc(df, station_code, lat, lon, elev, tests=('k_index',))
 
 
-def test_tracker_off(df, station_code=None, lat=None, lon=None, elev=None):
+def test_tracker_off(df, station_code=None, lat=None,
+                     lon=None, elev=None):
     """
     Run Tracker-off detection on a DataFrame.
     运行跟踪器失准检测。
@@ -281,5 +351,11 @@ def test_tracker_off(df, station_code=None, lat=None, lon=None, elev=None):
     df : pd.DataFrame
         DataFrame with added 'flagTracker' flag column.
         增加了 'flagTracker' 标记列的 DataFrame。
+
+    Raises
+    ------
+    TypeError, ValueError
+        Same as :func:`run_qc` for the ``tracker`` test subset.
+        与 :func:`run_qc` 在仅运行 ``tracker`` 时相同。
     """
     return run_qc(df, station_code, lat, lon, elev, tests=('tracker',))

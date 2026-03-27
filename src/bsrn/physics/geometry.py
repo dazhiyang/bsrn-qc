@@ -1,8 +1,10 @@
 """
-solar geometry calculations.
-Provides high-precision solar position and extraterrestrial radiation.
-太阳几何计算。
-提供高精度太阳位置和地外辐射计算。
+Solar geometry and extraterrestrial irradiance helpers.
+太阳几何与地外辐照度辅助函数。
+
+Uses the internal SPA implementation in :mod:`bsrn.physics.spa` for
+:func:`get_solar_position`; public callers use this module only.
+太阳位置由 :mod:`bsrn.physics.spa` 内部 SPA 实现支撑；对外请仅使用本模块。
 """
 
 import pandas as pd
@@ -27,6 +29,13 @@ def get_pressure_from_elevation(elev):
     pressure : numeric
         Surface pressure. [Pa]
         地表气压。[帕]
+
+    Raises
+    ------
+    ValueError
+        If *elev* is non-finite, or ``elev >= 44331.514`` m (outside the valid
+        standard-atmosphere range for this formula).
+        *elev* 非有限值，或超出该公式有效标准大气范围（``elev >= 44331.514`` m）时。
 
     References
     ----------
@@ -78,6 +87,13 @@ def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
     solpos : pd.DataFrame
         DataFrame with columns 'zenith' ($Z$), 'apparent_zenith', 'azimuth' ($\phi$). [degrees]
         包含 'zenith' ($Z$)、'apparent_zenith'、'azimuth' ($\phi$) 的 DataFrame。[度]
+
+    Raises
+    ------
+    ValueError
+        If *pressure* is provided and is non-positive or non-finite, or if
+        :func:`get_pressure_from_elevation` rejects *elev* when *pressure* is omitted.
+        给定 *pressure* 时非正或非有限，或省略 *pressure* 时 :func:`get_pressure_from_elevation` 拒绝 *elev* 时。
 
     References
     ----------
@@ -266,6 +282,8 @@ def add_solpos_columns(df, station_code=None, lat=None, lon=None, elev=None):
     df["azimuth"] = solpos["azimuth"]
     
     df["bni_extra"] = get_bni_extra(df.index)
+    df["ghi_extra"] = get_ghi_extra(df.index, df["zenith"])
+    return df
 
 
 # ---------------------------------------------------------------------------
@@ -335,6 +353,13 @@ def in_satellite_disk(lat, lon, sat_key):
     covered : bool or boolean array
         True if covered, False otherwise.
         若在覆盖范围内则返回 True，否则返回 False。
+
+    Raises
+    ------
+    KeyError
+        If *sat_key* is missing from the satellite longitude table
+        (see ``GEO_SATELLITE_LON_DEG``).
+        *sat_key* 不在卫星经度表（``GEO_SATELLITE_LON_DEG``）中时。
     """
     # Calculate angular distance to the sub-satellite point / 计算到本星下点的大圆角度
     angle = _central_angle_deg(

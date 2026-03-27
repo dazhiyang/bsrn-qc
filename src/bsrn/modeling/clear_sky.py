@@ -39,6 +39,12 @@ def get_relative_airmass(zenith, model='kastenyoung1989'):
         zenith angle greater than 90 degrees. [unitless]
         海平面处的相对大气质量。对于任何大于 90 度的天顶角返回 NaN 值。
 
+    Raises
+    ------
+    ValueError
+        If *model* is not ``'kastenyoung1989'`` or ``'kasten1966'``.
+        *model* 非 ``'kastenyoung1989'`` 或 ``'kasten1966'`` 时。
+
     References
     ----------
     .. [1] Kasten, F. (1965). A New Table and Approximation Formula for the
@@ -195,6 +201,13 @@ def rest2_model(index, zenith, rest2_inputs, no2=0.0002):
     dhi_clear : np.ndarray
         Clear-sky diffuse horizontal irradiance ($D_{hc}$). [W/m^2]
         晴空水平散射辐照度 ($D_{hc}$)。[瓦/平方米]
+
+    Raises
+    ------
+    ValueError
+        If ``rest2_inputs`` is not a :class:`~pandas.DataFrame`, row counts differ,
+        or required columns are missing.
+        ``rest2_inputs`` 非 DataFrame、行数不一致或缺少所需列时。
 
     References
     ----------
