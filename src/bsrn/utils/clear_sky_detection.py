@@ -149,6 +149,7 @@ def _window_sufficient_valid(window_mat):
     return n_valid >= min_required
 
 
+
 def _safe_divide(num, den):
     """
     Safe division with NaN on invalid entries.
@@ -434,17 +435,26 @@ def _brightsun_component_flag(meas, clear, zenith, window=10, is_ghi=True,
 
     # First differences for slope-based criteria and line-length.
     # 一阶差分（斜率相关判据与线长度使用）。
-    meas_diff = np.diff(m_win, axis=1)
-    clear_diff = np.diff(c_win, axis=1)
-    meas_slope_nstd = _safe_divide(_nanstd_no_warn(meas_diff, axis=1, ddof=0), meas_mean)
-    meas_line = np.nansum(np.sqrt(meas_diff * meas_diff + 1.0), axis=1)
-    clear_line = np.nansum(np.sqrt(clear_diff * clear_diff + 1.0), axis=1)
+    # MATLAB: diff along axis-0 (rows) + NaN-row pad → (n, window)
+    # MATLAB：沿 axis-0（行）差分 + NaN 行填充 → (n, window)
+    _pad = lambda m: np.vstack([np.diff(m, axis=0),
+                                np.full((1, m.shape[1]), np.nan)])
+    meas_diff = _pad(m_win)
+    clear_diff = _pad(c_win)
+    meas_slope_nstd = _safe_divide(
+        _nanstd_no_warn(meas_diff, axis=1, ddof=0), meas_mean)
+    meas_line = np.nansum(
+        np.sqrt(meas_diff * meas_diff + 1.0), axis=1)
+    clear_line = np.nansum(
+        np.sqrt(clear_diff * clear_diff + 1.0), axis=1)
     meas_slope_nstd[~sufficient_m] = np.nan
     meas_line[~sufficient_m] = np.nan
     clear_line[~sufficient_c] = np.nan
 
-    line_diff_norm = _safe_divide(meas_line - clear_line, clear_line)
-    X = _nanmax_no_warn(np.abs(meas_diff - clear_diff), axis=1)
+    line_diff_norm = _safe_divide(
+        meas_line - clear_line, clear_line)
+    X = _nanmax_no_warn(
+        np.abs(meas_diff - clear_diff), axis=1)
     line_diff_norm[~sufficient_m | ~sufficient_c] = np.nan
     X[~sufficient_m | ~sufficient_c] = np.nan
 
@@ -554,18 +564,26 @@ def _reno_cloud_flag(ghi, ghi_clear, window=10, mean_lim=75.0, max_lim=75.0,
 
     # Along-window differences and derived stats: slope variability (c4) and line length (c3).
     # 沿窗口的差分及派生量：斜率变异性（c4）与折线长度差（c3）。
-    meas_diff = np.diff(ghi_window, axis=1)
-    clear_diff = np.diff(clear_window, axis=1)
+    # MATLAB: diff along axis-0 (rows) + NaN-row pad → (n, window)
+    # MATLAB：沿 axis-0（行）差分 + NaN 行填充 → (n, window)
+    _pad = lambda m: np.vstack([np.diff(m, axis=0),
+                                np.full((1, m.shape[1]), np.nan)])
+    meas_diff = _pad(ghi_window)
+    clear_diff = _pad(clear_window)
 
-    meas_slope_nstd = _safe_divide(_nanstd_no_warn(meas_diff, axis=1, ddof=0), meas_mean)
-    meas_line = np.nansum(np.sqrt(meas_diff * meas_diff + 1.0), axis=1)
-    clear_line = np.nansum(np.sqrt(clear_diff * clear_diff + 1.0), axis=1)
+    meas_slope_nstd = _safe_divide(
+        _nanstd_no_warn(meas_diff, axis=1, ddof=0), meas_mean)
+    meas_line = np.nansum(
+        np.sqrt(meas_diff * meas_diff + 1.0), axis=1)
+    clear_line = np.nansum(
+        np.sqrt(clear_diff * clear_diff + 1.0), axis=1)
     meas_slope_nstd[~sufficient_ghi] = np.nan
     meas_line[~sufficient_ghi] = np.nan
     clear_line[~sufficient_clear] = np.nan
 
     line_diff = meas_line - clear_line
-    X = _nanmax_no_warn(np.abs(meas_diff - clear_diff), axis=1)
+    X = _nanmax_no_warn(
+        np.abs(meas_diff - clear_diff), axis=1)
     line_diff[~sufficient_ghi | ~sufficient_clear] = np.nan
     X[~sufficient_ghi | ~sufficient_clear] = np.nan
 
@@ -714,7 +732,9 @@ def ineichen_csd(ghi, ghi_extra, zenith, times=None, return_diagnostics=False):
     # assigns 1 where modified clearness is low (cloudy). So: kt_prime < 0.65 -> cloudy (cloud_flag=1).
     cloud_flag = np.zeros(len(ghi), dtype=float)
     cloud_flag[kt_prime < 0.65] = 1.0
-    bad = np.isnan(ghi) | np.isnan(ghi_extra) | np.isnan(zenith)
+    bad = (np.isnan(ghi) | np.isnan(ghi_extra)
+           | np.isnan(zenith) | (zenith >= 90.0)
+           | (ghi_extra <= 0.0))
     cloud_flag[bad] = np.nan
 
     diagnostics = {"kt": kt, "M": M, "kt_prime": kt_prime}
@@ -829,44 +849,85 @@ def lefevre_csd(ghi, dhi, ghi_extra, zenith, times=None,
     return _csd_to_output(idx, cloud_flag, "lefevre", diagnostics, return_diagnostics)
 
 
-def brightsun_csd(zenith, ghi, ghi_clear, dhi, dhi_clear, times,
-                  return_diagnostics=False):
+def _optimise_alpha(meas, clear):
     """
-    BrightSun2020CSDc clear-sky detection (tri-component style).
-    BrightSun2020CSDc 晴空检测（三分量风格） [1]_。
+    Closed-form RMSE-optimal scalar alpha: min_a sqrt(mean((y-a*x)^2)).
+    闭式 RMSE 最优标量 alpha。
+
+    Mathematically equivalent to MATLAB ``fminsearch`` on the same
+    scalar-alpha RMSE objective.
+    数学上等价于 MATLAB 对同一标量 RMSE 目标调用 ``fminsearch``。
+
+    Parameters
+    ----------
+    meas : np.ndarray
+        Measured irradiance (clear-period subset).
+        实测辐照度（晴空子集）。
+    clear : np.ndarray
+        Clear-sky irradiance (clear-period subset).
+        晴空辐照度（晴空子集）。
+
+    Returns
+    -------
+    float or None
+        Optimal alpha, or None if denominator is non-positive.
+        最优 alpha，若分母非正则返回 None。
+    """
+    denom = np.nansum(clear * clear)
+    if not np.isfinite(denom) or denom <= 0:
+        return None
+    alpha = np.nansum(meas * clear) / denom
+    if not np.isfinite(alpha):
+        return None
+    return float(alpha)
+
+
+
+def brightsun_csd(zenith, ghi, ghi_clear, dhi, dhi_clear,
+                  times, return_diagnostics=False):
+    """
+    BrightSun2020CSDc clear-sky detection (tri-component).
+    BrightSun2020CSDc 晴空检测（三分量） [1]_。
 
     MATLAB mapping:
-    `BrightSun2020CSDc(zen, ghi, ghics, dif, difcs, LST, plot_figure)`.
-    MATLAB 变量映射：`zen -> zenith`, `ghics -> ghi_clear`, `dif -> dhi`, `difcs -> dhi_clear`。
+    ``BrightSun2020CSDc(zen, ghi, ghics, dif, difcs, LST)``.
+    MATLAB 变量映射：``zen -> zenith``, ``ghics -> ghi_clear``,
+    ``dif -> dhi``, ``difcs -> dhi_clear``。
 
-    Notes
-    -----
-    This implementation preserves the tri-component spirit used in the MATLAB
-    routine: GHI and DHI via Reno-style criteria + DNI via clear-sky beam index
-    threshold varying with zenith, then combines the three flags.
-    此实现保留 MATLAB 三分量思路：GHI、DHI 采用 Reno 风格判据，DNI 采用随天顶角变化的
-    晴空束辐照指数阈值，最终合并三者判据。
+    The method proceeds in four stages matching the MATLAB routine:
+    该方法按四个阶段执行（与 MATLAB 例程一致）：
+
+    1. Initial Reno-style CSD guess for candidate clear periods.
+       初始 Reno 风格 CSD 猜测。
+    2. Daily clear-sky optimisation scales GHI, DHI, BNI
+       clear-sky curves independently (alpha bounds
+       ``[0.7, 1.5]`` for GHI/BNI, ``[0.3, 1.5]`` for DHI).
+       每日晴空优化独立缩放 GHI、DHI、BNI 晴空曲线。
+    3. Tri-component analysis on optimised curves.
+       基于优化曲线的三分量分析。
+    4. Cascaded duration filters (90/30/10-min).
+       级联持续时间滤波器。
 
     Parameters
     ----------
     zenith : array-like
-        Solar zenith angle (`zen -> zenith`). [degrees]
-        太阳天顶角 (`zen -> zenith`)。[度]
+        Solar zenith angle. [degrees]
+        太阳天顶角。[度]
     ghi : array-like
-        Global horizontal irradiance (`ghi`). [W/m^2]
-        水平总辐照度 (`ghi`)。[瓦/平方米]
+        Global horizontal irradiance. [W/m^2]
+        水平总辐照度。[瓦/平方米]
     ghi_clear : array-like
-        Clear-sky global horizontal irradiance (`ghics -> ghi_clear`). [W/m^2]
-        晴空水平总辐照度 (`ghics -> ghi_clear`)。[瓦/平方米]
+        Clear-sky GHI. [W/m^2]
+        晴空水平总辐照度。[瓦/平方米]
     dhi : array-like
-        Diffuse horizontal irradiance (`dif -> dhi`). [W/m^2]
-        水平散射辐照度 (`dif -> dhi`)。[瓦/平方米]
+        Diffuse horizontal irradiance. [W/m^2]
+        水平散射辐照度。[瓦/平方米]
     dhi_clear : array-like
-        Clear-sky diffuse horizontal irradiance (`difcs -> dhi_clear`). [W/m^2]
-        晴空水平散射辐照度 (`difcs -> dhi_clear`)。[瓦/平方米]
+        Clear-sky DHI. [W/m^2]
+        晴空水平散射辐照度。[瓦/平方米]
     times : array-like or pd.DatetimeIndex
-        Time index (MATLAB `LST` equivalent input sequence).
-        时间索引（对应 MATLAB `LST` 输入序列）。
+        Time index (MATLAB ``LST`` equivalent).
+        时间索引。
     return_diagnostics : bool, default False
         If True, include method diagnostics.
         若为 True，返回方法诊断量。
@@ -874,8 +935,9 @@ def brightsun_csd(zenith, ghi, ghi_clear, dhi, dhi_clear, times,
     Returns
     -------
     out : pd.DataFrame
-        Standardized output with `is_clearsky`, `cloud_flag`, and optional diagnostics.
-        标准化输出，含 `is_clearsky`、`cloud_flag` 及可选诊断量。
+        Columns: ``is_clearsky``, ``cloud_flag`` (duration-filtered),
+        ``method``; diagnostics when requested.
+        列：``is_clearsky``、``cloud_flag``（经滤波）、``method``。
 
     Raises
     ------
@@ -885,112 +947,184 @@ def brightsun_csd(zenith, ghi, ghi_clear, dhi, dhi_clear, times,
 
     References
     ----------
-    .. [1] Bright, J. M., Sun, X., Gueymard, C. A., Acord, B., Wang, P., &
-       Engerer, N. A. (2020). Bright-Sun: A globally applicable 1-min
-       irradiance clear-sky detection model. Renewable and Sustainable
-       Energy Reviews, 121, 109706.
-       (Implemented following the MATLAB csd-library BrightSun2020CSDc routine).
+    .. [1] Bright, J. M., Sun, X., Gueymard, C. A., Acord, B.,
+       Wang, P., & Engerer, N. A. (2020). Bright-Sun: A globally
+       applicable 1-min irradiance clear-sky detection model.
+       Renewable and Sustainable Energy Reviews, 121, 109706.
     """
     zenith = _as_1d_array(zenith, "zenith")
     ghi = _as_1d_array(ghi, "ghi", n=len(zenith))
-    ghi_clear = _as_1d_array(ghi_clear, "ghi_clear", n=len(zenith))
+    ghi_clear = _as_1d_array(
+        ghi_clear, "ghi_clear", n=len(zenith))
     dhi = _as_1d_array(dhi, "dhi", n=len(zenith))
-    dhi_clear = _as_1d_array(dhi_clear, "dhi_clear", n=len(zenith))
+    dhi_clear = _as_1d_array(
+        dhi_clear, "dhi_clear", n=len(zenith))
     idx = _resolve_index(times, len(zenith))
+    n_output = len(zenith)
 
+    # Cap DHI at GHI / 限制 DHI 不超过 GHI
     dhi = np.minimum(dhi, ghi)
     dhi_clear = np.minimum(dhi_clear, ghi_clear)
 
-    # BrightSun daily optimization (MATLAB spirit): scale clear-sky DHI per day
-    # using an initial GHI Reno guess, with irradiance threshold and alpha bounds.
-    # This mitigates model bias that otherwise over-flags DHI criteria.
-    dhi_clear_eff = np.array(dhi_clear, copy=True)
-    if isinstance(idx, pd.DatetimeIndex):
-        csd_initial_ghi, _ = _reno_cloud_flag(
-            ghi,
-            ghi_clear,
-            mean_lim=75.0,
-            max_lim=75.0,
-            lower_L_lim=-5.0,
-            upper_L_lim=10.0,
-            sigma_lim=0.1,
-            X_lim=8.0,
-        )
-        day_key = idx.floor("D")
-        for d in np.unique(day_key):
-            day_mask = day_key == d
-            use = (
-                day_mask
-                & np.isfinite(csd_initial_ghi)
-                & (csd_initial_ghi == 0.0)
-                & np.isfinite(ghi)
-                & np.isfinite(dhi)
-                & np.isfinite(dhi_clear)
-                & (ghi >= 30.0)
-                & (dhi >= 30.0)
-            )
-            if np.sum(use) <= 60:
-                continue
-            x = dhi_clear[use]
-            y = dhi[use]
-            denom = np.nansum(x * x)
-            if not np.isfinite(denom) or denom <= 0:
-                continue
-            alpha = np.nansum(y * x) / denom
-            if not np.isfinite(alpha):
-                continue
-            alpha = float(np.clip(alpha, 0.3, 1.5))
-            dhi_clear_eff[day_mask] = dhi_clear_eff[day_mask] * alpha
-
+    # BNI from closure / 由闭合计算 BNI
     mu0 = np.cos(np.radians(zenith))
     bni = _safe_divide(ghi - dhi, mu0)
-    bni_clear = _safe_divide(ghi_clear - dhi_clear_eff, mu0)
+    bni_clear = _safe_divide(ghi_clear - dhi_clear, mu0)
 
-    # Tri-component BrightSun: relative limits, normalized line_diff, zenith-dependent (MATLAB BrightSunCriteria).
+    # NaN removal (MATLAB pattern) / 删除 NaN 行
+    idxs_nan = (np.isnan(ghi) | np.isnan(bni)
+                | np.isnan(dhi))
+    not_nan = ~idxs_nan
+
+    ghi_c = ghi[not_nan].copy()
+    bni_c = bni[not_nan].copy()
+    dhi_c = dhi[not_nan].copy()
+    ghics_c = ghi_clear[not_nan].copy()
+    bnics_c = bni_clear[not_nan].copy()
+    dhics_c = dhi_clear[not_nan].copy()
+    zen_c = zenith[not_nan].copy()
+    n_clean = len(ghi_c)
+
+    times_c = None
+    if isinstance(idx, pd.DatetimeIndex):
+        times_c = idx[not_nan]
+
+    # ---- Stage 1: initial Reno guess (sigma_lim=0.1) ----
+    # 阶段 1：初始 Reno 猜测
+    csd_initial, _ = _reno_cloud_flag(
+        ghi_c, ghics_c,
+        mean_lim=75.0, max_lim=75.0,
+        lower_L_lim=-5.0, upper_L_lim=10.0,
+        sigma_lim=0.1, X_lim=8.0,
+    )
+    csd_initial = np.where(
+        np.isfinite(csd_initial), csd_initial, 1.0)
+
+    # ---- Stage 2: daily optimisation (GHI, DHI, BNI) ----
+    # 阶段 2：每日优化
+    opt_thres = 30.0
+    upper_a = 1.5
+    lower_a = 0.7
+    lower_a_dhi = 0.3
+
+    if times_c is not None and len(times_c) > 0:
+        day_key = times_c.floor("D")
+        for d in np.unique(day_key):
+            ix = np.where(day_key == d)[0]
+            csdd = csd_initial[ix].copy()
+            csdd[(dhi_c[ix] < opt_thres)
+                 | (ghi_c[ix] < opt_thres)] = 1.0
+            cm = csdd == 0.0
+            if np.sum(cm) <= 60:
+                continue
+            # GHI / GHI 优化
+            a = _optimise_alpha(ghi_c[ix][cm],
+                                ghics_c[ix][cm])
+            if a is not None:
+                ghics_c[ix] *= np.clip(a, lower_a, upper_a)
+            # DHI / DHI 优化
+            a = _optimise_alpha(dhi_c[ix][cm],
+                                dhics_c[ix][cm])
+            if a is not None:
+                dhics_c[ix] *= np.clip(a, lower_a_dhi,
+                                       upper_a)
+            # BNI / BNI 优化
+            a = _optimise_alpha(bni_c[ix][cm],
+                                bnics_c[ix][cm])
+            if a is not None:
+                bnics_c[ix] *= np.clip(a, lower_a, upper_a)
+
+    # ---- Stage 3: tri-component analysis ----
+    # 阶段 3：三分量分析
     cloud_ghi = _brightsun_component_flag(
-        ghi, ghi_clear, zenith, window=10, is_ghi=True
-    )
+        ghi_c, ghics_c, zen_c, window=10, is_ghi=True)
     cloud_dhi = _brightsun_component_flag(
-        dhi, dhi_clear_eff, zenith, window=10, is_ghi=False
-    )
+        dhi_c, dhics_c, zen_c, window=10, is_ghi=False)
 
+    # BNI: zenith-dependent kcb threshold
+    # BNI：随天顶角变化的 kcb 阈值
     z_ref = np.arange(30.0, 90.01, 0.01)
     kc_lims = np.flip(np.linspace(0.5, 0.9, len(z_ref)))
-    inds = np.searchsorted(z_ref, np.clip(zenith, z_ref[0], z_ref[-1]), side="left")
+    inds = np.searchsorted(
+        z_ref, np.clip(zen_c, z_ref[0], z_ref[-1]),
+        side="left")
     inds = np.clip(inds, 0, len(z_ref) - 1)
-    kc_lim = kc_lims[inds]
-    kcb = _safe_divide(bni, bni_clear)
-    cloud_bni = np.ones(len(zenith), dtype=float)
-    cloud_bni[kcb > kc_lim] = 0.0
+    kc_lim_c = kc_lims[inds]
+    kcb_c = _safe_divide(bni_c, bnics_c)
+    cloud_bni = np.ones(n_clean, dtype=float)
+    cloud_bni[kcb_c > kc_lim_c] = 0.0
 
-    cloud_flag = np.ones(len(zenith), dtype=float)
-    cloud_flag[(cloud_ghi + cloud_dhi + cloud_bni) == 0] = 0.0
+    csd_overall = np.ones(n_clean, dtype=float)
+    csd_overall[(cloud_ghi + cloud_dhi + cloud_bni) == 0] = 0.0
 
-    bad = (
-        np.isnan(zenith)
-        | np.isnan(ghi)
-        | np.isnan(ghi_clear)
-        | np.isnan(dhi)
-        | np.isnan(dhi_clear)
-    )
-    cloud_flag[bad] = np.nan
-    cloud_bni[bad] = np.nan
+    # ---- Stage 4: duration filters ----
+    # 阶段 4：持续时间滤波器
+    # Inline centred Hankel filter: sum forward window, shift to centre
+    # 内联居中 Hankel 滤波器：前向窗口求和后平移居中
+    def _dur(flags, w, tol):
+        h = np.nansum(_hankel_window(flags, w), axis=1)
+        h = np.concatenate([np.full(w // 2, np.nan),
+                            h[:n_clean - w // 2]])
+        out = np.zeros(n_clean, dtype=float)
+        out[h > tol] = 1.0
+        return out
+
+    # 1st: 90 min, tolerance 10 / 第一滤波器
+    csd_1st = _dur(csd_overall, 90, 10)
+
+    # Sunrise/sunset proximity (zen ≈ 85°)
+    # 日出日落邻近
+    ss_idx = np.where(np.round(zen_c) == 85)[0]
+    if len(ss_idx) > 0:
+        all_i = np.arange(n_clean)
+        ss_s = np.sort(ss_idx)
+        pos = np.searchsorted(ss_s, all_i)
+        pos = np.clip(pos, 0, len(ss_s) - 1)
+        pl = np.clip(pos - 1, 0, len(ss_s) - 1)
+        dist_ss = np.minimum(
+            np.abs(all_i - ss_s[pos]),
+            np.abs(all_i - ss_s[pl]))
+    else:
+        dist_ss = np.full(n_clean, n_clean)
+    csd_1st[dist_ss < 90] = 0.0
+
+    # 2nd: 30 min, tolerance 0 / 第二滤波器
+    csd_2nd = _dur(csd_overall, 30, 0)
+
+    # 3rd: 10 min, tolerance 2 (sunrise/sunset override)
+    # 第三滤波器（日出日落覆盖）
+    csd_3rd = _dur(csd_overall, 10, 2)
+    csd_2nd[(csd_3rd == 0) & (dist_ss < 90)] = 0.0
+
+    # Final: all must agree clear / 最终合并
+    csd_filtered = np.ones(n_clean, dtype=float)
+    csd_filtered[
+        (csd_overall + csd_1st + csd_2nd) == 0] = 0.0
+
+    # ---- Map back to full length ----
+    # 映射回完整长度
+    cloud_flag = np.ones(n_output, dtype=float)
+    cloud_flag[not_nan] = csd_filtered
+    cloud_flag[idxs_nan] = np.nan
+
+    def _expand(arr):
+        full = np.full(n_output, np.nan)
+        full[not_nan] = arr
+        return full
 
     diagnostics = {
-        "cloud_ghi": cloud_ghi,
-        "cloud_dhi": cloud_dhi,
-        "cloud_bni": cloud_bni,
-        "kcb": kcb,
-        "kc_lim": kc_lim,
+        "cloud_ghi": _expand(cloud_ghi),
+        "cloud_dhi": _expand(cloud_dhi),
+        "cloud_bni": _expand(cloud_bni),
+        "kcb": _expand(kcb_c),
+        "kc_lim": _expand(kc_lim_c),
         "mu0": mu0,
         "bni": bni,
         "bni_clear": bni_clear,
     }
-    for key in diagnostics:
-        arr = np.asarray(diagnostics[key], dtype=float)
-        arr[bad] = np.nan
-        diagnostics[key] = arr
-    return _csd_to_output(idx, cloud_flag, "brightsun", diagnostics, return_diagnostics)
+    return _csd_to_output(
+        idx, cloud_flag, "brightsun",
+        diagnostics, return_diagnostics)
 
 
 def detect_clearsky(method, **kwargs):
