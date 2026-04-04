@@ -110,7 +110,7 @@ Other important features include:
 - **Cloud Enhancement Event (CEE) Detection:** Killinger, Yang, and Gueymard methods to detect events when measured GHI significantly exceeds references.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
 - **Robust Retrieval:** High-level API for FTP downloads from BSRN-AWI with exponential backoff retries (analysis functions assume **one station-to-archive file at a time**).
-- **Station-to-archive formatting:** The `bsrn.archive` subpackage provides logical-record specifications (`LR_SPECS`), Fortran-style validation, and ASCII `get_bsrn_format` output for BSRN header and data records (`LR0001`–`LR4000`), with `BSRNRecord` in `api` and concrete `LR*` classes in `formatter`.
+- **Station-to-archive formatting:** The `bsrn.archive` subpackage provides logical-record specifications (`LR_SPECS`), Fortran-style validation, and ASCII `get_bsrn_format` output for BSRN header and data records (`LR0001`–`LR4000`). Concrete `LR*` types are Pydantic models built from `LR_SPECS` in `records_dynamic`; `get_azimuth_elevation` lives in `api`.
 - **Visualization:** Data availability heatmaps and k vs kt separation plots via the very pretty `plotnine` (which reminds me of the good old R days).
 
 ## 📂 File Structure
@@ -131,8 +131,11 @@ bsrn-qc/
 │       ├── constants.py               # Station database, Linke turbidity & physical constants
 │       ├── archive/                   # Station-to-archive logical records (WRMC-style LR layouts)
 │       │   ├── specs.py               # LR_SPECS + station directory & A3–A7 code tables
-│       │   ├── api.py                 # BSRNRecord (assignment validation); get_azimuth_elevation
-│       │   ├── formatter.py           # LR0001–LR4000 classes, get_bsrn_format, lr0001_format helpers
+│       │   ├── api.py                 # get_azimuth_elevation (LR0004 horizon layout)
+│       │   ├── records_base.py        # ArchiveRecordBase (Pydantic + archive validation)
+│       │   ├── records_dynamic.py     # LR0001–LR4000CONST models from LR_SPECS
+│       │   ├── archive_lr_formats.py  # get_bsrn_format implementations per LR
+│       │   ├── formatting.py          # Fortran-style field formatting mixin
 │       │   └── validation.py          # Field validators (R validateFunc parity)
 │       ├── io/
 │       │   ├── reader.py              # Read xxxmmyy.dat.gz station-to-archive files
@@ -296,13 +299,15 @@ fig.save("availability.png", dpi=300)
 
 ### Station-to-archive logical records (`bsrn.archive`)
 
-Use `LR_SPECS` for field names, formats, and validators; build text with `LR*` classes (`formatter`) or helpers such as `lr0001_format`, `lr0100_data_format`.
+Logical records are **Pydantic v2** models (`LR0001`, …, `LR0100`, `LR4000`, …) built from `LR_SPECS` in `records_dynamic`. The legacy umbrella type **`BSRNRecord` is removed**—use a concrete `LR*` model and call `get_bsrn_format` on the instance.
+
+Use `LR_SPECS` for field names, formats, and validators; build text with `LR0001(**fields).get_bsrn_format()`, or for minute LRs pass column series plus `yearMonth` into `LR0100` / `LR4000` then `get_bsrn_format(changed=...)`.
 
 ```python
-from bsrn.archive import LR_SPECS, lr0001_format
+from bsrn.archive import LR0001, LR_SPECS
 
 # Required keys for LR0001 are listed in LR_SPECS["LR0001"]
-# out = lr0001_format({"stationNumber": 94, "month": 1, "year": 2024, "version": 1})
+# out = LR0001(stationNumber=94, month=1, year=2024, version=1).get_bsrn_format()
 ```
 
 ## 📜 License

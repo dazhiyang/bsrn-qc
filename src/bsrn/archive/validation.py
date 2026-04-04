@@ -1,11 +1,12 @@
 """
 BSRN logical-record field validators (R ``1_validateFunc_headers.R`` + ``1_validateFunc_datas.R``).
 
-Each ``*_validateFunction`` name matches ``LR_SPECS`` ``validate_func``; ``BSRNRecord`` loads
-the callable by name on field assignment. Code lists come from ``specs`` (``QUANTITIES``, …).
+Each ``*_validateFunction`` name matches ``LR_SPECS`` ``validate_func``; Pydantic
+``ArchiveRecordBase`` runs them in a model validator. Code lists come from ``specs``
+(``QUANTITIES``, …).
 
 BSRN 逻辑记录字段校验（R ``1_validateFunc_*.R``）。函数名与 ``LR_SPECS`` 中 ``validate_func`` 一致，
-由 ``BSRNRecord`` 在赋值时按名调用；分类编码表见 ``specs``。
+由 Pydantic ``ArchiveRecordBase`` 的模型校验器按名调用；分类编码表见 ``specs``。
 """
 
 import calendar

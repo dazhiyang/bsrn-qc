@@ -10,7 +10,7 @@ Core
 .. autosummary::
    :toctree: generated/
 
-   bsrn.archive.BSRNRecord
+   bsrn.archive.ArchiveRecordBase
    bsrn.archive.get_azimuth_elevation
 
 Logical record classes
@@ -30,22 +30,7 @@ Logical record classes
    bsrn.archive.LR4000
    bsrn.archive.LR4000CONST
 
-Format line builders
---------------------
-.. autosummary::
-   :toctree: generated/
-
-   bsrn.archive.lr0001_format
-   bsrn.archive.lr0002_format
-   bsrn.archive.lr0003_format
-   bsrn.archive.lr0004_format
-   bsrn.archive.lr0005_format
-   bsrn.archive.lr0006_format
-   bsrn.archive.lr0007_format
-   bsrn.archive.lr0008_format
-   bsrn.archive.lr0100_data_format
-   bsrn.archive.lr4000_data_format
-   bsrn.archive.lr4000const_format
+Each ``LR*`` model implements ``get_bsrn_format`` for archive text (see ``bsrn.archive.archive_lr_formats``).
 
 Metadata and lookup tables
 --------------------------
@@ -66,6 +51,8 @@ Submodules
    :toctree: generated/
 
    bsrn.archive.api
-   bsrn.archive.formatter
+   bsrn.archive.archive_lr_formats
+   bsrn.archive.records_base
+   bsrn.archive.records_dynamic
    bsrn.archive.specs
    bsrn.archive.validation

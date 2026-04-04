@@ -53,9 +53,9 @@ def plot_csd_booklet(file_path, output_file, station_code, df=None, title=None):
         Station abbreviation (e.g. "QIQ") for clear-sky and site location.
         站点缩写（如 "QIQ"），用于晴空与站点位置。
     df : pd.DataFrame, optional
-        If provided, use this DataFrame instead of reading from file_path (for testing).
+        If provided, use this DataFrame instead of reading from ``file_path``.
         Must have one-month DatetimeIndex and columns ghi, bni, dhi.
-        若提供，则使用此 DataFrame 而非从文件读取（用于测试）；须为单月且含 ghi, bni, dhi。
+        若提供，则使用此 DataFrame 而非从文件读取；须为单月且含 ghi, bni, dhi。
     title : str, optional
         Same title on every PDF page. If None (default), no plot title.
         每页共用标题；默认 None 不显示。
