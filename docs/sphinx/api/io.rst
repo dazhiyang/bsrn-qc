@@ -3,13 +3,14 @@ I/O Operations
 
 Readers
 -------
+
+Reading ``.dat.gz`` archive files is now handled by
+:meth:`bsrn.dataset.BSRNDataset.from_file`.
+
 .. autosummary::
    :toctree: generated/
 
-   bsrn.io.reader.read_lr0100
-   bsrn.io.reader.read_lr0300
-   bsrn.io.reader.read_lr4000
-   bsrn.io.reader.read_station_to_archive
+   bsrn.dataset.BSRNDataset.from_file
 
 Data Fetching
 -------------
