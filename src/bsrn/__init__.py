@@ -6,3 +6,4 @@ bsrn：BSRN 站点存档文件质量控制工具。
 __version__ = "0.2.0"
 
 from . import archive, io, qc, utils, constants, modeling, physics
+from .dataset import BSRNDataset

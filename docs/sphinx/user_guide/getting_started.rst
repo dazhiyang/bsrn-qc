@@ -3,19 +3,38 @@ Getting Started
 
 This guide provides a quick introduction to using `bsrn` for quality control and clear-sky modeling.
 
-Basic Usage
------------
+BSRNDataset (recommended)
+-------------------------
+
+The simplest way to work with a BSRN archive file is through
+:class:`~bsrn.dataset.BSRNDataset`, which reads the file, resolves
+station metadata, and exposes chainable pipeline methods:
 
 .. code-block:: python
 
-   from bsrn.io.reader import read_station_to_archive
+   import bsrn
+
+   ds = bsrn.BSRNDataset.from_file("data/QIQ/qiq0125.dat.gz")
+
+   df = ds.add_solpos()        # solar position + extraterrestrial
+   df = ds.add_clearsky()      # clear-sky irradiance (Ineichen)
+   df = ds.run_qc()            # 6-level quality control flags
+
+Functional API
+--------------
+
+All pipeline steps are also available as standalone functions,
+useful when working with non-BSRN data or custom DataFrames:
+
+.. code-block:: python
+
+   from bsrn.physics.geometry import add_solpos_columns
    from bsrn.modeling.clear_sky import add_clearsky_columns
+   from bsrn.qc.wrapper import run_qc
 
-   # Read a BSRN station-to-archive file
-   df = read_station_to_archive("data/QIQ/qiq0124.dat.gz", logical_records="lr0100")
-
-   # Add clear-sky columns (REST2 fetches MERRA-2 from Hugging Face automatically)
-   df = add_clearsky_columns(df, station_code="QIQ", model="rest2")
+   df = add_solpos_columns(df, lat=47.80, lon=124.49, elev=170)
+   df = add_clearsky_columns(df, lat=47.80, lon=124.49, elev=170)
+   df = run_qc(df, lat=47.80, lon=124.49, elev=170)
 
 Key Features
 ------------

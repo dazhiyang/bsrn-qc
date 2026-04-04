@@ -110,6 +110,10 @@ class BSRNDataset(BaseModel):
         frozen=False,
     )
 
+    # ------------------------------------------------------------------ #
+    #  Fields                                                              #
+    # ------------------------------------------------------------------ #
+
     # Core (required): identity + minute radiation data.
     # 核心（必填）：站点标识 + 分钟辐射数据。
     station_code: str
@@ -129,8 +133,10 @@ class BSRNDataset(BaseModel):
     elev: float = None
     resolution: str = None
 
-    # Case-insensitive; reject codes absent from the registry.
-    # 大小写不敏感；拒绝不在注册表中的代码。
+    # ------------------------------------------------------------------ #
+    #  Validators                                                          #
+    # ------------------------------------------------------------------ #
+
     @field_validator("station_code")
     @classmethod
     def _validate_station_code(cls, v):
@@ -142,7 +148,6 @@ class BSRNDataset(BaseModel):
             )
         return code
 
-    # Calendar month bounds. / 日历月份范围。
     @field_validator("month")
     @classmethod
     def _validate_month(cls, v):
@@ -152,8 +157,6 @@ class BSRNDataset(BaseModel):
             )
         return v
 
-    # Auto-fill geo metadata + infer resolution after construction.
-    # 构造后自动填充地理元数据 + 推断时间分辨率。
     @model_validator(mode="after")
     def _resolve_metadata(self):
         """
@@ -177,12 +180,11 @@ class BSRNDataset(BaseModel):
         return self
 
     # ------------------------------------------------------------------ #
-    #  Factory: delegates to io.reader for parsing                         #
-    #  工厂方法：委托 io.reader 解析文件                                    #
+    #  Factory                                                             #
     # ------------------------------------------------------------------ #
 
     @classmethod
-    def from_file(cls, path: str | Path) -> BSRNDataset:
+    def from_file(cls, path):
         """
         Parse a BSRN ``.dat.gz`` station-to-archive file and return
         a fully validated ``BSRNDataset``.
@@ -212,27 +214,9 @@ class BSRNDataset(BaseModel):
         """
         return cls(**read_bsrn_archive(path))
 
-    def _infer_resolution(self):
-        """
-        Infer temporal resolution from ``lr0100`` vector length
-        vs calendar month.
-
-        根据 ``lr0100`` 向量长度与日历月推断时间分辨率。
-        """
-        y, m = map(int, self.lr0100.yearMonth.split("-"))
-        ndays = calendar.monthrange(y, m)[1]
-        expected_1min = ndays * 1440
-        for col in _LR0100_MINUTE_COLS:
-            vec = getattr(self.lr0100, col, None)
-            if vec is not None:
-                n = len(vec)
-                if n == expected_1min:
-                    return "1min"
-                minutes_per_sample = expected_1min / n
-                if minutes_per_sample == int(minutes_per_sample):
-                    return f"{int(minutes_per_sample)}min"
-                return f"{minutes_per_sample:.2f}min"
-        return "1min"
+    # ------------------------------------------------------------------ #
+    #  Properties                                                          #
+    # ------------------------------------------------------------------ #
 
     @property
     def data(self):
@@ -286,3 +270,115 @@ class BSRNDataset(BaseModel):
                 if vec is not None:
                     cols[col] = np.asarray(vec)
         return pd.DataFrame(cols, index=idx)
+
+    # ------------------------------------------------------------------ #
+    #  Pipeline methods (delegate to standalone functions)                  #
+    #  管线方法（委托给独立函数）                                           #
+    # ------------------------------------------------------------------ #
+
+    def add_solpos(self):
+        """
+        Add solar position and extraterrestrial irradiance columns
+        to ``data``.
+
+        向 ``data`` 添加太阳位置和地外辐射列。
+
+        Delegates to
+        :func:`~bsrn.physics.geometry.add_solpos_columns` using
+        the resolved ``lat``, ``lon``, ``elev``.
+
+        Returns
+        -------
+        pandas.DataFrame
+            ``data`` with added columns: ``zenith``,
+            ``apparent_zenith``, ``azimuth``, ``bni_extra``,
+            ``ghi_extra``.
+        """
+        from .physics.geometry import add_solpos_columns
+        return add_solpos_columns(
+            self.data, lat=self.lat, lon=self.lon, elev=self.elev,
+        )
+
+    def add_clearsky(self, model="ineichen", mcclear_email=None):
+        """
+        Add clear-sky irradiance columns to ``data``.
+
+        向 ``data`` 添加晴空辐射列。
+
+        Delegates to
+        :func:`~bsrn.modeling.clear_sky.add_clearsky_columns`.
+
+        Parameters
+        ----------
+        model : str, optional
+            Clear-sky model name (default ``'ineichen'``).
+            晴空模型名称（默认 ``'ineichen'``）。
+        mcclear_email : str, optional
+            E-mail for CAMS McClear API (only when
+            ``model='mcclear'``).
+            CAMS McClear API 邮箱（仅 ``model='mcclear'``
+            时使用）。
+
+        Returns
+        -------
+        pandas.DataFrame
+            ``data`` with added clear-sky columns
+            (``ghi_clear``, ``bni_clear``, ``dhi_clear``, …).
+        """
+        from .modeling.clear_sky import add_clearsky_columns
+        return add_clearsky_columns(
+            self.data, lat=self.lat, lon=self.lon, elev=self.elev,
+            model=model, mcclear_email=mcclear_email,
+        )
+
+    def run_qc(self, tests=('ppl', 'erl', 'closure',
+                            'diff_ratio', 'k_index', 'tracker')):
+        """
+        Run QC tests and add flag columns to ``data``.
+
+        运行 QC 测试并向 ``data`` 添加标志列。
+
+        Delegates to :func:`~bsrn.qc.wrapper.run_qc`.
+
+        Parameters
+        ----------
+        tests : tuple of str, optional
+            QC test names to run (default: all six).
+            要运行的 QC 测试名称（默认全部六项）。
+
+        Returns
+        -------
+        pandas.DataFrame
+            ``data`` with added ``flag_*`` columns.
+        """
+        from .qc.wrapper import run_qc
+        return run_qc(
+            self.data, lat=self.lat, lon=self.lon, elev=self.elev,
+            tests=tests,
+        )
+
+    # ------------------------------------------------------------------ #
+    #  Private helpers                                                      #
+    # ------------------------------------------------------------------ #
+
+    def _infer_resolution(self):
+        """
+        Infer temporal resolution from ``lr0100`` vector length
+        vs calendar month.
+
+        根据 ``lr0100`` 向量长度与日历月推断时间分辨率。
+        """
+        y, m = map(int, self.lr0100.yearMonth.split("-"))
+        ndays = calendar.monthrange(y, m)[1]
+        expected_1min = ndays * 1440
+        for col in _LR0100_MINUTE_COLS:
+            vec = getattr(self.lr0100, col, None)
+            if vec is not None:
+                n = len(vec)
+                if n == expected_1min:
+                    return "1min"
+                minutes_per_sample = expected_1min / n
+                if minutes_per_sample == int(minutes_per_sample):
+                    return f"{int(minutes_per_sample)}min"
+                return f"{minutes_per_sample:.2f}min"
+        return "1min"

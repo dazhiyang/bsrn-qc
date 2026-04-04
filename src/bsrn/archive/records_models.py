@@ -319,6 +319,7 @@ LR0006.get_bsrn_format = _FORMATTERS["LR0006"]
 LR0007.get_bsrn_format = _FORMATTERS["LR0007"]
 LR0008.get_bsrn_format = _FORMATTERS["LR0008"]
 LR0100.get_bsrn_format = _FORMATTERS["LR0100"]
+LR0300.get_bsrn_format = _FORMATTERS["LR0300"]
 LR4000.get_bsrn_format = _FORMATTERS["LR4000"]
 LR4000CONST.get_bsrn_format = _FORMATTERS["LR4000CONST"]
 
@@ -332,6 +333,7 @@ __all__ = [
     "LR0007",
     "LR0008",
     "LR0100",
+    "LR0300",
     "LR4000",
     "LR4000CONST",
 ]

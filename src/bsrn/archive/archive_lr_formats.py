@@ -323,6 +323,28 @@ def lr0100_get_bsrn_format(self, changed=True):
     return f"{res}\n{strData}"
 
 
+def lr0300_get_bsrn_format(self, changed=True):
+    """Emit full LR0300 minute table. / 输出 LR0300 分钟表。"""
+    res = "*C0300" if changed else "*U0300"
+    m = self._format_series_field
+    y, mo = map(int, self._private["yearMonth"].split("-"))
+    nd = calendar.monthrange(y, mo)[1]
+    days = np.repeat(np.arange(1, nd + 1), 1440)
+    df_days = pd.Series([f"{d:>2d}" for d in days])
+    mins = np.tile(np.arange(0, 1440), nd)
+    df_mins = pd.Series([f"{m_:>4d}" for m_ in mins])
+    strData = (
+        " " + df_days + " " + df_mins + "   "
+        + m("swu_avg") + " " + m("swu_std")
+        + " " + m("swu_min") + " " + m("swu_max") + "   "
+        + m("lwu_avg") + " " + m("lwu_std")
+        + " " + m("lwu_min") + " " + m("lwu_max") + "   "
+        + m("net_avg") + " " + m("net_std")
+        + " " + m("net_min") + " " + m("net_max")
+    ).str.cat(sep="\n")
+    return f"{res}\n{strData}"
+
+
 def lr4000_get_bsrn_format(self, changed=True):
     """
     Emit full LR4000 minute table. / 输出 LR4000 分钟表。
@@ -357,6 +379,7 @@ _FORMATTERS = {
     "LR0007": lr0007_get_bsrn_format,
     "LR0008": lr0008_get_bsrn_format,
     "LR0100": lr0100_get_bsrn_format,
+    "LR0300": lr0300_get_bsrn_format,
     "LR4000": lr4000_get_bsrn_format,
     "LR4000CONST": lr4000const_get_bsrn_format,
 }

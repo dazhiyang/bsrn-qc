@@ -12,8 +12,6 @@ the file once, locates ``*U`` / ``*C`` record markers, and builds
 标记，并构建 LR0100 / LR0300 / LR4000 Pydantic 模型实例。
 """
 
-from __future__ import annotations
-
 import gzip
 from pathlib import Path
 
@@ -47,7 +45,7 @@ _LR4000_MINUTE_COLS = (
 #  Public API                                                          #
 # ------------------------------------------------------------------ #
 
-def read_bsrn_archive(path: str | Path) -> dict:
+def read_bsrn_archive(path):
     """
     Parse a BSRN ``.dat.gz`` station-to-archive file.
 

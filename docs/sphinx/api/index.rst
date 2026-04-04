@@ -9,6 +9,7 @@ This page contains the detailed API documentation for the `bsrn` package.
    :maxdepth: 2
    :caption: API Sections
 
+   dataset
    io
    archive
    qc

@@ -54,11 +54,27 @@ import bsrn.visualization
 # Access plotting tools like bsrn.visualization.calendar.plot_calendar()
 ```
 
-### Quick Example (Single-File Workflow)
+### Quick Example — BSRNDataset (recommended)
+
+```python
+import bsrn
+
+# Read a single monthly archive file
+ds = bsrn.BSRNDataset.from_file("data/QIQ/qiq0125.dat.gz")
+
+# Pipeline: solar position → clear-sky → QC (each returns a DataFrame)
+df = ds.add_solpos()
+df = ds.add_clearsky()
+df = ds.run_qc()
+```
+
+### Quick Example — Functional API
+
+The same steps are available as standalone functions, useful for
+non-BSRN data or custom DataFrames:
 
 ```python
 from bsrn.io.retrieval import download_bsrn_stn, get_bsrn_file_inventory
-from bsrn.io.reader import read_station_to_archive
 from bsrn.physics.geometry import add_solpos_columns
 from bsrn.modeling.clear_sky import add_clearsky_columns
 from bsrn.qc.wrapper import run_qc
@@ -69,8 +85,9 @@ inventory = get_bsrn_file_inventory(["QIQ"], username="your_user", password="you
 # 2. Download data for a station
 download_bsrn_stn("QIQ", "data/QIQ", username="your_user", password="your_pass")
 
-# 3. Read a single monthly file (one file at a time)
-df = read_station_to_archive("data/QIQ/qiq0124.dat.gz")
+# 3. Read via BSRNDataset and get the DataFrame
+ds = bsrn.BSRNDataset.from_file("data/QIQ/qiq0125.dat.gz")
+df = ds.data
 
 # 4. Add solar position (recommended before time-averaging or clear-sky)
 df = add_solpos_columns(df, "QIQ")
@@ -128,6 +145,7 @@ bsrn-qc/
 ├── src/
 │   └── bsrn/
 │       ├── __init__.py
+│       ├── dataset.py                 # BSRNDataset: central monthly data object + pipeline methods
 │       ├── constants.py               # Station database, Linke turbidity & physical constants
 │       ├── archive/                   # Station-to-archive logical records (WRMC-style LR layouts)
 │       │   ├── __init__.py            # Re-exports LR* models, LR_SPECS, get_azimuth_elevation, …
