@@ -14,7 +14,7 @@ Heatmaps and Calendars
    :toctree: generated/
 
    bsrn.visualization.calendar.plot_clearsky_calendar
-   bsrn.visualization.qc_table.plot_qc_table
+   bsrn.visualization.table.plot_table
 
 Model Comparisons
 -----------------
@@ -30,5 +30,5 @@ Time Series
 .. autosummary::
    :toctree: generated/
 
-   bsrn.visualization.timeseries.plot_bsrn_timeseries_booklet
-   bsrn.visualization.timeseries.plot_bsrn_timeseries_day
+   bsrn.visualization.daily.plot_bsrn_daily_booklet
+   bsrn.visualization.daily.plot_bsrn_daily_day

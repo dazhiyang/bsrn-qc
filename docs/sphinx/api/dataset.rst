@@ -43,3 +43,16 @@ Pipeline methods
    bsrn.dataset.BSRNDataset.add_solpos
    bsrn.dataset.BSRNDataset.add_clearsky
    bsrn.dataset.BSRNDataset.run_qc
+
+Plotting
+--------
+
+You can quickly generate plots directly from the dataset.
+
+.. autosummary::
+   :toctree: generated/
+
+   bsrn.dataset.BSRNDataset.plot
+   bsrn.dataset.BSRNPlot
+   bsrn.dataset.BSRNPlot.daily
+   bsrn.dataset.BSRNPlot.table
