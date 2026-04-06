@@ -7,6 +7,7 @@ Wrappers
    :toctree: generated/
 
    bsrn.qc.wrapper.run_qc
+   bsrn.qc.wrapper.mask_failed_irradiance
    bsrn.qc.wrapper.test_physically_possible
    bsrn.qc.wrapper.test_extremely_rare
    bsrn.qc.wrapper.test_closure

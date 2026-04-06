@@ -8,10 +8,14 @@ These tutorials are provided as interactive Jupyter notebooks.
 :func:`~bsrn.io.retrieval.get_bsrn_file_inventory`, and download station-to-archive
 ``.dat.gz`` files with :func:`~bsrn.io.retrieval.download_bsrn_stn`.
 
-**2.quality_control** — QIQ December LR0100 data; **Part A** runs each ``*_test`` tier
-(PPL, ERL, closure, diffuse *k*, *k*-indices, tracker-off); **Part B** uses
-:func:`~bsrn.qc.wrapper.run_qc` and compares tier counts; **§8** plots one UTC day with
-``flagTracker`` failures (visual inspection emphasized).
+**2.quality_control** — QIQ **March** LR0100 month: **Part A** runs
+:meth:`~bsrn.dataset.BSRNDataset.qc_test` and tallies **tier row counts** from ``flag*``
+columns; **Part B** exercises individual ``*_test`` helpers (PPL, ERL, closure, diffuse
+*k*, *k*-indices, tracker-off), and **§7** checks that Part A and Part B agree per tier
+(using :func:`~bsrn.qc.wrapper.run_qc`). **§8** is the **daily QC audit table**
+(``ds.plot.table``); **§9** is a **faceted day** plot (``ds.plot.daily``) before
+masking; **§10** applies :meth:`~bsrn.dataset.BSRNDataset.qc_mask` and **replots** the
+audit table on the masked minute series.
 
 **3.time_averaging** — explicit time aggregation with
 :func:`~bsrn.utils.averaging.pretty_average` (**floor** / **ceiling** / **center**,

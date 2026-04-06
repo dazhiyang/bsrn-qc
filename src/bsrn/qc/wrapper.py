@@ -64,6 +64,110 @@ def _get_metadata(station_code, lat, lon, elev):
     )
 
 
+# Flag column → value columns to set NaN where flag == 1 (fail). Matches
+# :mod:`bsrn.visualization.daily` QC marker grouping (not a blind row-sum).
+# 标记列 → 失败（值为 1）时置 NaN 的观测列；与 daily 中 QC 标记分组一致（非简单行求和）。
+_QC_SINGLE_FLAG_TARGETS = (
+    ("flagPPLGHI", ("ghi",)),
+    ("flagPPLBNI", ("bni",)),
+    ("flagPPLDHI", ("dhi",)),
+    ("flagPPLLWD", ("lwd",)),
+    ("flagERLGHI", ("ghi",)),
+    ("flagERLBNI", ("bni",)),
+    ("flagERLDHI", ("dhi",)),
+    ("flagERLLWD", ("lwd",)),
+)
+# If any listed flag is 1, NaN all listed value columns (OR over flags).
+# 任一列出标记为 1 时，将所列观测列均置 NaN。
+_QC_COMBINED_FLAG_TARGETS = (
+    (("flag3lowSZA", "flag3highSZA"), ("ghi", "bni", "dhi")),
+    (("flagKKt", "flagKlowSZA", "flagKhighSZA"), ("ghi", "dhi")),
+    (("flagKbKt", "flagKb", "flagKt", "flagTracker"), ("ghi", "bni")),
+)
+_QC_FLAG_COLUMN_NAMES = frozenset(
+    f for f, _ in _QC_SINGLE_FLAG_TARGETS
+) | frozenset(
+    f for grp, _ in _QC_COMBINED_FLAG_TARGETS for f in grp
+)
+
+
+def mask_failed_irradiance(df, *, flag_remove=True):
+    """
+    Set shortwave / longwave irradiance columns to NaN where QC flags fail.
+
+    在 QC 标记为失败处将短波/长波辐照度列置为 NaN。
+
+    Uses the same flag-to-column mapping as :func:`run_qc` outputs: each
+    single-flag column (e.g. ``flagPPLGHI``) clears only its component; closure,
+    diffuse-ratio, k-index, and tracker groups clear the components those tests share.
+    Mutates ``df`` in place for irradiance values. When ``flag_remove`` is True
+    (default), standard :func:`run_qc` flag columns are dropped afterward.
+
+    与 :func:`run_qc` 输出采用相同的标记→列映射：单列标记只清除对应分量；
+    闭合、散射比、k-index、跟踪器组合清除各测试共用的分量。辐照度值**原地**修改。
+    ``flag_remove`` 为 True（默认）时，随后删除默认测试套件产生的标准标记列。
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Frame that already contains ``run_qc`` flag columns.
+        已含 :func:`run_qc` 标记列的 DataFrame。
+    flag_remove : bool, optional
+        If True (default), drop QC flag columns after masking.
+        为 True（默认）时，掩膜后删除 QC 标记列。
+
+    Returns
+    -------
+    pandas.DataFrame
+        ``df`` (same object), updated in place.
+        ``df``（同一对象），原地更新。
+
+    Notes
+    -----
+    Call this **after** :func:`run_qc` when you want failed minutes cleared;
+    :func:`run_qc` does not invoke it automatically.
+    需在清除失败分钟时于 :func:`run_qc` **之后**调用；:func:`run_qc` 不会自动执行。
+
+    To keep an unmodified copy, run ``mask_failed_irradiance(df.copy(), ...)``.
+    若需保留未修改副本，先 ``mask_failed_irradiance(df.copy(), ...)``。
+
+    Does not clear auxiliary columns (e.g. ``ghi_clear``, ``zenith``).
+    不清除辅助列（如 ``ghi_clear``、``zenith``）。
+    """
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(
+            "Input 'df' must be a pandas DataFrame. / 输入 'df' 必须是 pandas DataFrame。"
+        )
+
+    for fcol, vcols in _QC_SINGLE_FLAG_TARGETS:
+        if fcol not in df.columns:
+            continue
+        bad = df[fcol].to_numpy() == 1
+        if not bad.any():
+            continue
+        for vc in vcols:
+            if vc in df.columns:
+                df.loc[bad, vc] = np.nan
+
+    for fcols, vcols in _QC_COMBINED_FLAG_TARGETS:
+        present = [c for c in fcols if c in df.columns]
+        if not present:
+            continue
+        bad = (df[present].to_numpy() == 1).any(axis=1)
+        if not bad.any():
+            continue
+        for vc in vcols:
+            if vc in df.columns:
+                df.loc[bad, vc] = np.nan
+
+    if flag_remove:
+        drop_flags = [c for c in df.columns if c in _QC_FLAG_COLUMN_NAMES]
+        if drop_flags:
+            df.drop(columns=drop_flags, inplace=True)
+
+    return df
+
+
 def run_qc(df, station_code=None, lat=None, lon=None, elev=None,
            tests=('ppl', 'erl', 'closure', 'diff_ratio', 'k_index', 'tracker')):
     r"""

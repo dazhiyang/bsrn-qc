@@ -16,9 +16,10 @@ station metadata, and exposes chainable pipeline methods:
 
    ds = bsrn.BSRNDataset.from_file("data/QIQ/qiq0125.dat.gz")
 
-   df = ds.solpos()            # solar position + extraterrestrial
-   df = ds.clear_sky()         # clear-sky irradiance (Ineichen)
-   df = ds.qc()                # 6-level quality control flags
+   ds.solpos()            # solar position + extraterrestrial
+   ds.clear_sky()         # clear-sky irradiance (Ineichen)
+   ds.qc_test()           # 6-level quality control flags
+   ds.qc_mask()           # optional: NaN failed irradiance, drop flags
 
 Functional API
 --------------

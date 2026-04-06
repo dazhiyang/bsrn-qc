@@ -59,17 +59,20 @@ import bsrn.visualization
 ```python
 import bsrn
 
-# Read a single monthly archive file
+# One station-month from a BSRN LR0100 archive (.dat.gz)
 ds = bsrn.BSRNDataset.from_file("data/QIQ/qiq0125.dat.gz")
 
-# Pipeline: solar position → clear-sky → QC (each returns a DataFrame)
-df = ds.solpos()
-df = ds.clear_sky()
-df = ds.qc()
+# Typical pipeline (each step mutates the cached frame and returns it)
+ds.solpos()                             # solar geometry + extraterrestrial
+ds.clear_sky(model="rest2")             # ghi_clear / bni_clear / … (REST2; MERRA-2 via Hugging Face)
+ds.qc_test()                            # flag columns: 0 = pass, 1 = fail
+ds.qc_mask()                            # NaN failed irradiance; drop flag columns
+
+df = ds.data()                          # minute-resolution table for analysis or export
 
 # Visualize directly from the dataset (requires bsrn[viz])
-ds.plot.daily("1995-01-15")  # plots a single day
-ds.plot.table()              # generates a QC summary table
+ds.plot.daily("2025-01-15")             # UTC date inside the loaded month
+ds.plot.table()                         # QC summary table
 ```
 
 ### Quick Example — Functional API

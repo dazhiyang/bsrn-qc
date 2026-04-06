@@ -11,6 +11,7 @@ tracker-off); :mod:`wrapper` provides :func:`~bsrn.qc.wrapper.run_qc` and phase 
 from . import ppl, erl, closure, diff_ratio, k_index, tracker, wrapper
 from .wrapper import (
     run_qc,
+    mask_failed_irradiance,
     test_physically_possible,
     test_extremely_rare,
     test_closure,

@@ -42,7 +42,8 @@ Pipeline methods
 
    bsrn.dataset.BSRNDataset.solpos
    bsrn.dataset.BSRNDataset.clear_sky
-   bsrn.dataset.BSRNDataset.qc
+   bsrn.dataset.BSRNDataset.qc_test
+   bsrn.dataset.BSRNDataset.qc_mask
    bsrn.dataset.BSRNDataset.average
 
 Plotting

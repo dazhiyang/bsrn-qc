@@ -8,12 +8,13 @@ only the mean/value columns by default. LR0300 / LR4000 columns are
 available on demand via ``data(include=[...])``. Most pipeline methods
 (solar position, clear-sky, QC) mutate the cached frame in-place;
 the ``average`` method replaces the cache with a coarser-index result
-from :func:`~bsrn.utils.averaging.pretty_average`.
+from :func:`~bsrn.utils.averaging.pretty_average`. Use :meth:`qc_test`
+then optionally :meth:`qc_mask` to apply QC-based masking.
 
 BSRN 中心数据集：将一个月度站点文件封装为带类型校验的对象。``lr0100``
 为分钟数据源；``data()`` 返回仅含均值列的缓存 ``DataFrame``。
 LR0300 / LR4000 列按需通过 ``data(include=[...])`` 获取。多数管线方法
-原地修改缓存；``average`` 方法以
+原地修改缓存；可先 ``qc_test`` 再选 ``qc_mask``。``average`` 方法以
 :func:`~bsrn.utils.averaging.pretty_average` 的较粗索引结果替换缓存。
 """
 
@@ -58,14 +59,16 @@ class BSRNDataset(BaseModel):
     单月 BSRN 数据集：站点标识 + 分钟级数据。
 
     Typical enrichment on the cached :meth:`data` frame is
-    :meth:`solpos`, then :meth:`clear_sky`, then :meth:`qc`
-    (each mutates that frame in place and returns it). :meth:`average`
-    replaces the cache with a coarser time series from
+    :meth:`solpos`, then :meth:`clear_sky`, then :meth:`qc_test`
+    (each mutates that frame in place and returns it). Optional
+    :meth:`qc_mask` sets failed irradiance to NaN and can drop flag columns.
+    :meth:`average` replaces the cache with a coarser time series from
     :func:`~bsrn.utils.averaging.pretty_average`.
 
     常见流程为在缓存的 :meth:`data` 帧上依次调用
-    :meth:`solpos`、:meth:`clear_sky`、:meth:`qc`
-    （均原地修改该帧并返回同一对象）。:meth:`average` 以
+    :meth:`solpos`、:meth:`clear_sky`、:meth:`qc_test`
+    （均原地修改该帧并返回同一对象）。可选 :meth:`qc_mask` 将未通过处辐照度置
+    NaN 并可删除标记列。:meth:`average` 以
     :func:`~bsrn.utils.averaging.pretty_average` 的结果替换缓存（较粗时间索引）。
 
     Parameters
@@ -364,8 +367,8 @@ class BSRNDataset(BaseModel):
             model=model, mcclear_email=mcclear_email,
         )
 
-    def qc(self, tests=('ppl', 'erl', 'closure',
-                        'diff_ratio', 'k_index', 'tracker')):
+    def qc_test(self, tests=('ppl', 'erl', 'closure',
+                             'diff_ratio', 'k_index', 'tracker')):
         """
         Run QC tests and add flag columns to the cached ``data()``
         frame.
@@ -391,6 +394,34 @@ class BSRNDataset(BaseModel):
             lat=self.lat, lon=self.lon, elev=self.elev,
             tests=tests,
         )
+
+    def qc_mask(self, flag_remove=True):
+        """
+        Set irradiance values to NaN where QC flags fail; optionally drop
+        flag columns.
+
+        在未通过 QC 处将辐照度置 NaN；可选删除标记列。
+
+        Call :meth:`qc_test` first so flag columns exist. Delegates to
+        :func:`~bsrn.qc.wrapper.mask_failed_irradiance` on ``data()``.
+
+        须先调用 :meth:`qc_test` 以生成标记列。委托
+        :func:`~bsrn.qc.wrapper.mask_failed_irradiance` 作用于 ``data()``。
+
+        Parameters
+        ----------
+        flag_remove : bool, optional
+            If True (default), drop standard QC flag columns after masking.
+            为 True（默认）时掩膜后删除标准 QC 标记列。
+
+        Returns
+        -------
+        pandas.DataFrame
+            ``data()`` after masking (same cached object).
+            掩膜后的 ``data()``（同一缓存对象）。
+        """
+        from .qc.wrapper import mask_failed_irradiance
+        return mask_failed_irradiance(self.data(), flag_remove=flag_remove)
 
     def average(self, freq, alignment="ceiling", aggfunc="mean",
                 match_ceiling_labels=True):
