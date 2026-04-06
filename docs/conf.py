@@ -81,3 +81,9 @@ html_theme_options = {
 html_static_path = [os.path.join("sphinx", "_static")]
 html_logo = os.path.join("sphinx", "_static", "logo.jpg")
 html_favicon = os.path.join("sphinx", "_static", "logo.jpg")
+
+latex_engine = "xelatex"
+latex_use_xindy = False
+latex_elements = {
+    "preamble": "\\usepackage[UTF8]{ctex}\n",
+}
