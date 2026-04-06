@@ -22,14 +22,9 @@ from plotnine import (
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
-from bsrn.constants import BSRN_STATIONS, WONG_PALETTE
-from bsrn.physics.geometry import get_solar_position, get_bni_extra
-from bsrn.qc.ppl import ghi_ppl_test, bni_ppl_test, dhi_ppl_test
-
+from bsrn.constants import WONG_PALETTE
 
 from bsrn.dataset import BSRNDataset
-from bsrn.modeling.clear_sky import add_clearsky_columns
-from bsrn.qc.wrapper import run_qc
 
 # L1–L6 QC markers: WONG[2–6] for L1–5, black for L6 (WONG[0–1] reserved for line series).
 # L1–L6 标记：L1–5 用 Wong 剩余五色，L6 黑色；WONG[0–1] 留给实测/晴空线。
@@ -78,16 +73,14 @@ def _qc_marker_slices(df, mask, ycol, param_facet, level, chunks):
     )
 
 
-def _build_qc_marker_frame(day_df, day_zenith, station_code):
+def _build_qc_marker_frame(day_df, day_zenith):
     """
-    Per-minute QC failures for faceted daily (Levels 1–6; Wong [2–6] + black, distinct shapes).
-    分面时间序列用的逐分钟 QC 失败点（1–6 级；Wong 五色 + 黑，各级不同形状）。
+    Per-minute QC failures from existing ``flag*`` columns only (no ``run_qc``).
+
+    仅根据数据框上已有的 ``flag*`` 列绘制失败点（不调用 ``run_qc``）。
     """
-    if station_code is None:
-        return None
     df = day_df.copy()
     df["zenith"] = day_zenith.reindex(df.index).to_numpy()
-    df = run_qc(df, station_code=station_code)
     chunks = []
 
     pairs_l1 = [
@@ -148,11 +141,16 @@ def _build_qc_marker_frame(day_df, day_zenith, station_code):
     return out
 
 
-def _load_month_archive_for_daily(file_path, station_code, apply_qc,
-                                       df=None):
+def _load_month_archive_for_daily(file_path=None, df=None):
     """
-    Load one month from archive, add geometry, optional clearsky and PPL masking.
-    加载单月存档，加入几何、可选晴空与 PPL 掩膜。
+    Load one month and add closure diagnostics (GHI vs sum).
+
+    Requires ``zenith`` and ``apparent_zenith`` on the frame (from
+    :meth:`~bsrn.dataset.BSRNDataset.solpos`). This module does not compute
+    geometry, PPL masks, clear-sky, or QC.
+
+    加载单月并加入闭合诊断量。帧上须已有 ``zenith``、``apparent_zenith``（``solpos()``）。
+    本模块不计算几何、不做 PPL/晴空/QC。
     """
     if df is not None:
         plot_df = df.copy()
@@ -166,36 +164,31 @@ def _load_month_archive_for_daily(file_path, station_code, apply_qc,
             f"Found {len(unique_months)} months: {unique_months}"
         )
 
-    stn = BSRN_STATIONS.get(station_code, {"lat": 0, "lon": 0, "elev": 0})
-    solpos = get_solar_position(plot_df.index, stn["lat"], stn["lon"], stn["elev"])
-    mu0 = np.cos(np.radians(solpos["apparent_zenith"]))
-    zenith = solpos["zenith"]
+    if "zenith" not in plot_df.columns or "apparent_zenith" not in plot_df.columns:
+        raise ValueError(
+            "Daily plots require ``zenith`` and ``apparent_zenith`` on the DataFrame. "
+            "Call :meth:`BSRNDataset.solpos` before plotting. / "
+            "请先调用 ``solpos()``，使数据框包含 ``zenith`` 与 ``apparent_zenith``。"
+        )
+    zenith = plot_df["zenith"]
+    apparent_zenith = plot_df["apparent_zenith"]
+    mu0 = np.cos(np.radians(apparent_zenith))
 
     plot_df["sum_irrad"] = plot_df["bni"] * mu0 + plot_df["dhi"]
     plot_df["gh_ratio"] = plot_df["ghi"] / plot_df["sum_irrad"]
     plot_df["gh_diff"] = plot_df["ghi"] - plot_df["sum_irrad"]
 
-    if station_code is not None:
-        plot_df = add_clearsky_columns(plot_df, station_code)
-
-    if apply_qc:
-        bni_extra = get_bni_extra(plot_df.index)
-        ghi_mask = ghi_ppl_test(plot_df["ghi"], solpos["apparent_zenith"], bni_extra)
-        bni_mask = bni_ppl_test(plot_df["bni"], bni_extra)
-        dhi_mask = dhi_ppl_test(plot_df["dhi"], solpos["apparent_zenith"], bni_extra)
-        plot_df.loc[~ghi_mask, "ghi"] = np.nan
-        plot_df.loc[~bni_mask, "bni"] = np.nan
-        plot_df.loc[~dhi_mask, "dhi"] = np.nan
-
     return plot_df.sort_index(), zenith
 
 
-def _ggplot_bsrn_daily_one_day(
-    day_df, day_zenith, title=None, station_code=None, show_qc_markers=True
-):
+def _ggplot_bsrn_daily_one_day(day_df, day_zenith, title=None,
+                                show_qc_markers=True):
     """
     Build the standard 3×3 facet times ggplot for one UTC day.
-    构建单日 UTC 的 3×3 分面时间序列图。
+
+    Clear-sky ribbon/lines are drawn only for irradiance columns present on ``day_df``.
+    QC markers are drawn only when ``show_qc_markers`` and matching ``flag*`` columns exist.
+    晴空曲线仅当帧上存在对应 ``*_clear`` 列时绘制；QC 标记仅当存在相应 ``flag*`` 列时绘制。
     """
     measured_color = WONG_PALETTE[0]
     clearsky_color = WONG_PALETTE[1]
@@ -212,9 +205,11 @@ def _ggplot_bsrn_daily_one_day(
     main_vars = ["ghi", "bni", "dhi"]
     if "lwd" in day_work.columns:
         main_vars.append("lwd")
-    clear_vars = ["ghi_clear", "bni_clear", "dhi_clear"]
-    if "lwd_clear" in day_work.columns:
-        clear_vars.append("lwd_clear")
+    clear_vars = [
+        c
+        for c in ("ghi_clear", "bni_clear", "dhi_clear", "lwd_clear")
+        if c in day_work.columns
+    ]
 
     day_main_measured = day_work.melt(
         id_vars=["time"],
@@ -222,24 +217,32 @@ def _ggplot_bsrn_daily_one_day(
         var_name="parameter",
         value_name="measured",
     )
-    day_main_clear = day_work.melt(
-        id_vars=["time"],
-        value_vars=clear_vars,
-        var_name="parameter",
-        value_name="clearsky",
-    )
     day_main_measured["parameter"] = day_main_measured["parameter"].str.upper()
-    day_main_clear["parameter"] = (
-        day_main_clear["parameter"].str.replace("_clear", "").str.upper()
-    )
-    day_main = pd.merge(
-        day_main_measured, day_main_clear, on=["time", "parameter"], how="left"
-    )
+    if clear_vars:
+        day_main_clear = day_work.melt(
+            id_vars=["time"],
+            value_vars=clear_vars,
+            var_name="parameter",
+            value_name="clearsky",
+        )
+        day_main_clear["parameter"] = (
+            day_main_clear["parameter"].str.replace("_clear", "").str.upper()
+        )
+        day_main = pd.merge(
+            day_main_measured, day_main_clear, on=["time", "parameter"], how="left"
+        )
+    else:
+        day_main = day_main_measured.copy()
+        day_main["clearsky"] = np.nan
 
     day_df_diag = day_df.copy()
     day_df_diag.loc[day_zenith >= 90, "gh_ratio"] = np.nan
 
-    diag_vars = ["gh_diff", "gh_ratio", "temp", "rh", "pressure"]
+    diag_vars = [
+        c
+        for c in ("gh_diff", "gh_ratio", "temp", "rh", "pressure")
+        if c in day_df_diag.columns
+    ]
     diag_work = day_df_diag.reset_index()
     _t2 = diag_work.columns[0]
     if _t2 != "time":
@@ -268,8 +271,8 @@ def _ggplot_bsrn_daily_one_day(
     day_all["parameter"] = day_all["parameter"].astype(cat_type)
 
     marker_df = None
-    if show_qc_markers and station_code:
-        marker_df = _build_qc_marker_frame(day_df, day_zenith, station_code)
+    if show_qc_markers:
+        marker_df = _build_qc_marker_frame(day_df, day_zenith)
         if marker_df is not None:
             marker_df = marker_df.copy()
             marker_df["parameter"] = marker_df["parameter"].astype(cat_type)
@@ -297,19 +300,26 @@ def _ggplot_bsrn_daily_one_day(
     if legend_pos == "bottom":
         height_inch = height_inch + 0.35
 
-    layers = [
-        ggplot(day_all, aes(x="time")),
-        geom_ribbon(
-            data=cs_sw,
-            mapping=aes(ymin=0, ymax="clearsky"),
-            fill=ribbon_color,
-            alpha=0.25,
-        ),
-        geom_line(
-            data=cs_data, mapping=aes(y="clearsky"), color=clearsky_color, size=0.3
-        ),
-        geom_line(aes(y="measured"), color=measured_color, size=0.3),
-    ]
+    layers = [ggplot(day_all, aes(x="time"))]
+    if not cs_data.empty:
+        if not cs_sw.empty:
+            layers.append(
+                geom_ribbon(
+                    data=cs_sw,
+                    mapping=aes(ymin=0, ymax="clearsky"),
+                    fill=ribbon_color,
+                    alpha=0.25,
+                )
+            )
+        layers.append(
+            geom_line(
+                data=cs_data,
+                mapping=aes(y="clearsky"),
+                color=clearsky_color,
+                size=0.3,
+            )
+        )
+    layers.append(geom_line(aes(y="measured"), color=measured_color, size=0.3))
     if marker_df is not None and not marker_df.empty:
         layers.append(
             geom_point(
@@ -418,31 +428,27 @@ def _ggplot_bsrn_daily_one_day(
     return sum(layers[1:], layers[0])
 
 
-def plot_bsrn_daily_day(file_path, day, station_code=None,
-                             apply_qc=False, show_qc_markers=True,
-                             output_file=None, title=None, df=None):
+def plot_bsrn_daily_day(file_path, day, show_qc_markers=True,
+                        output_file=None, title=None, df=None):
     """
     Plot one UTC day from a single-month BSRN archive (same layout as each booklet page).
     从单月 BSRN 存档绘制一个 UTC 日（版式与手册单页相同）。
 
+    The frame (from ``df`` or loaded from ``file_path``) must already include
+    ``zenith`` and ``apparent_zenith`` (e.g. after :meth:`BSRNDataset.solpos`).
+
     Parameters
     ----------
-    file_path : str
-        Path to the BSRN station-to-archive file (``.dat.gz``).
-        BSRN 站点存档路径（``.dat.gz``）。
+    file_path : str, optional
+        Path to a single-month archive when ``df`` is not passed; otherwise ignored.
+        未传 ``df`` 时的单月 ``.dat.gz`` 路径；传入 ``df`` 时可省略。
     day : str, datetime.date, datetime.datetime, or pd.Timestamp
         Calendar day to plot (UTC), e.g. ``"2024-01-15"`` or ``pd.Timestamp("2024-01-15")``.
         要绘制的日历日（UTC）。
-    station_code : str, optional
-        Station abbreviation for title and clearsky / QC (same as booklet).
-        站点缩写，用于标题与晴空 / QC（与手册一致）。
-    apply_qc : bool, default False
-        If True, mask GHI/BNI/DHI with physically possible limits before plotting.
-        若为 True，绘图前用物理可能限值掩膜 GHI/BNI/DHI。
     show_qc_markers : bool, default True
-        If True and ``station_code`` is set, overlay Level 1–6 QC failure markers
-        (Wong palette) on the relevant facets.
-        若为 True 且提供了 ``station_code``，在相应分面上叠加 1–6 级 QC 失败标记（Wong 色）。
+        If True, overlay QC failure markers where matching ``flag*`` columns exist
+        (no QC is run here; use :meth:`~bsrn.dataset.BSRNDataset.qc_test` first).
+        为 True 时在已有 ``flag*`` 列的分面上叠加失败点（此处不运行 QC；请先 ``qc_test()``）。
     output_file : str, optional
         If set, save the figure (e.g. ``".pdf"`` or ``".png"``) via plotnine.
         若设置则保存图形（如 ``.pdf`` / ``.png``）。
@@ -456,9 +462,7 @@ def plot_bsrn_daily_day(file_path, day, station_code=None,
         The figure; display in notebooks with the last expression or call ``.draw()``.
         图形对象；笔记本中作为最后一行显示或调用 ``.draw()``。
     """
-    plot_df, zenith = _load_month_archive_for_daily(
-        file_path, station_code, apply_qc, df=df
-    )
+    plot_df, zenith = _load_month_archive_for_daily(file_path=file_path, df=df)
 
     idx_tz = getattr(plot_df.index, "tz", None)
     day_anchor = pd.Timestamp(day)
@@ -472,8 +476,9 @@ def plot_bsrn_daily_day(file_path, day, station_code=None,
     mask = (plot_df.index >= day_start) & (plot_df.index < day_end)
     day_df = plot_df.loc[mask]
     if day_df.empty:
+        src = file_path if file_path is not None else "<dataframe>"
         raise ValueError(
-            f"No rows for UTC day {day_start.date()} in {file_path!r} "
+            f"No rows for UTC day {day_start.date()} in {src!r} "
             f"(index range {plot_df.index.min()} … {plot_df.index.max()})."
         )
 
@@ -483,7 +488,6 @@ def plot_bsrn_daily_day(file_path, day, station_code=None,
         day_df,
         day_zenith,
         title,
-        station_code=station_code,
         show_qc_markers=show_qc_markers,
     )
     if output_file is not None:
@@ -491,12 +495,13 @@ def plot_bsrn_daily_day(file_path, day, station_code=None,
     return p
 
 
-def plot_bsrn_daily_booklet(file_path, output_file, station_code=None,
-                                 apply_qc=False, show_qc_markers=True,
-                                 title=None, df=None):
+def plot_bsrn_daily_booklet(file_path, output_file, show_qc_markers=True,
+                            title=None, df=None):
     """
     Generate a multi-page PDF booklet where each day is one page from a BSRN archive file.
     从 BSRN 存档文件生成多页 PDF 手册，每一天占一页。
+
+    The frame must include ``zenith`` and ``apparent_zenith`` (see :meth:`BSRNDataset.solpos`).
 
     Parameters
     ----------
@@ -506,15 +511,9 @@ def plot_bsrn_daily_booklet(file_path, output_file, station_code=None,
     output_file : str
         Path to the output PDF file.
         输出 PDF 文件的路径。
-    station_code : str, optional
-        Station abbreviation used for Title and QC calculations.
-        站点缩写，用于标题和质量控制计算。
-    apply_qc : bool, default False
-        If True, applies physically possible limits (PPL) and masks bad data.
-        如果为 True，则应用物理可能极限 (PPL) 并屏蔽错误数据。
     show_qc_markers : bool, default True
-        If True and ``station_code`` is set, draw Level 1–6 QC failure markers per day.
-        若为 True 且设置了 ``station_code``，为每日绘制 1–6 级 QC 失败标记。
+        Draw QC markers per day when ``flag*`` columns are present.
+        当存在 ``flag*`` 列时为每日绘制 QC 标记。
     title : str, optional
         Plot title on every page. If None (default), no title.
         每页图标题；默认 None 不显示。
@@ -525,9 +524,7 @@ def plot_bsrn_daily_booklet(file_path, output_file, station_code=None,
         The function saves the plots to the specified PDF file.
         该函数将图表保存到指定的 PDF 文件中。
     """
-    plot_df, zenith = _load_month_archive_for_daily(
-        file_path, station_code, apply_qc, df=df
-    )
+    plot_df, zenith = _load_month_archive_for_daily(file_path=file_path, df=df)
 
     print(f"Generating PDF booklet: {output_file}...")
     with PdfPages(output_file) as pdf:
@@ -537,7 +534,6 @@ def plot_bsrn_daily_booklet(file_path, output_file, station_code=None,
                 day_df,
                 day_zenith,
                 title,
-                station_code=station_code,
                 show_qc_markers=show_qc_markers,
             )
             fig = p.draw()

@@ -7,6 +7,8 @@ description: Standards and governance for the bsrn project, including naming con
 
 This document defines the naming conventions, scientific symbols, and bilingual (English/Chinese) translations used throughout the `bsrn` project.
 
+**Contributors and automated agents** MUST read this skill **before** editing project code and **apply** the rules below (especially §Documentation — function signatures and docstrings). Treat it as binding, not background.
+
 ## 📏 Radiometric Parameters
 
 Code variables and documentation **MUST** strictly adhere to the following table:

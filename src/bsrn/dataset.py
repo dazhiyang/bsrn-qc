@@ -585,7 +585,6 @@ class BSRNPlot:
             return plot_bsrn_daily_booklet(
                 file_path=None,
                 output_file=output_file,
-                station_code=self._ds.station_code,
                 df=filtered_df,
                 **kwargs,
             )
@@ -595,7 +594,6 @@ class BSRNPlot:
             return plot_bsrn_daily_day(
                 file_path=None,
                 day=date_to_plot,
-                station_code=self._ds.station_code,
                 output_file=output_file,
                 df=df,
                 **kwargs,
