@@ -28,6 +28,9 @@ Format Codes (Fortran-style):
 # LR_SPECS: per logical record (LR0001 … LR4000CONST), each field’s format, missing value,
 # mandatory flag, default, and validate_func name (callable name in ``validation``).
 # 各逻辑记录的字段规范：Fortran 风格格式、缺失值、必填、默认值、以及 ``validation`` 模块中的校验函数名。
+#:
+#: Nested mapping keyed by LR code, then field name, to Fortran-style format metadata
+#: (``format``, ``missing``, ``validate_func`` name, etc.). Used by Pydantic LR models.
 LR_SPECS = {
     "LR0001": {
         "stationNumber": {"label": "Station identification number", "format": "I2", "missing": None, "mandatory": True, "default": None, "validate_func": "I2_validateFunction"},
@@ -247,6 +250,8 @@ LR_SPECS = {
 # STATION_METADATA: BSRN station directory by 3-letter code (name, lat/lon, contacts, …).
 # Used when populating LR0001 / LR0002 / LR0004-style fields.
 # BSRN 站点目录（三位代码 → 名称、坐标、联系人等）；用于 LR0001 / LR0002 / LR0004 等字段。
+#:
+#: Mapping from three-letter station code to station directory metadata (name, coordinates, …).
 STATION_METADATA = {
     "ABS": {"name": "Abashiri", "location": "Hokkaido, Japan", "station_no": None, "lat": 44.0178, "lon": 144.2797, "elevation": 38.0, "established": "2021-03-01", "closed": None, "surface_type": "asphalt", "topography_type": "flat, rural", "scientist": "Sasaki Shun", "email": "rrc-jma@met.kishou.go.jp", "url": None},
     "ALE": {"name": "Alert", "location": "Lincoln Sea", "station_no": 18, "lat": 82.4900, "lon": -62.4200, "elevation": 127.0, "established": "2004-08-16", "closed": None, "surface_type": "tundra", "topography_type": "hilly, rural", "scientist": "Christopher Cox", "email": "christopher.j.cox@noaa.gov", "url": None},
@@ -330,6 +335,8 @@ STATION_METADATA = {
 
 # QUANTITIES: measured quantity label → WRMC ``radiationQuantityMeasured`` id for LR0008.
 # 辐射/气象量名称 → LR0008 中 ``radiationQuantityMeasured`` 的编号。
+#:
+#: Mapping from quantity label string to WRMC numeric id for LR0008.
 QUANTITIES = {
     "global 2 (pyranometer) ": 2,
     "direct": 3,
@@ -362,6 +369,8 @@ QUANTITIES = {
 
 # SURFACES: surface-type label → I2 code for LR0004 ``surfaceType``.
 # 地表类型描述 → LR0004 中 ``surfaceType`` 的整数码。
+#:
+#: Mapping from human-readable surface description to LR0004 ``surfaceType`` code.
 SURFACES = {
     "glacier - accumulation area": 1,
     "glacier - ablation area": 2,
@@ -389,6 +398,8 @@ SURFACES = {
 
 # TOPOGRAPHIES: human-readable topography label → I2 code for LR0004 ``topographyType``.
 # 地形描述字符串 → LR0004 中 ``topographyType`` 的整数码。
+#:
+#: Mapping from topography description to LR0004 ``topographyType`` code.
 TOPOGRAPHIES = {
     "flat - urban": 1,
     "flat - rural": 2,
@@ -402,6 +413,8 @@ TOPOGRAPHIES = {
 
 # PYRGEOMETER_BODY: pyrgeometer body compensation option → I2 code for LR0008 ``pyrgeometerBody``.
 # 长波表体补偿方式 → LR0008 ``pyrgeometerBody`` 编码。
+#:
+#: Mapping from pyrgeometer body compensation option to LR0008 code.
 PYRGEOMETER_BODY = {
     "Manufacturer & battery circuit": 1,
     "Corrected manufacturer & battery circuit": 2,
@@ -411,6 +424,8 @@ PYRGEOMETER_BODY = {
 
 # PYRGEOMETER_DOME: pyrgeometer dome / ventilation option → I2 code for LR0008 ``pyrgeometerDome``.
 # 长波表罩与通风组合 → LR0008 ``pyrgeometerDome`` 编码。
+#:
+#: Mapping from dome/ventilation option to LR0008 ``pyrgeometerDome`` code.
 PYRGEOMETER_DOME = {
     "Dome shaded": 1,
     "Instrument ventilated": 2,

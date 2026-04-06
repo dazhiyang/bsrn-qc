@@ -13,7 +13,7 @@ Heatmaps and Calendars
 .. autosummary::
    :toctree: generated/
 
-   bsrn.visualization.calendar.plot_clearsky_calendar
+   bsrn.visualization.calendar.plot_calendar
    bsrn.visualization.table.plot_table
 
 Model Comparisons

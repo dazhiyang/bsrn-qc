@@ -1,8 +1,8 @@
 Examples
 ========
 
-Additional examples for using ``bsrn`` beyond the notebooks in :doc:`tutorials/index`.
-更多示例见 :doc:`tutorials/index` 中的教程笔记本。
+Additional examples for using ``bsrn`` beyond the notebooks in :doc:`/tutorials/index`.
+更多示例见 :doc:`/tutorials/index` 中的教程笔记本。
 
 Hugging Face
 ------------
