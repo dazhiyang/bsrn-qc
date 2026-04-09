@@ -1,6 +1,5 @@
 """
-bsrn: Quality Control for BSRN station-to-archive files.
-bsrn：BSRN 站点存档文件质量控制工具。
+bsrn: BSRN station-to-archive files, QC, solar geometry, clear-sky modeling, and utilities.
 """
 
 __version__ = "0.2.1"

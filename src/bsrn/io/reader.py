@@ -1,15 +1,11 @@
 """
 BSRN ``.dat.gz`` archive reader — returns validated Pydantic LR models.
-BSRN ``.dat.gz`` 存档读取器 — 返回已校验的 Pydantic LR 模型。
 
 The single public entry point is :func:`read_bsrn_archive`, which opens
 the file once, locates ``*U`` / ``*C`` record markers, and builds
 :class:`~bsrn.archive.records_models.LR0100`,
 :class:`~bsrn.archive.records_models.LR0300`, and
 :class:`~bsrn.archive.records_models.LR4000` instances.
-
-唯一公开入口为 :func:`read_bsrn_archive`，一次性打开文件、定位记录
-标记，并构建 LR0100 / LR0300 / LR4000 Pydantic 模型实例。
 """
 
 import gzip
@@ -49,14 +45,11 @@ def read_bsrn_archive(path):
     """
     Parse a BSRN ``.dat.gz`` station-to-archive file.
 
-    解析 BSRN ``.dat.gz`` 台站存档文件。
-
     Parameters
     ----------
     path : str or Path
         Path to the ``.dat.gz`` file (filename format
         ``XXXMMYY.dat.gz``).
-        ``.dat.gz`` 文件路径（文件名格式 ``XXXMMYY.dat.gz``）。
 
     Returns
     -------
@@ -89,7 +82,6 @@ def read_bsrn_archive(path):
         lines = f.readlines()
 
     # Locate all record markers (*U… / *C…).
-    # 定位所有记录标记。
     markers = [
         (i, lines[i].strip())
         for i in range(len(lines))

@@ -1,6 +1,5 @@
 """
 Visualization of irradiance separation: k vs kt scatter (Erbs, BRL, etc.).
-辐照分离可视化：k vs kt 散点图（Erbs、BRL 等）。
 """
 
 import pandas as pd
@@ -30,70 +29,62 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
                  output_file=None, title=None):
     """
     Faceted scatter plot of k (diffuse fraction) vs kt (clearness index) from a DataFrame.
-    根据 DataFrame 绘制 k vs kt 散点图，按模型分面。
 
     One panel per model; measured (gray) and model (colored) in each panel.
-    每个模型一个面板；各面板内为实测（灰）与模型（着色）点。
 
     Parameters
     ----------
     df : pd.DataFrame
         Input data with DatetimeIndex and at least ``ghi_col`` and ``dhi_col``.
-        输入数据，需含 DatetimeIndex 及 ghi、dhi 列。
     models : sequence of str
         Model names to plot, e.g. ``('erbs', 'brl')``. Each in SUPPORTED_SEPARATION_MODELS.
-        要绘制的模型名，如 ``('erbs', 'brl')``。
     lat : float
-        Latitude. [degrees] 纬度。[度]
+        Latitude. [degrees]
     lon : float
-        Longitude. [degrees] 经度。[度]
+        Longitude. [degrees]
     ghi_col : str, default "ghi"
-        Column name for GHI. GHI 列名。
+        Column name for GHI.
     dhi_col : str, default "dhi"
-        Column name for DHI. DHI 列名。
+        Column name for DHI.
     k_mod_cols : dict or None, optional
         Map model name to column name for model k. If None, runs each separation model.
         For ``engerer2`` and ``yang4``, k must be pre-computed and provided here (both need clear-sky GHI).
-        模型名到 k 列名的映射。engerer2、yang4 的 k 须预先计算并通过此处传入。
     output_file : str, optional
-        Path to save the figure. 保存路径。
+        Path to save the figure.
     title : str, optional
-        Overall plot title. 图标题。
+        Overall plot title.
 
     Notes
     -----
     To include Engerer2 or Yang4 (both require clear-sky GHI): add clear-sky GHI to ``df``
     (e.g. :func:`bsrn.physics.clearsky.add_clearsky_columns`), run the separation with
     ``ghi_clear=df["ghi_clear"].values``, assign the result's ``"k"`` to a column, then pass
-    ``k_mod_cols={"engerer2": "k_engerer2", "yang4": "k_yang4"}``. 要绘制 Engerer2/Yang4：
-    先在 df 中加入晴空 GHI，调用对应 separation(..., ghi_clear=...)，将 k 写入列再通过 k_mod_cols 传入。
+    ``k_mod_cols={"engerer2": "k_engerer2", "yang4": "k_yang4"}``.
 
     Returns
     -------
     p : plotnine.ggplot
         The ggplot object. If ``output_file`` was set, this is a **new** instance
         (the one used for saving is not safe to draw again after ``plt.close``).
-        若传了 ``output_file``，返回的是**新**构建的对象（保存用的对象在 close 后不宜再次 draw）。
     """
     if not isinstance(df.index, pd.DatetimeIndex):
-        raise ValueError("df must have a DatetimeIndex. / df 须为 DatetimeIndex。")
+        raise ValueError("df must have a DatetimeIndex.")
     for col, name in [(ghi_col, "ghi"), (dhi_col, "dhi")]:
         if col not in df.columns:
-            raise ValueError(f"DataFrame missing column '{col}' ({name}). / 缺少列 '{col}'。")
+            raise ValueError(f"DataFrame missing column '{col}' ({name}).")
 
     models = tuple(m.strip().lower() for m in models)
     if not models:
-        raise ValueError("models must be a non-empty sequence. / models 不可为空。")
+        raise ValueError("models must be a non-empty sequence.")
     for m in models:
         if m not in SUPPORTED_SEPARATION_MODELS:
             raise ValueError(
-                f"model must be one of {SUPPORTED_SEPARATION_MODELS}, got {m!r}. / "
-                f"model 必须为 {SUPPORTED_SEPARATION_MODELS} 之一。"
+                f"model must be one of {SUPPORTED_SEPARATION_MODELS}, got {m!r}."
             )
 
     use = df[[ghi_col, dhi_col]].dropna()
     if len(use) == 0:
-        raise ValueError("No valid ghi/dhi rows after dropna. / dropna 后无有效 ghi/dhi 行。")
+        raise ValueError("No valid ghi/dhi rows after dropna.")
     times = use.index
     ghi = np.asarray(use[ghi_col], dtype=float)
     dhi = np.asarray(use[dhi_col], dtype=float)
@@ -129,16 +120,14 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
                 result = brl_separation(times_day, ghi_day, lat, lon)
             elif model == "engerer2":
                 raise ValueError(
-                    "engerer2 requires pre-computed k. Run engerer2_separation and pass column in k_mod_cols. / "
-                    "engerer2 需预先计算 k，请运行 engerer2_separation 并通过 k_mod_cols 传入列名。"
+                    "engerer2 requires pre-computed k. Run engerer2_separation and pass column in k_mod_cols."
                 )
             elif model == "yang4":
                 raise ValueError(
-                    "yang4 requires pre-computed k. Run yang4_separation and pass column in k_mod_cols. / "
-                    "yang4 需预先计算 k，请运行 yang4_separation 并通过 k_mod_cols 传入列名。"
+                    "yang4 requires pre-computed k. Run yang4_separation and pass column in k_mod_cols."
                 )
             else:
-                raise ValueError(f"Unknown model {model!r}. / 未知模型 {model!r}。")
+                raise ValueError(f"Unknown model {model!r}.")
             k_mod = np.asarray(result["k"], dtype=float)
         label = MODEL_DISPLAY_NAMES[model]
         for i in range(n):
@@ -149,8 +138,7 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
     order = [x for x in FACET_ORDER if x in plot_df["model"].values]
     plot_df["model"] = pd.Categorical(plot_df["model"], categories=order, ordered=True)
 
-    # Scattermore-style: rasterize points to a fixed grid (like R scattermore) for clean, fast plots.
-    # 类 scattermore：将点栅格化到固定网格，得到清晰、快速的图。
+    # Scattermore-style: rasterize points to a fixed grid for clean, fast plots.
     df_meas = plot_df[plot_df["source"] == "measured"].dropna().copy()
     df_mod = plot_df[plot_df["source"] == "model"].dropna().copy()
     df_mod = df_mod[df_mod["k"] < 1].copy()
@@ -175,8 +163,7 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
         x_range=(0, 1), y_range=(0, 1), fill_style="viridis", model_col="model"
     )
 
-    # Figure width 160 mm per project rules (standard journal column width).
-    # 按项目规范：图宽 160 mm（标准期刊栏宽）。
+    # Figure width 160 mm (standard journal column width)
     n_facets = plot_df["model"].nunique()
     width_mm = 160.0
     width_inch = width_mm / 25.4
@@ -184,7 +171,6 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
     fig_h = panel_width_inch * 0.9 + 0.35  # Extra height for legend bar below.
 
     # Use STIX math font so $k$ / $k_t$ match Times New Roman text (plotnine uses matplotlib).
-    # 使用 STIX 数学字体，使 $k$、$k_t$ 与 Times New Roman 正文一致。
     prev_fontset = mpl.rcParams.get("mathtext.fontset")
     try:
         mpl.rcParams["mathtext.fontset"] = "stix"
@@ -243,7 +229,6 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
         p = _ggplot()
         if output_file:
             # Rasterize tile layers so PDF stores them as bitmaps (KB not MB).
-            # 将瓦片层栅格化，使 PDF 以位图存储，体积为 KB 级。
             fig = p.draw()
             for ax in fig.axes:
                 for col in ax.collections:
@@ -263,7 +248,6 @@ def _points_to_raster(df, xcol, ycol, value=None, n=512, x_range=(0, 1), y_range
                       fill_style="gray", model_col="model", facet_models=None):
     """
     Rasterize (x, y) points into a grid and assign fill colors (scattermore-style).
-    将 (x, y) 点栅格化到网格并赋填充色（类 scattermore）。
 
     Parameters
     ----------
@@ -352,12 +336,10 @@ def _points_to_raster(df, xcol, ycol, value=None, n=512, x_range=(0, 1), y_range
     zvals = out["z"].values
     out = out.drop(columns=["z"])
     if fill_style == "gray":
-        # Single gray for measured layer (no density scale).
-        # 实测层使用单一灰色，无密度梯度。
+        # Single gray for measured layer (no density scale)
         pass
     else:
-        # Viridis: keep numeric value for legend bar.
-        # Viridis：保留数值以便绘制图例条。
+        # Viridis: keep numeric value for legend bar
         zmin, zmax = np.nanmin(zvals), np.nanmax(zvals)
         out["value"] = (
             np.ones_like(zvals)
@@ -375,7 +357,6 @@ def _points_to_raster(df, xcol, ycol, value=None, n=512, x_range=(0, 1), y_range
 def _get_density(x, y, n=200):
     """
     Grid-based 2-D density estimate, equivalent to R's MASS::kde2d + findInterval lookup.
-    基于网格的二维密度估计，等同于 R 的 MASS::kde2d + findInterval。
     """
     from scipy.ndimage import gaussian_filter
 

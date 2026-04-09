@@ -1,8 +1,6 @@
 """
 Solar Position Algorithm (SPA) for solar radiation applications.
 Ported from pvlib-python (Holmgren et al. 2018).
-太阳位置算法 (SPA)。
-从 pvlib-python 移植 (Holmgren et al. 2018)。
 
 References:
 [1] Reda, I.; Andreas, A. (2004). Solar Position Algorithm for Solar Radiation 
@@ -17,7 +15,7 @@ Source Software 8.92 (2023): 5994.
 import numpy as np
 import pandas as pd
 
-# heliocentric longitude coefficients / 日心经度系数
+# heliocentric longitude coefficients
 L0 = np.array([
     [175347046.0, 0.0, 0.0], [3341656.0, 4.6692568, 6283.07585],
     [34894.0, 4.6261, 12566.1517], [3497.0, 2.7441, 5753.3849],
@@ -92,14 +90,14 @@ L3 = np.array([
 L4 = np.array([[114.0, 3.142, 0.0], [8.0, 4.13, 6283.08], [1.0, 3.84, 12566.15]])
 L5 = np.array([[1.0, 3.14, 0.0]])
 
-# heliocentric latitude coefficients / 日心纬度系数
+# heliocentric latitude coefficients
 B0 = np.array([
     [280.0, 3.199, 84334.662], [102.0, 5.422, 5507.553],
     [80.0, 3.88, 5223.69], [44.0, 3.7, 2352.87], [32.0, 4.0, 1577.34]
 ])
 B1 = np.array([[9.0, 3.9, 5507.55], [6.0, 1.73, 5223.69]])
 
-# heliocentric radius coefficients / 日心半径系数
+# heliocentric radius coefficients
 R0 = np.array([
     [100013989.0, 0.0, 0.0], [1670700.0, 3.0984635, 6283.07585],
     [13956.0, 3.05525, 12566.1517], [3084.0, 5.1985, 77713.7715],
@@ -303,7 +301,6 @@ def _topocentric_local_hour_angle(h, delta_alpha):
 def _atmospheric_refraction_correction(pressure, temp, e0, atmos_refract=0.5667):
     """
     Atmospheric refraction correction per NREL SPA (Reda & Andreas, 2004).
-    大气折射校正，基于 NREL SPA (Reda & Andreas, 2004)。
     """
     # switch: only apply when the sun is above the refraction-adjusted horizon
     switch = np.where(e0 >= -1.0 * (0.26667 + atmos_refract), 1.0, 0.0)
@@ -348,7 +345,7 @@ def _solar_position(unixtime, lat, lon, elev, pressure=1013.25, temp=12, delta_t
     alpha = _geocentric_sun_right_ascension(lamd, epsilon, beta)
     delta = _geocentric_sun_declination(lamd, epsilon, beta)
     H = _local_hour_angle(v, lon, alpha)
-    # Topocentric conversions / 站心坐标转换 (Parallax correction)
+    # Topocentric conversions (parallax correction)
     eq_hor_par = _equatorial_horizontal_parallax(R)
     u = _uterm(lat)
     x = _xterm(u, lat, elev)
@@ -371,7 +368,7 @@ def _solar_position(unixtime, lat, lon, elev, pressure=1013.25, temp=12, delta_t
     zenith_true = 90.0 - e0
     zenith_apparent = 90.0 - e
     
-    # Azimuth / 方位角 (Measured from North)
+    # Azimuth (measured from North)
     gamma = np.degrees(np.arctan2(np.sin(HR), np.cos(HR) * np.sin(LatR) - np.tan(DR) * np.cos(LatR)))
     azimuth = (gamma + 180.0) % 360
     

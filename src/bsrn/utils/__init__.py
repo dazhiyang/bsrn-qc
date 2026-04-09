@@ -1,6 +1,5 @@
 """
 Utilities: time averaging, radiometric helpers, QC summaries, and clear-sky / CEE detection.
-工具子包：时间平均、辐射计算、QC 摘要及晴空 / 云增强检测。
 
 Exposes :mod:`averaging`, :mod:`calculations`, :mod:`quality`,
 :mod:`clear_sky_detection`, :mod:`cee_detection`, and convenience imports such as

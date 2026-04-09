@@ -1,6 +1,5 @@
 """
 Calendar-style irradiance plots.
-日历样式的辐照度对比图。
 """
 
 import numpy as np
@@ -29,38 +28,29 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
                   other_cols=None, labels=None, title=None):
     """
     Plot a one-page calendar-style comparison for multiple irradiance series (up to 7).
-    生成单页日历样式对比图，展示多条辐照度时段序列（最多 7 条）。
 
     Parameters
     ----------
     df : pd.DataFrame
         Processed DataFrame with UTC DatetimeIndex and 'zenith' column.
-        已处理的 DataFrame，含 UTC DatetimeIndex 与 ``zenith`` 列。
     output_file : str
         Path to save the output PDF.
-        保存 PDF 的路径。
     station_code : str
         BSRN station code for the title.
-        用于标题的原站 BSRN 代码。
     meas_col : str, optional
         Column name for measured data (plotted as solid line).
-        实测数据的列名（用实线绘制）。
     clear_col : str, optional
         Column name for clear-sky data (plotted with line and ribbon).
-        晴空数据的列名（绘制线条与色带）。
     other_cols : list of str, optional
         Additional column names to plot as solid lines.
-        要作为实线绘制的其他额外列名。
     labels : list of str, optional
         Labels for the legend corresponding to provided columns in order:
         [meas_col, clear_col] + other_cols. If None, column names are used.
-        与 [实测, 晴空] + 其他列 对应的图例标签列表；为 None 时使用列名。
     title : str, optional
         Plot title. If None (default), no title is drawn.
-        图标题；默认 None 不显示。
     """
     if "zenith" not in df.columns:
-        raise ValueError("df must contain a 'zenith' column. / df 必须包含 ``zenith`` 列。")
+        raise ValueError("df must contain a 'zenith' column.")
 
     columns = []
     if meas_col:
@@ -71,7 +61,7 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
         columns.extend(other_cols)
         
     if not columns:
-        raise ValueError("At least one column must be specified to plot. / 必须指定至少一列进行绘制。")
+        raise ValueError("At least one column must be specified to plot.")
 
     if len(columns) > 7:
         import warnings
@@ -84,10 +74,9 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
     clean_idx = df.index.tz_localize(None) if df.index.tz is not None else df.index
     
     # Automatically slice to the most frequent month to handle boundary effects from averaging
-    # 自动切分到出现频率最高的月份，以处理由于平均产生的边界效应
     all_months = clean_idx.to_period("M")
     if all_months.empty:
-        raise ValueError("DataFrame index is empty. / DataFrame 索引为空。")
+        raise ValueError("DataFrame index is empty.")
     
     target_month = pd.Series(all_months).mode()[0]
     if len(all_months.unique()) > 1:

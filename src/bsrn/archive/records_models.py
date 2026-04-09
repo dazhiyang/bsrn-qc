@@ -5,9 +5,6 @@ Each scalar/header field uses :func:`lr_spec` once: it attaches both BSRN
 ``json_schema_extra`` (Fortran layout) and post-parse validation
 (``Annotated`` + ``AfterValidator``). LR0100 / LR4000 minute columns use
 ``lr_spec_field`` plus a shared ``field_validator`` that reads ``yearMonth``.
-
-显式 Pydantic 逻辑记录模型。**标量/头字段** 用 ``lr_spec`` 一次完成元数据 + 校验；
-**LR0100/LR4000 分钟列** 用 ``lr_spec_field`` 与 ``field_validator``（依赖 ``yearMonth``）。
 """
 
 from __future__ import annotations
@@ -209,7 +206,6 @@ def _validate_minute_vector(v, field_name: str, lr_code: str, year_month: object
 class LR0100(ArchiveRecordBase):
     """
     Minute-resolution archive block; series columns accept ``pandas.Series`` or ``numpy.ndarray``.
-    分钟分辨率存档块；序列列接受 ``pandas.Series`` 或 ``numpy.ndarray``。
     """
 
     model_config = ConfigDict(extra="ignore", frozen=False, arbitrary_types_allowed=True)
@@ -244,7 +240,6 @@ class LR0100(ArchiveRecordBase):
 class LR0300(ArchiveRecordBase):
     """
     LR0300 reflected / upward radiation minute block (SWU, LWU, Net).
-    LR0300 反射/上行辐射分钟块（短波上行、长波上行、净辐射）。
     """
 
     model_config = ConfigDict(extra="ignore", frozen=False, arbitrary_types_allowed=True)
@@ -272,7 +267,6 @@ class LR0300(ArchiveRecordBase):
 class LR4000(ArchiveRecordBase):
     """
     LR4000 pyrgeometer minute block; series columns accept ``pandas.Series`` or ``numpy.ndarray``.
-    LR4000 长波表分钟块；序列列接受 ``pandas.Series`` 或 ``numpy.ndarray``。
     """
 
     model_config = ConfigDict(extra="ignore", frozen=False, arbitrary_types_allowed=True)

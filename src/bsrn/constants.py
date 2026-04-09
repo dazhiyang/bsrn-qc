@@ -1,34 +1,30 @@
 """
-BSRN Standards and Constants.
-BSRN 标准和常量。
+BSRN standards and constants.
 
-Contains physical constants, model parameters, and station metadata.
-包含物理常量、模型参数和站点元数据。
+Physical constants, model parameters, station metadata, service endpoints,
+Hugging Face repository IDs, and visualization palettes.
 """
 
 """
-BSRN Data Services: Connectivity parameters for the BSRN archive.
-BSRN 数据服务：BSRN 存档的连接参数。
+BSRN Data Services: connectivity parameters for the BSRN archive.
 """
 BSRN_FTP_HOST = "ftp.bsrn.awi.de"
 
 """
-Station Metadata: Mapping of station abbreviations to geographic info.
-站点元数据：站点缩写到地理信息的映射。
+Station metadata: mapping of station abbreviations to geographic info.
 
-Includes: name, latitude [degrees], longitude [degrees], elevation [m].
-包括：名称、纬度 [度]、经度 [度]、海拔 [米]。
+Includes: name, latitude [degrees], longitude [degrees], elevation [m],
+status, and Köppen climate class (``kgc``).
 
 References
 ----------
-Driemel, A., et al. (2018). Baseline Surface Radiation Network (BSRN): 
-structure and data description (1992–2017). Earth System Science Data, 
+Driemel, A., et al. (2018). Baseline Surface Radiation Network (BSRN):
+structure and data description (1992–2017). Earth System Science Data,
 10(3), 1491-1501.
 
 Note
-----------
+----
 The KCC for CLH, GVN, MNM, SYO and TIR are inferred from the station locations.
-
 """
 BSRN_STATIONS = {
     "ABS": {"name": "Abashiri", "lat": 44.0178, "lon": 144.2797, "elev": 38.0, "status": "active", "kgc": "Dfb"},
@@ -112,12 +108,11 @@ BSRN_STATIONS = {
 }
 
 """
-Linke Turbidity: Monthly values for BSRN stations.
-Linke 浑浊度：BSRN 站点的月度值。
+Linke turbidity: monthly values for BSRN stations.
 
 References
 ----------
-SoDA-PRO (2024). Linke Turbidity Factor. Retrieved from 
+SoDA-PRO (2024). Linke Turbidity Factor. Retrieved from
 https://www.soda-pro.com/help/general-knowledge/linke-turbidity-factor
 """
 LINKE_TURBIDITY = {
@@ -202,37 +197,32 @@ LINKE_TURBIDITY = {
 }
 
 """
-Solar constant (SC) [$E_{\text{sc}}$]. [W/m^2]
-太阳常数 (SC) [$E_{\text{sc}}$]。[瓦/平方米]
+Solar constant (SC) [$E_{\text{sc}}$] [W/m^2].
 
 References
 ----------
-Gueymard, C. A. (2018). A reevaluation of the solar constant based on a 
-42-year total solar irradiance time series and a reconciliation of 
+Gueymard, C. A. (2018). A reevaluation of the solar constant based on a
+42-year total solar irradiance time series and a reconciliation of
 spaceborne observations. Solar Energy, 168, 2-9.
 """
-solar_constant = 1361.1 # temporary for testing
-
+solar_constant = 1361.1
 
 r"""
-Stefan-Boltzmann constant [$\sigma_{\text{B}}$]. [W/m^2/K^4]
-斯特芬-波兹曼常数 ($\sigma_{\text{B}}$)。[瓦/平方米/开尔文^4]
+Stefan-Boltzmann constant [$\sigma_{\text{B}}$] [W/m^2/K^4].
 """
 sigmaB = 5.670374419e-8
 
 
 """
 Engerer2 separation model parameters (C, b0, b1, b2, b3, b4, b5).
-Engerer2 辐照分离模型参数 (C, b0, b1, b2, b3, b4, b5)。
 
 Mapping by averaging period [minutes].
-按平均时段 [分钟] 映射。
 
 References
 ----------
-Bright, J. M., & Engerer, N. A. (2019). Engerer2: Global 
-re-parameterisation, update, and validation of an irradiance separation 
-model at different temporal resolutions. Journal of Renewable and 
+Bright, J. M., & Engerer, N. A. (2019). Engerer2: Global
+re-parameterisation, update, and validation of an irradiance separation
+model at different temporal resolutions. Journal of Renewable and
 Sustainable Energy, 11(3), 033701.
 """
 ENGERER2_PARAMS = {
@@ -248,48 +238,42 @@ ENGERER2_PARAMS = {
 
 """
 Yang4 separation model parameters.
-Yang4 辐照分离模型参数。
 
-Predictors: kt, AST, zenith, dktc, k_de, k_60min.
-预测变量：kt, AST, zenith, dktc, k_de, k_60min。
+Predictors: ``kt``, AST, ``zenith``, ``dktc``, ``k_de``, ``k_60min``.
 
 References
 ----------
-Yang, D., & Boland, J. (2019). Satellite-augmented diffuse solar 
-radiation separation models. Journal of Renewable and Sustainable Energy, 
+Yang, D., & Boland, J. (2019). Satellite-augmented diffuse solar
+radiation separation models. Journal of Renewable and Sustainable Energy,
 11(2), 023704.
 """
 YANG4_PARAMS = (
-    0.0361,   # C (lower bound) / C (下限)
-    -0.5744,  # b0 (intercept) / b0 (截距)
-    4.3184,   # b1 (kt) / b1 (晴朗指数)
-    -0.0011,  # b2 (AST) / b2 (地面太阳时)
-    0.0004,   # b3 (zenith) / b3 (太阳天顶角)
-    -4.7952,  # b4 (dktc) / b4 (晴空偏离度)
-    1.4414,   # b5 (k_de) / b5 (云增强分数)
-    -2.8396,  # b6 (k_60min) / b6 (60 分钟平均散射分数)
+    0.0361,   # C (lower bound)
+    -0.5744,  # b0 (intercept)
+    4.3184,   # b1 (kt)
+    -0.0011,  # b2 (AST)
+    0.0004,   # b3 (zenith)
+    -4.7952,  # b4 (dktc)
+    1.4414,   # b5 (k_de)
+    -2.8396,  # b6 (k_60min)
 )
 
 
 """
 Hugging Face dataset repositories.
-Hugging Face 数据集仓库。
 
-Each satellite-derived or reanalysis product is stored as monthly parquet files
-on Hugging Face. The repository IDs and maintainer emails are listed below.
-每种卫星反演或再分析产品以月度 parquet 文件形式存储在 Hugging Face 上。
-仓库 ID 与维护者邮箱如下。
+Each satellite-derived or reanalysis product is stored as monthly Parquet files
+on Hugging Face. Repository IDs and maintainer contact are listed below.
 """
-# Mainteiner email for HF updates / HF 更新维护者邮箱
 HF_MAINTAINER_EMAIL = "yangdazhi.nus@gmail.com"
 
-# MERRA-2 (REST2 clear-sky inputs) / MERRA-2（REST2 晴空输入）
+# MERRA-2 (REST2 clear-sky inputs).
 MERRA2_HF_REPO_ID = "dazhiyang/bsrn-merra2"
 
-# CAMS Radiation Service (CRS) / CAMS 辐射服务 (CRS)
+# CAMS Radiation Service (CRS).
 CRS_HF_REPO_ID = "dazhiyang/bsrn-crs"
 
-# NSRDB PSM v4 (one repo per variant) / NSRDB PSM v4（每变体一个仓库）
+# NSRDB PSM v4 (one repository per variant).
 NSRDB_CONUS_HF_REPO_ID = "dazhiyang/bsrn-nsrdb-conus"
 NSRDB_FULL_DISC_HF_REPO_ID = "dazhiyang/bsrn-nsrdb-full-disc"
 NSRDB_AGGREGATED_HF_REPO_ID = "dazhiyang/bsrn-nsrdb-aggregated"
@@ -297,11 +281,9 @@ NSRDB_AGGREGATED_HF_REPO_ID = "dazhiyang/bsrn-nsrdb-aggregated"
 
 """
 Geostationary satellite subsatellite longitudes [degrees].
-静止卫星星下点经度 [度]。
 
 All geostationary satellites orbit at 0° latitude; the Earth-disk
 reliability radius is approximately 60° for all entries.
-所有静止卫星轨道纬度为 0°；地球圆盘可靠性半径约为 60°。
 
 References
 ----------
@@ -321,13 +303,9 @@ GEO_SATELLITE_DISK_RADIUS_DEG = 60.0
 
 """
 CAMS/McClear parsing constants.
-CAMS/McClear 解析常量。
 
-Base host for CAMS/McClear API (SoDa).
-CAMS/McClear API（SoDa）的基础主机名。
-
-Map CAMS/McClear variable names to project variable names.
-将 CAMS/McClear 变量名映射到项目变量名。
+Base host for the CAMS/McClear API (SoDa). Maps McClear CSV column names to
+project variable names.
 
 References
 ----------
@@ -360,30 +338,25 @@ MCCLEAR_VARIABLE_MAP = {
 
 """
 CAMS Radiation Service (CRS) on SoDa.
-SoDa 上的 CAMS 辐射服务（CRS）。
 
-Same HTTPS host and CSV layout as McClear; WPS ``Identifier`` is ``get_cams_radiation``.
-与 McClear 使用相同 HTTPS 主机与 CSV 布局；WPS ``Identifier`` 为 ``get_cams_radiation``。
+Same HTTPS host and CSV layout as McClear; WPS ``Identifier`` is
+``get_cams_radiation``. SoDa CRS CSV also includes clear-sky columns, ``TOA``,
+``BHI``, ``Reliability``, etc. :func:`bsrn.io.crs.download_crs` keeps only
+all-sky ``GHI``, ``BNI``, ``DHI`` (Wh→W) as ``ghi_crs``, ``bni_crs``,
+``dhi_crs`` plus the UTC time index.
 
-SoDa CRS CSV also includes clear-sky columns, ``TOA``, ``BHI``, ``Reliability``, etc.
-:func:`bsrn.io.crs.download_crs` keeps only all-sky ``GHI``, ``BNI``, ``DHI`` (Wh→W) as
-``ghi_crs``, ``bni_crs``, ``dhi_crs`` plus the UTC time index.
-SoDa CRS CSV 另含晴空分量、``TOA``、``BHI``、``Reliability`` 等；:func:`bsrn.io.crs.download_crs`
-仅保留全天空 ``GHI``、``BNI``、``DHI``（Wh→W 换算后列名为 ``ghi_crs`` 等）及 UTC 时间索引。
+Himawari and MSG GEO metadata (subsatellite point, **60°** reliability radius,
+minimum *start* dates) are used by :func:`bsrn.io.crs.download_crs` via
+``_check_crs_coverage``.
 
-Himawari and MSG GEO metadata (subsatellite point, **60°** reliability radius, minimum
-*start* dates) used by :func:`bsrn.io.crs.download_crs` via ``_check_crs_coverage``.
-Himawari 与 MSG 的 GEO 元数据（星下点、60° 可靠性半径、最早起始日），由 ``_check_crs_coverage`` 使用。
-
-All-sky columns are named ``ghi_crs``, ``bni_crs``, ``dhi_crs`` to leave room for other
-gridded products (e.g. ``ghi_nsrdb``) when merging workflows.
-全天空列使用 ``*_crs`` 后缀，便于与后续其他格点产品（如 ``ghi_nsrdb``）并列区分。
+All-sky columns are named ``ghi_crs``, ``bni_crs``, ``dhi_crs`` to leave room
+for other gridded products (e.g. ``ghi_nsrdb``) when merging workflows.
 
 References
 ----------
-.. [1] Schroedter-Homscheidt, M., et al. (2016). User’s Guide to the CAMS Radiation Service.
+.. [1] Schroedter-Homscheidt, M., et al. (2016). User's Guide to the CAMS Radiation Service.
        European Commission.
-.. [2] CAMS radiation service — SoDa. 
+.. [2] CAMS radiation service — SoDa.
        https://www.soda-pro.com/web-services/radiation/cams-radiation-service
 """
 CRS_MSG_MIN_START_UTC = "2004-01-01"
@@ -401,17 +374,17 @@ CRS_OUTPUT_COLUMNS = ["ghi_crs", "bni_crs", "dhi_crs"]
 
 """
 NSRDB (National Solar Radiation Database) on NLR.
-NLR 上的 NSRDB (国家太阳辐射数据库)。
 
 Supports three variants:
-1. conus (v4.0.0): 5-min, 2018–2024, CONUS (GOES-East + GOES-West overlap).
-2. full-disc (v4.0.0): 10-min, 2018–2024, full GOES Earth disk.
-3. aggregated (v4.0.0): 30-min, 1998–2024, aggregated GOES archive.
+
+1. ``conus`` (v4.0.0): 5-min, 2018–2024, CONUS (GOES-East + GOES-West overlap).
+2. ``full-disc`` (v4.0.0): 10-min, 2018–2024, full GOES Earth disk.
+3. ``aggregated`` (v4.0.0): 30-min, 1998–2024, aggregated GOES archive.
 
 References
 ----------
-.. [1] Sengupta, M., Xie, Y., Lopez, A., Habte, A., Maclaurin, G., & Shelby, J. 
-       (2018). The national solar radiation data base (NSRDB). Renewable 
+.. [1] Sengupta, M., Xie, Y., Lopez, A., Habte, A., Maclaurin, G., & Shelby, J.
+       (2018). The national solar radiation data base (NSRDB). Renewable
        and sustainable energy reviews, 89, 51-60.
 .. [2] NSRDB Physical Solar Model (PSM) v4.0.0.
        https://nsrdb.nrel.gov/data-viewer
@@ -456,19 +429,18 @@ NSRDB_OUTPUT_COLUMNS = ["ghi_nsrdb", "bni_nsrdb", "dhi_nsrdb"]
 
 """
 Wong colorblind-friendly palette.
-Wong 色盲友好配色方案。
 
 References
 ----------
-Wong, B. (2011). Points of view: Color blindness. Nature Methods, 
+Wong, B. (2011). Points of view: Color blindness. Nature Methods,
 8(6), 441-441.
 """
 WONG_PALETTE = [
-    "#E69F00",  # Orange / 橙色
-    "#56B4E9",  # Sky Blue / 天蓝色
-    "#009E73",  # Bluish Green / 青绿色
-    "#CC79A7",  # Reddish Purple / 浅紫红色
-    "#D55E00",  # Vermillion / 朱红色
-    "#F0E442",  # Yellow / 黄色
-    "#0072B2"   # Blue / 蓝色
+    "#E69F00",  # Orange
+    "#56B4E9",  # Sky Blue
+    "#009E73",  # Bluish Green
+    "#CC79A7",  # Reddish Purple
+    "#D55E00",  # Vermillion
+    "#F0E442",  # Yellow
+    "#0072B2",  # Blue
 ]

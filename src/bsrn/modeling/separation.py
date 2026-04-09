@@ -1,7 +1,6 @@
 """
 Irradiance separation models (Erbs, Engerer2, etc.).
 Estimates diffuse fraction and DHI/BNI from GHI.
-辐照分离模型（Erbs、Engerer2 等）。从 GHI 估算散射分数与 DHI/BNI。
 """
 
 import numpy as np
@@ -15,7 +14,6 @@ def _get_solar_and_kt(times, ghi, lat, lon, elev=0, min_mu0=0.065,
                       max_clearness_index=1.0):
     """
     Get ghi_extra, zenith, mu0, kt, and night mask for separation.
-    为分离模型计算 ghi_extra、天顶角、mu0、kt 与夜间掩码。
 
     Uses pvlib-style clearness index: ghi_extra = bni_extra * max(mu0, min_mu0),
     kt from calc_kt, clamped and set to NaN at night.
@@ -24,41 +22,31 @@ def _get_solar_and_kt(times, ghi, lat, lon, elev=0, min_mu0=0.065,
     ----------
     times : pd.DatetimeIndex
         Timestamps (same length as ghi).
-        时间戳（与 ghi 等长）。
     ghi : array-like
         Global horizontal irradiance. [W/m^2]
-        水平总辐照度。[瓦/平方米]
     lat : float
         Latitude. [degrees]
-        纬度。[度]
     lon : float
         Longitude. [degrees]
-        经度。[度]
     elev : float, default 0
         Site elevation. [m] Used for topocentric solar position (matches pvlib when same elev).
-        站点海拔。[米]。用于站心太阳位置（与 pvlib 使用相同 elev 时一致）。
     min_mu0 : float, default 0.065
         Minimum cosine of solar zenith for ghi_extra and kt (equiv. ~86.3 deg).
-        ghi_extra 与 kt 中余弦天顶角的最小值（相当于 ~86.3 度）。
     max_clearness_index : float, default 1.0
         Upper clamp for kt.
-        kt 的上限。
 
     Returns
     -------
     ghi, ghi_extra, zenith, mu0, kt, night : tuple
         Solar and clearness index components.
-        太阳和晴朗指数分量。
 
     Raises
     ------
     ValueError
         If ``times`` is not a :class:`~pandas.DatetimeIndex` or ``ghi`` length mismatches.
-        ``times`` 非 DatetimeIndex 或 ``ghi`` 长度不一致时。
     """
 
     # Check if times is a pd.DatetimeIndex.
-    # 检查 times 是否为 pd.DatetimeIndex。
     if not isinstance(times, pd.DatetimeIndex):
         raise ValueError("times must be a pd.DatetimeIndex.")
 
@@ -66,19 +54,19 @@ def _get_solar_and_kt(times, ghi, lat, lon, elev=0, min_mu0=0.065,
     if len(ghi) != len(times):
         raise ValueError("ghi must have the same length as times.")
 
-    # Get the solar position. / 获取太阳位置。
+    # Get the solar position.
     solpos = geometry.get_solar_position(times, lat, lon, elev)
     zenith = solpos["zenith"].values
     mu0 = np.maximum(np.cos(np.radians(zenith)), 0.0)
 
-    # Get the extraterrestrial BNI. / 获取地外法向辐照度。
+    # Get the extraterrestrial BNI.
     bni_extra = np.asarray(geometry.get_bni_extra(times), dtype=float)
     ghi_extra = bni_extra * np.maximum(mu0, min_mu0)
 
-    # Get the night mask. / 获取夜间掩码。
+    # Get the night mask.
     night = zenith >= 90
 
-    # Get the clearness index. / 获取晴朗指数。
+    # Get the clearness index.
     # Keep calc_kt output as-is; nighttime separation (k, dhi, bni) is set to 0 in each model.
     kt = calc_kt(ghi, zenith, bni_extra, min_mu0=min_mu0,
                   max_clearness_index=max_clearness_index)
@@ -87,7 +75,6 @@ def _get_solar_and_kt(times, ghi, lat, lon, elev=0, min_mu0=0.065,
 def _k_to_dhi_bni(ghi, k, zenith, max_zenith=87.0, force_nan=None):
     """
     Convert diffuse fraction $k$ to DHI and BNI with pvlib-style edge handling.
-    由散射分数 $k$ 计算 DHI 与 BNI，采用 pvlib 风格的边界处理。
 
     DHI = $k \\cdot G_h$, BNI = $(G_h - \\text{DHI}) / \\mu_0$. Where
     zenith > max_zenith, GHI < 0, BNI < 0, or $\\mu_0 \\le 0$, sets BNI = 0 and
@@ -98,25 +85,19 @@ def _k_to_dhi_bni(ghi, k, zenith, max_zenith=87.0, force_nan=None):
     ----------
     ghi : array-like
         Global horizontal irradiance ($G_h$). [W/m^2]
-        水平总辐照度。[瓦/平方米]
     k : array-like
         Diffuse fraction ($k$). [unitless]
-        散射分数。[无单位]
     zenith : array-like
         Solar zenith angle ($Z$). [degrees]
-        太阳天顶角。[度]
     max_zenith : float, default 87.0
         Maximum zenith for valid BNI; beyond this BNI = 0, DHI = GHI. [degrees]
-        BNI 有效的天顶角上限；超过则 BNI=0、DHI=GHI。[度]
     force_nan : array-like or None, default None
         If provided, DHI and BNI are set to NaN where force_nan is True.
-        若提供，则在 force_nan 为 True 处将 DHI、BNI 设为 NaN。
 
     Returns
     -------
     dhi, bni : tuple of np.ndarray
         Diffuse horizontal and beam normal irradiance. [W/m^2]
-        水平散射与法向直接辐照度。[瓦/平方米]
     """
 
     ghi = np.asarray(ghi, dtype=float)
@@ -138,26 +119,21 @@ def _k_to_dhi_bni(ghi, k, zenith, max_zenith=87.0, force_nan=None):
 def _apparent_solar_time(times, lon):
     """
     Calculate apparent solar time (AST, hours) from timestamps and longitude.
-    根据时间戳 and 经度计算地面太阳时 AST（小时）。
 
     Uses the equation of time formulation from Ridley et al. (2010), consistent
     with the BRL, Engerer2 and Yang4 models.
-    使用与 BRL、Engerer2 与 Yang4 模型一致的时间方程形式（Ridley 等，2010）。
 
     Parameters
     ----------
     times : pd.DatetimeIndex
         Timestamps for calculation.
-        计算对应的时间戳。
     lon : float
         Longitude. [degrees]
-        经度。[度]
 
     Returns
     -------
     ast : np.ndarray
         Apparent solar time in hours. [h]
-        地面太阳时（小时）。[小时]
     """
 
     doy = times.dayofyear.values
@@ -184,33 +160,25 @@ def _apparent_solar_time(times, lon):
 def _brl_daily_clearness_index(times, ghi, ghi_extra, night):
     """
     Daily clearness index K_t = sum(ghi over day) / sum(ghi_extra over day).
-    计算日晴朗指数 K_t = 一个全天 ghi 的总和 / ghi_extra 总和。
 
     A daily K_t is only computed when more than half of the daytime hourly
     values (ghi_extra > 0) have non-NaN GHI; otherwise K_t for that day is NaN.
-    只有当白天小时数据（ghi_extra > 0）中超过一半具有非 NaN 的 GHI 时，才计算该日的 K_t，
-    否则该日的 K_t 记为 NaN。
 
     Parameters
     ----------
     times : DatetimeIndex
         Timestamps for calculation.
-        计算对应的时间戳。
     ghi : numeric or Series
         Global horizontal irradiance. [W/m^2]
-        水平总辐照度。[瓦/平方米]
     ghi_extra : numeric or Series
         Extraterrestrial horizontal irradiance. [W/m^2]
-        地外水平辐照度。[瓦/平方米]
     night : array-like
         Night mask at the native resolution (True for night).
-        原始时间分辨率下的夜间掩码（夜间为 True）。
 
     Returns
     -------
     Kt : np.ndarray
         Daily clearness index ($K_t$). [unitless]
-        日晴朗指数 ($K_t$)。[无单位]
     """
 
     idx = pd.DatetimeIndex(times)
@@ -218,23 +186,23 @@ def _brl_daily_clearness_index(times, ghi, ghi_extra, night):
     ghi_extra_ser = pd.Series(ghi_extra, index=idx)
     night_ser = pd.Series(night, index=idx)
 
-    # Resample to hourly means (GHI, GHI_extra) and any-night mask / 重采样到小时均值和“是否夜间”掩码
+    # Resample to hourly means (GHI, GHI_extra) and any-night mask
     hourly_ghi = ghi_ser.resample("1h").mean()
     hourly_ghi_extra = ghi_extra_ser.resample("1h").mean()
     hourly_night = night_ser.resample("1h").max().astype(bool)
 
-    # Define daytime as hours with at least one non-night sample / 若该小时内存在非夜间样本，则视为白天
+    # Define daytime as hours with at least one non-night sample
     is_daytime = ~hourly_night
     has_data = is_daytime & hourly_ghi.notna()
 
-    # Per-day sums and counts restricted to daytime / 白天内的逐日求和和计数
+    # Per-day sums and counts restricted to daytime
     dates = hourly_ghi.index.date
     daily_ghi = hourly_ghi.where(is_daytime).groupby(dates).sum()
     daily_ghi_extra = hourly_ghi_extra.where(is_daytime).groupby(dates).sum()
     daily_count_daytime = is_daytime.groupby(dates).sum()
     daily_count_valid = has_data.groupby(dates).sum()
 
-    # Only compute K_t when > half of daytime hours have valid data / 仅当有效白天小时数超过一半时计算 K_t
+    # Only compute K_t when > half of daytime hours have valid data
     enough_data = daily_count_valid > (daily_count_daytime / 2.0)
     with np.errstate(divide="ignore", invalid="ignore"):
         Kt_day = daily_ghi / daily_ghi_extra
@@ -248,28 +216,22 @@ def _brl_daily_clearness_index(times, ghi, ghi_extra, night):
 def _brl_psi(kt, night, dates):
     """
     Piecewise linear interpolation for BRL ψ parameter.
-    BRL ψ 参数的分段线性插值。
 
     ψ = (k_{t-1}+k_{t+1})/2 for sunrise < t < sunset; at sunrise ψ=k_{t+1}, at sunset ψ=k_{t-1}.
-    在日出 < t < 日落时 ψ = (k_{t-1}+k_{t+1})/2；在日出时 ψ = k_{t+1}，在日落时 ψ = k_{t-1}。
 
     Parameters
     ----------
     kt : array-like
         Clearness index. [unitless]
-        晴朗指数。[无单位]
     night : array-like
         Night mask (True for night).
-        夜间掩码（夜间为 True）。
     dates : array-like
         Dates corresponding to timestamps.
-        时间戳对应的日期。
 
     Returns
     -------
     psi : np.ndarray
         BRL ψ parameter. [unitless]
-        BRL ψ 参数。[无单位]
     """
 
     n = len(kt)
@@ -307,10 +269,8 @@ def _engerer2_k_at_resolution(df, lat, lon, period_minutes, ghi_col="ghi",
                               ghi_clear_col="ghi_clear"):
     """
     Compute Engerer2 diffuse fraction at a given temporal resolution by resampling.
-    通过重采样在给定的时间分辨率下计算 Engerer2 散射分数。
 
     Requires a clear-sky GHI column in df (caller must provide it).
-    要求 df 中包含晴空 GHI 列（由调用方提供）。
 
     Resamples the input to `period_minutes` using right-closed bins (e.g. (10:00, 11:00]
     for the hour labeled 11:00), runs Engerer2 with the corresponding coefficient set,
@@ -322,41 +282,32 @@ def _engerer2_k_at_resolution(df, lat, lon, period_minutes, ghi_col="ghi",
     ----------
     df : pd.DataFrame
         Input data with DatetimeIndex and a clear-sky GHI column.
-        包含 DatetimeIndex 与晴空 GHI 列的输入数据。
     lat : float
         Latitude. [degrees]
-        纬度。[度]
     lon : float
         Longitude. [degrees]
-        经度。[度]
     period_minutes : int
         Resampling resolution. [minutes]
-        重采样分辨率。[分钟]
     ghi_col : str, default "ghi"
         Column name for GHI. [W/m^2]
-        GHI 的列名。[瓦/平方米]
     ghi_clear_col : str, default "ghi_clear"
         Column name for clear-sky GHI. [W/m^2] Must be present in df.
-        晴空 GHI 的列名。[瓦/平方米] 必须存在于 df 中。
 
     Returns
     -------
     k : np.ndarray
         Diffuse fraction k aligned to `df.index`. [unitless]
-        与 `df.index` 对齐的散射分数 k。[无单位]
 
     Raises
     ------
     ValueError
         If ``ghi_clear_col`` is missing, ``period_minutes`` is unsupported, or
         ``df.index`` is not a :class:`~pandas.DatetimeIndex`.
-        缺少 ``ghi_clear_col``、``period_minutes`` 不支持或 ``df.index`` 非 DatetimeIndex 时。
     """
     if ghi_clear_col not in df.columns:
         raise ValueError(
             f"DataFrame must contain clear-sky column '{ghi_clear_col}'. "
-            "Provide ghi_clear (e.g. :func:`bsrn.modeling.clear_sky.add_clearsky_columns`) before calling. / "
-            f"数据框必须包含晴空列 '{ghi_clear_col}'。请先提供 ghi_clear（如通过 add_clearsky_columns）。"
+            "Provide ghi_clear (e.g. :func:`bsrn.modeling.clear_sky.add_clearsky_columns`) before calling."
         )
 
     resample_rule = {
@@ -410,10 +361,8 @@ def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065,
                     max_zenith=87.0):
     """
     Erbs irradiance separation [1]_: diffuse fraction $k$ from clearness index $k_t$, then DHI and BNI.
-    Erbs 辐照分离：由晴朗指数 $k_t$ 得散射分数 $k$，再得 DHI 与 BNI。
 
     Inputs are time, ghi, and location (lat, lon, elev); zenith and clearness index are computed inside.
-    输入为时间、GHI 与位置（lat, lon, elev）；天顶角与晴朗指数在函数内计算。
 
     Piecewise formula (Erbs et al.):
     - $k_t \\leq 0.22$: $k = 1.0 - 0.09 k_t$
@@ -423,37 +372,29 @@ def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065,
     Parameters
     ----------
     times : pd.DatetimeIndex
-        Timestamps. 
-        时间戳。
+        Timestamps.
     ghi : array-like
-        Global horizontal irradiance. [W/m^2] 水平总辐照度。[瓦/平方米]
+        Global horizontal irradiance. [W/m^2]
     lat : float
-        Latitude. [degrees] 
-        纬度。[度]
+        Latitude. [degrees]
     lon : float
-        Longitude. [degrees] 
-        经度。[度]
+        Longitude. [degrees]
     elev : float, default 0
         Site elevation. [m] Use same value as for zenith when comparing to pvlib.
-        站点海拔。[米]。与 pvlib 比较时使用与 zenith 相同的值。
     min_mu0 : float, default 0.065
-        Minimum $\\mu_0$ when computing $k_t$. 
-        计算 $k_t$ 时 $\\mu_0$ 最小值。
+        Minimum $\\mu_0$ when computing $k_t$.
     max_zenith : float, default 87.0
         Maximum zenith for valid BNI; beyond this BNI is set to 0. [degrees]
-        BNI 有效的天顶角上限；超过则 BNI 置 0。[度]
 
     Returns
     -------
     out : pd.DataFrame
         DataFrame with index=times and columns ``k``, ``dhi``, ``bni`` (modeled).
-        索引为 times、列为 k/dhi/bni（模型结果）的 DataFrame。
 
     Raises
     ------
     ValueError
         Propagated from :func:`_get_solar_and_kt` if ``times`` or ``ghi`` are invalid.
-        由 :func:`_get_solar_and_kt` 在 ``times`` 或 ``ghi`` 无效时抛出。
 
     References
     ----------
@@ -465,12 +406,11 @@ def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065,
         times, ghi, lat, lon, elev=elev, min_mu0=min_mu0, max_clearness_index=1.0
     )
 
-    # Calculate diffuse fraction / 计算散射分数 
-    # For Kt <= 0.22, set the diffuse fraction / 对于 Kt <= 0.22，设置散射分数
+    # Calculate diffuse fraction
+    # For Kt <= 0.22, set the diffuse fraction
     k = 1.0 - 0.09 * kt
 
     # For Kt > 0.22 and Kt <= 0.8, set the diffuse fraction
-    # 对于 Kt > 0.22 且 Kt <= 0.8，设置散射分数
     k = np.where(
         (kt > 0.22) & (kt <= 0.8),
         0.9511 - 0.1604 * kt + 4.388 * kt ** 2
@@ -478,63 +418,51 @@ def erbs_separation(times, ghi, lat, lon, elev=0, min_mu0=0.065,
         k
     )
 
-    # For Kt > 0.8, set the diffuse fraction / 对于 Kt > 0.8，设置散射分数
+    # For Kt > 0.8, set the diffuse fraction
     k = np.where(kt > 0.8, 0.165, k)
 
     # This ensures the diffuse fraction is physically valid; values <0 or >1 are not physical.
-    # 这确保了散射分数是物理有效的；值 <0 或 >1 不是物理有效的。
     k = np.clip(k, 0.0, 1.0)
 
-    # Calculate DHI and BNI / 计算 DHI 与 BNI
+    # Calculate DHI and BNI
     dhi, bni = _k_to_dhi_bni(ghi, k, zenith, max_zenith=max_zenith)
 
     # Nighttime separation handled by _k_to_dhi_bni and zenith limits.
-    # 夜间处理由 _k_to_dhi_bni 和天顶角限制完成。
     return pd.DataFrame({"k": k, "dhi": dhi, "bni": bni}, index=times)
 
 def brl_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
     """
     BRL irradiance separation [1]_: diffuse fraction $k$ from logistic function of
     $k_t$, AST, $\\alpha$, $K_t$, $\\psi$.
-    BRL 辐照分离：由 $k_t$、AST、$\\alpha$、$K_t$、$\\psi$ 的逻辑回归函数得散射分数 $k$。
 
     $k = 1 / (1 + \\exp(-5.38 + 6.63 k_t + 0.006\\,\\text{AST} - 0.007\\,\\alpha
     + 1.75 K_t + 1.31 \\psi))$. $\\psi$ at sunrise = $k_{t+1}$, at sunset =
     $k_{t-1}$, else $(k_{t-1}+k_{t+1})/2$. $K_t$ = daily clearness index.
-    日出时 $\\psi = k_{t+1}$，日落时 $\\psi = k_{t-1}$，否则为 $(k_{t-1}+k_{t+1})/2$。$K_t$ = 日晴朗指数。
 
     Parameters
     ----------
     times : pd.DatetimeIndex
-        Timestamps. 
-        时间戳。
+        Timestamps.
     ghi : array-like
-        Global horizontal irradiance. [W/m^2] 
-        水平总辐照度。[瓦/平方米]
+        Global horizontal irradiance. [W/m^2]
     lat : float
-        Latitude. [degrees] 
-        纬度。[度]
+        Latitude. [degrees]
     lon : float
-        Longitude. [degrees] 
-        经度。[度]
+        Longitude. [degrees]
     min_mu0 : float, default 0.065
-        Minimum $\\mu_0$ when computing $k_t$. 
-        计算 $k_t$ 时 $\\mu_0$ 最小值。
+        Minimum $\\mu_0$ when computing $k_t$.
     max_zenith : float, default 87.0
         Maximum zenith for valid BNI; beyond this BNI is set to 0. [degrees]
-        BNI 有效的天顶角上限；超过则 BNI 置 0。[度]
 
     Returns
     -------
     out : pd.DataFrame
         DataFrame with index=times and columns ``k``, ``dhi``, ``bni`` (modeled).
-        索引为 times、列为 k/dhi/bni（模型结果）的 DataFrame。
 
     Raises
     ------
     ValueError
         Propagated from :func:`_get_solar_and_kt` if ``times`` or ``ghi`` are invalid.
-        由 :func:`_get_solar_and_kt` 在 ``times`` 或 ``ghi`` 无效时抛出。
 
     References
     ----------
@@ -546,23 +474,23 @@ def brl_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
         times, ghi, lat, lon, min_mu0=min_mu0, max_clearness_index=1.0
     )
 
-    # Daily clearness index Kt (Eq. 7), only when enough daytime data / 日晴朗指数 Kt（仅在白天数据充足时）
+    # Daily clearness index Kt (Eq. 7), only when enough daytime data
     Kt = _brl_daily_clearness_index(times, ghi, ghi_extra, night)
     good_day = np.isfinite(Kt)
 
-    # Apparent solar time AST (hours) / 地面太阳时 AST (小时)
+    # Apparent solar time AST (hours)
     ast = _apparent_solar_time(times, lon)
 
-    # Solar altitude alpha (degrees) = 90 - zenith / 太阳高度角 alpha (度) = 90 - 天顶角
+    # Solar altitude alpha (degrees) = 90 - zenith
     alpha = 90.0 - zenith
 
-    # psi: piecewise from kt at adjacent timesteps / psi: 来自相邻时间步 kt 的分段
+    # psi: piecewise from kt at adjacent timesteps
     dates = np.array([t.date() for t in times])
     psi = _brl_psi(kt, night, dates)
-    # For days without a valid Kt, psi is not defined / 若该日无有效 Kt，则 psi 记为 NaN
+    # For days without a valid Kt, psi is not defined
     psi = np.where(good_day, psi, np.nan)
 
-    # k = 1 / (1 + exp(...)); hourly kt and daily Kt / 逻辑回归公式
+    # k = 1 / (1 + exp(...)); hourly kt and daily Kt
     exponent = (
         -5.38 + 6.63 * kt + 0.006 * ast - 0.007 * alpha
         + 1.75 * Kt + 1.31 * psi
@@ -571,56 +499,48 @@ def brl_separation(times, ghi, lat, lon, min_mu0=0.065, max_zenith=87.0):
         k = 1.0 / (1.0 + np.exp(exponent))
 
     # This ensures the diffuse fraction is physically valid; values <0 or >1 are not physical.
-    # 这确保了散射分数是物理有效的；值 <0 或 >1 不是物理有效的。
     k = np.clip(k, 0.0, 1.0)
 
-    # Nighttime or days without valid Kt: k is NaN / 夜间或无有效 Kt 的日期：k 记为 NaN
+    # Nighttime or days without valid Kt: k is NaN
     k = np.where(night | ~good_day, np.nan, k)
 
-    # Calculate DHI and BNI / 计算 DHI 与 BNI
+    # Calculate DHI and BNI
     dhi, bni = _k_to_dhi_bni(ghi, k, zenith, max_zenith=max_zenith, force_nan=~good_day)
 
     # Nighttime separation handled by _k_to_dhi_bni and zenith limits.
-    # 夜间处理由 _k_to_dhi_bni 和天顶角限制完成。
     return pd.DataFrame({"k": k, "dhi": dhi, "bni": bni}, index=times)
 
 def engerer2_separation(times, ghi, lat, lon, ghi_clear, averaging_period=1):
     """
     Engerer2 irradiance separation: estimate diffuse fraction ($k$), DHI and BNI from GHI.
-    Engerer2 辐照分离：由 GHI 估算散射分数 ($k$)、DHI 与 BNI。
 
     Caller must provide clear-sky GHI (e.g. from a clear-sky model or add_clearsky_columns).
-    调用方必须提供晴空 GHI（例如由晴空模型或 add_clearsky_columns 得到）。
 
     Parameters
     ----------
     times : pd.DatetimeIndex
-        Timestamps. 时间戳。
+        Timestamps.
     ghi : array-like
-        Global horizontal irradiance. [W/m^2] 水平总辐照度。[瓦/平方米]
+        Global horizontal irradiance. [W/m^2]
     lat : float
-        Latitude. [degrees] 纬度。[度]
+        Latitude. [degrees]
     lon : float
-        Longitude. [degrees] 经度。[度]
+        Longitude. [degrees]
     ghi_clear : array-like
         Clear-sky GHI. [W/m^2] Same length as times. Required.
-        晴空 GHI。[瓦/平方米] 与 times 等长。必填。
     averaging_period : int, default 1
         Coefficient set for resolution. [minutes] 1, 5, 10, 15, 30, 60, or 1440.
-        对应分辨率的系数集。[分钟]
 
     Returns
     -------
     out : pd.DataFrame
         DataFrame with index=times and columns ``k``, ``dhi``, ``bni`` (modeled).
-        索引为 times、列为 k/dhi/bni（模型结果）的 DataFrame。
 
     Raises
     ------
     ValueError
         If ``averaging_period`` is not in the supported set, ``times`` is not a
         :class:`~pandas.DatetimeIndex`, or ``ghi`` / ``ghi_clear`` lengths mismatch.
-        ``averaging_period`` 不在支持集合、``times`` 非 DatetimeIndex 或 ``ghi``/``ghi_clear`` 长度不一致时。
 
     References
     ----------
@@ -664,7 +584,7 @@ def engerer2_separation(times, ghi, lat, lon, ghi_clear, averaging_period=1):
     ast = np.where(night, np.nan, ast)
     k_de = np.where(night, np.nan, k_de)
 
-    # Engerer2 logistic formula / Engerer2 逻辑公式
+    # Engerer2 logistic formula
     c, b0, b1, b2, b3, b4, b5 = ENGERER2_PARAMS[averaging_period]
     with np.errstate(invalid="ignore"):
         k = c + (1 - c) / (1 + np.exp(
@@ -675,7 +595,6 @@ def engerer2_separation(times, ghi, lat, lon, ghi_clear, averaging_period=1):
     dhi, bni = _k_to_dhi_bni(ghi, k, zenith, max_zenith=87.0)
 
     # Nighttime separation handled by _k_to_dhi_bni and zenith limits.
-    # 夜间处理由 _k_to_dhi_bni 和天顶角限制完成。
     return pd.DataFrame({"k": k, "dhi": dhi, "bni": bni}, index=times)
 
 def yang4_separation(times, ghi, lat, lon, ghi_clear):
@@ -685,34 +604,30 @@ def yang4_separation(times, ghi, lat, lon, ghi_clear):
     Uses YANG2 coefficient set (TABLE III) from 1-min SURFRAD data.
 
     Caller must provide clear-sky GHI (e.g. from a clear-sky model or add_clearsky_columns).
-    调用方必须提供晴空 GHI（例如由晴空模型或 add_clearsky_columns 得到）。
 
     Parameters
     ----------
     times : pd.DatetimeIndex
-        Timestamps. 时间戳。
+        Timestamps.
     ghi : array-like
-        Global horizontal irradiance. [W/m^2] 水平总辐照度。[瓦/平方米]
+        Global horizontal irradiance. [W/m^2]
     lat : float
-        Latitude. [degrees] 纬度。[度]
+        Latitude. [degrees]
     lon : float
-        Longitude. [degrees] 经度。[度]
+        Longitude. [degrees]
     ghi_clear : array-like
         Clear-sky GHI. [W/m^2] Same length as times. Required.
-        晴空 GHI。[瓦/平方米] 与 times 等长。必填。
 
     Returns
     -------
     out : pd.DataFrame
         DataFrame with index=times and columns ``k``, ``dhi``, ``bni`` (modeled).
-        索引为 times、列为 k/dhi/bni（模型结果）的 DataFrame。
 
     Raises
     ------
     ValueError
         If ``times`` is not a :class:`~pandas.DatetimeIndex`, lengths mismatch, or
         :func:`_engerer2_k_at_resolution` rejects inputs (e.g. missing ``ghi_clear``).
-        ``times`` 非 DatetimeIndex、长度不一致或 :func:`_engerer2_k_at_resolution` 拒绝输入（如缺 ``ghi_clear``）时。
 
     References
     ----------
@@ -757,7 +672,7 @@ def yang4_separation(times, ghi, lat, lon, ghi_clear):
     k_de = np.where(night, np.nan, k_de)
     k_engerer2_60 = np.where(night, np.nan, k_engerer2_60)
 
-    # Yang4 logistic formula / Yang4 逻辑公式
+    # Yang4 logistic formula
     C, b0, b1, b2, b3, b4, b5, b6 = YANG4_PARAMS
     exponent = b0 + b1 * kt + b2 * ast + b3 * zenith + b4 * dktc + b6 * k_engerer2_60
     with np.errstate(invalid="ignore", over="ignore"):
@@ -767,5 +682,4 @@ def yang4_separation(times, ghi, lat, lon, ghi_clear):
     dhi, bni = _k_to_dhi_bni(ghi, k, zenith, max_zenith=87.0)
 
     # Nighttime separation handled by _k_to_dhi_bni and zenith limits.
-    # 夜间处理由 _k_to_dhi_bni 和天顶角限制完成。
     return pd.DataFrame({"k": k, "dhi": dhi, "bni": bni}, index=times)

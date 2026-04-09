@@ -1,6 +1,5 @@
 """
 Shared Pydantic base classes for BSRN logical records.
-BSRN 逻辑记录共用的 Pydantic 基类。
 """
 
 from __future__ import annotations
@@ -70,7 +69,6 @@ class ArchiveRecordBase(ArchiveFormatMixin, BaseModel):
     :class:`pydantic.functional_validators.AfterValidator` and, for LR0100 / LR4000
     minute vectors, :func:`pydantic.field_validator` (with ``ValidationInfo`` for
     ``yearMonth``).
-    逻辑记录基类：Pydantic 模型 + 定宽格式化；子类用 ``AfterValidator`` / ``field_validator`` 挂接 BSRN 校验。
     """
 
     model_config = ConfigDict(extra="ignore", frozen=False)
@@ -79,6 +77,5 @@ class ArchiveRecordBase(ArchiveFormatMixin, BaseModel):
     def _private(self):
         """
         Field values as a dict for ``get_bsrn_format`` implementations.
-        ``get_bsrn_format`` 实现使用的字段值字典。
         """
         return {name: getattr(self, name) for name in type(self).model_fields}

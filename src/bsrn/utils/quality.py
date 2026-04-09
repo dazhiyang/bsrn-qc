@@ -1,6 +1,5 @@
 """
 Quality control summary for BSRN data.
-BSRN 数据质量控制摘要。
 """
 
 import numpy as np
@@ -21,19 +20,16 @@ _BSRN_MISSING_ATOL = 5e-3
 def _series_not_missing(s):
     """
     True where ``s`` is a measured value (not NaN / not BSRN missing codes).
-    非缺失测量。
 
     Parameters
     ----------
     s : pandas.Series
         Input column.
-        输入列。
 
     Returns
     -------
     pandas.Series
         Boolean mask aligned to ``s.index``.
-        与 ``s.index`` 对齐的布尔掩码。
     """
     x = pd.to_numeric(s, errors="coerce")
     mask = x.notna().to_numpy(dtype=bool, copy=True)
@@ -46,19 +42,16 @@ def _series_not_missing(s):
 def _series_finite_numeric(s):
     """
     True where ``s`` coerces to a finite float.
-    有限浮点。
 
     Parameters
     ----------
     s : pandas.Series
         Input column.
-        输入列。
 
     Returns
     -------
     pandas.Series
         Boolean mask aligned to ``s.index``.
-        与 ``s.index`` 对齐的布尔掩码。
     """
     x = pd.to_numeric(s, errors="coerce")
     v = x.to_numpy(dtype=np.float64, copy=False)
@@ -69,49 +62,39 @@ def _series_finite_numeric(s):
 def get_daily_stats(df, lat, lon, elev, station_code=None):
     """
     Calculate daily QC statistics and sunshine duration.
-    计算每日 QC 统计信息和日照时数。
 
     Parameters
     ----------
     df : pd.DataFrame
         BSRN data archive.
-        BSRN 数据存档。
     lat : float
         Latitude. [degrees]
-        纬度。[度]
     lon : float
         Longitude. [degrees]
-        经度。[度]
     elev : float
         Elevation. [m]
-        海拔。[米]
     station_code : str, optional
         BSRN station abbreviation. If ``ghi_clear`` / ``bni_clear`` are not on ``df``,
         used with :func:`~bsrn.modeling.clear_sky.add_clearsky_columns` so the
         **tracker** row matches :func:`~bsrn.qc.wrapper.run_qc` (Ineichen references).
-        站点缩写。若 ``df`` 上无晴空列，则用于生成与 ``run_qc`` 一致的跟踪器参考。
 
     Returns
     -------
     daily_df : pd.DataFrame
         Daily counts of flags and sunshine duration metrics.
-        每日标记计数和日照时数指标。
 
     Notes
     -----
     Minutes with BSRN missing codes (``-999``, ``-99.9``, ``-99.99``) or NaN in the
     relevant input column do not add to per-test failure sums. ``is_sunshine`` only
     counts minutes with a valid (non-missing) BNI value above the threshold.
-    各测试输入列为 BSRN 缺失码（``-999``、``-99.9``、``-99.99``）或 NaN 的分钟不计入该测试的失败累计；
-    ``is_sunshine`` 仅在 BNI 有效且超阈值时计数。
 
     **TRACKER** uses Ineichen ``ghi_clear`` / ``bni_clear`` like ``run_qc`` (not the
     GHIE-only fallback). Pass ``station_code`` so Linke turbidity matches the registry;
     if only ``lat`` / ``lon`` / ``elev`` are available, clear-sky is still computed but
     turbidity defaults may differ from ``run_qc`` with a named station.
-    **TRACKER** 与 ``run_qc`` 相同采用 Ineichen 晴空；建议传 ``station_code`` 以匹配注册表 Linke；仅坐标时浑浊度默认可能与命名站点略有差异。
     """
-    # Calculate solar geometry / 计算太阳几何参数
+    # Calculate solar geometry
     solpos = geometry.get_solar_position(df.index, lat, lon, elev)
     zenith = solpos["zenith"]
     bni_extra = geometry.get_bni_extra(df.index)
@@ -123,15 +106,11 @@ def get_daily_stats(df, lat, lon, elev, station_code=None):
     bni_x = pd.Series(bni_extra, index=df.index)
     geo_ok = _series_finite_numeric(zenith) & _series_finite_numeric(bni_x)
 
-    # Sunshine duration (h) / 日照时数 (h)
-    # ACT: BNI > 120 W/m^2 / 实际：BNI > 120 W/m^2
-    # MAX: Zenith < 90 / 最大：太阳天顶角 < 90
+    # Sunshine duration (h): ACT = BNI > 120 W/m^2; MAX = zenith < 90°
     df["is_sunshine"] = ((df["bni"] > 120) & nm_b).astype(int)
     df["is_daylight"] = (zenith < 90).astype(int)
 
-    # QC Tests (True = Pass, False = Fail) / QC 测试（True = 通过，False = 失败）
-    # Failure sums exclude missing / NaN inputs for that test.
-    # 失败累计排除该测试相关列的缺失与 NaN。
+    # QC tests (True = pass, False = fail); failure sums exclude missing inputs per test.
     df["GHI_PPL"] = (
         (~ppl.ghi_ppl_test(g, zenith, bni_extra)) & nm_g & geo_ok
     ).astype(int)
@@ -171,7 +150,7 @@ def get_daily_stats(df, lat, lon, elev, station_code=None):
     fail_ktl = ~k_index.kt_limit_test(g, bni_extra, zenith) & nm_g & geo_ok
     df["CMP_K"] = (fail_kbkt | fail_kkt | fail_kbl | fail_ktl).astype(int)
 
-    # Tracker: match run_qc by using Ineichen GHIC/BNIC when clearsky not on df / 与 run_qc 一致：用 Ineichen 晴空
+    # Tracker: match run_qc using Ineichen ghi_clear/bni_clear when not on df
     ghi_clear = df["ghi_clear"] if "ghi_clear" in df.columns else None
     bni_clear = df["bni_clear"] if "bni_clear" in df.columns else None
     if ghi_clear is None or bni_clear is None:
@@ -188,7 +167,7 @@ def get_daily_stats(df, lat, lon, elev, station_code=None):
     )
     df["TRACKER"] = ((~pass_trk) & vt).astype(int)
 
-    # Aggregate by day / 按天汇总
+    # Aggregate by day
     daily = df.groupby(df.index.date).agg({
         'is_sunshine': 'sum',
         'is_daylight': 'sum',
@@ -199,9 +178,9 @@ def get_daily_stats(df, lat, lon, elev, station_code=None):
         'CMP_CLO': 'sum', 'CMP_DIF': 'sum', 'CMP_K': 'sum',
         'TRACKER': 'sum'
     })
-    
+
     daily['SD_ACT'] = daily['is_sunshine'] / 60.0
     daily['SD_MAX'] = daily['is_daylight'] / 60.0
     daily['SD_REL'] = (daily['SD_ACT'] / daily['SD_MAX'] * 100.0).fillna(0)
-    
+
     return daily

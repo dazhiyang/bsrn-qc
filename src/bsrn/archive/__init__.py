@@ -5,8 +5,6 @@ BSRN station-to-archive: logical-record specs, Pydantic models, validators, and 
 - ``records_base`` / ``records_models`` — Pydantic ``LR*`` models; BSRN checks use ``AfterValidator`` and ``field_validator`` (see ``records_models``).
 - ``validation`` — Python callables referenced by each field’s ``validate_func`` string.
 - ``archive_lr_formats`` — ``get_bsrn_format`` on each LR plus ``get_azimuth_elevation`` for LR0004 horizon lines.
-
-BSRN 台站存档：逻辑记录规范、Pydantic 模型、字段校验与定宽 ASCII 格式化。
 """
 
 from . import specs, validation

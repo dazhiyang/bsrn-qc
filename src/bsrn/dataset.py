@@ -10,12 +10,6 @@ available on demand via ``data(include=[...])``. Most pipeline methods
 the ``average`` method replaces the cache with a coarser-index result
 from :func:`~bsrn.utils.averaging.pretty_average`. Use :meth:`qc_test`
 then optionally :meth:`qc_mask` to apply QC-based masking.
-
-BSRN 中心数据集：将一个月度站点文件封装为带类型校验的对象。``lr0100``
-为分钟数据源；``data()`` 返回仅含均值列的缓存 ``DataFrame``。
-LR0300 / LR4000 列按需通过 ``data(include=[...])`` 获取。多数管线方法
-原地修改缓存；可先 ``qc_test`` 再选 ``qc_mask``。``average`` 方法以
-:func:`~bsrn.utils.averaging.pretty_average` 的较粗索引结果替换缓存。
 """
 
 from __future__ import annotations
@@ -34,7 +28,6 @@ from .io.reader import read_bsrn_archive
 
 # Variable maps: LR field name → short column name exposed by data().
 # Only these columns appear; _std/_min/_max are dropped.
-# 变量映射：LR 字段名 → data() 暴露的短列名。
 _LR0100_VAR_MAP = {
     "ghi_avg": "ghi", "bni_avg": "bni",
     "dhi_avg": "dhi", "lwd_avg": "lwd",
@@ -54,9 +47,7 @@ _LR4000_VAR_MAP = {
 
 class BSRNDataset(BaseModel):
     """
-    One monthly BSRN dataset: station identity + minute data.
-
-    单月 BSRN 数据集：站点标识 + 分钟级数据。
+    One monthly BSRN dataset: station identity and minute data.
 
     Typical enrichment on the cached :meth:`data` frame is
     :meth:`solpos`, then :meth:`clear_sky`, then :meth:`qc_test`
@@ -65,63 +56,42 @@ class BSRNDataset(BaseModel):
     :meth:`average` replaces the cache with a coarser time series from
     :func:`~bsrn.utils.averaging.pretty_average`.
 
-    常见流程为在缓存的 :meth:`data` 帧上依次调用
-    :meth:`solpos`、:meth:`clear_sky`、:meth:`qc_test`
-    （均原地修改该帧并返回同一对象）。可选 :meth:`qc_mask` 将未通过处辐照度置
-    NaN 并可删除标记列。:meth:`average` 以
-    :func:`~bsrn.utils.averaging.pretty_average` 的结果替换缓存（较粗时间索引）。
-
     Parameters
     ----------
     station_code : str
-        Three-letter BSRN station code (must exist in
-        ``BSRN_STATIONS``).
-        三位 BSRN 站点代码（须在 ``BSRN_STATIONS`` 中）。
+        Three-letter BSRN station code (must exist in ``BSRN_STATIONS``).
     year : int
         Four-digit measurement year.
-        四位测量年份。
     month : int
         Measurement month (1--12).
-        测量月份（1--12）。
     lr0100 : LR0100
         Validated LR0100 logical record (minute radiation and
         met data). This is the source of truth; ``data()`` is
         derived from it.
-        已校验的 LR0100 逻辑记录（分钟辐射与气象数据）。
-        为数据源；``data()`` 由其派生。
     lr0300 : LR0300 or None
         Validated LR0300 logical record (reflected / upward
         SW, LW, net radiation). Default ``None``.
-        已校验的 LR0300 逻辑记录（反射/上行辐射）。
     lr4000 : LR4000 or None
         Validated LR4000 logical record (pyrgeometer minute
         data). Default ``None``.
-        已校验的 LR4000 逻辑记录（长波表分钟数据）。
     station_name : str or None
         Resolved from ``BSRN_STATIONS`` when omitted.
-        省略时从 ``BSRN_STATIONS`` 解析。
     lat : float or None
         Latitude (degrees); resolved from ``BSRN_STATIONS``.
-        纬度（度）；从 ``BSRN_STATIONS`` 解析。
     lon : float or None
         Longitude (degrees); resolved from ``BSRN_STATIONS``.
-        经度（度）；从 ``BSRN_STATIONS`` 解析。
     elev : float or None
         Elevation (m above sea level); resolved from
         ``BSRN_STATIONS``.
-        海拔（米）；从 ``BSRN_STATIONS`` 解析。
     resolution : int or None
         Temporal resolution in minutes (e.g. ``1``, ``2``,
         ``3``, ``5``). Defaults to ``1``.
-        时间分辨率（分钟）；默认 ``1``。
 
     Raises
     ------
     ValueError
-        If ``station_code`` is not in ``BSRN_STATIONS``,
-        ``month`` is out of 1--12.
-        ``station_code`` 不在 ``BSRN_STATIONS`` 或 ``month``
-        不在 1--12 时。
+        If ``station_code`` is not in ``BSRN_STATIONS`` or
+        ``month`` is outside 1--12.
     """
 
     model_config = ConfigDict(
@@ -134,18 +104,16 @@ class BSRNDataset(BaseModel):
     # ------------------------------------------------------------------ #
 
     # Core (required): identity + minute radiation data.
-    # 核心（必填）：站点标识 + 分钟辐射数据。
     station_code: str
     year: int
     month: int
     lr0100: LR0100
 
-    # Optional logical records. / 可选逻辑记录。
+    # Optional logical records.
     lr0300: Optional[LR0300] = None
     lr4000: Optional[LR4000] = None
 
     # Resolved from BSRN_STATIONS; users may override.
-    # 从 BSRN_STATIONS 解析；用户可覆盖。
     station_name: str = None
     lat: float = None
     lon: float = None
@@ -184,9 +152,6 @@ class BSRNDataset(BaseModel):
         """
         Fill ``station_name``, ``lat``, ``lon``, ``elev`` from
         ``BSRN_STATIONS`` when not explicitly provided.
-
-        未显式传入时从 ``BSRN_STATIONS`` 填充站点名、经纬度、
-        海拔。
         """
         meta = BSRN_STATIONS[self.station_code]
         if self.station_name is None:
@@ -211,16 +176,11 @@ class BSRNDataset(BaseModel):
         Parse a BSRN ``.dat.gz`` station-to-archive file and return
         a fully validated ``BSRNDataset``.
 
-        解析 BSRN ``.dat.gz`` 台站存档文件并返回完整校验的
-        ``BSRNDataset``。
-
         Parameters
         ----------
         path : str or Path
             Path to the ``.dat.gz`` file (filename format
             ``XXXMMYY.dat.gz``).
-            ``.dat.gz`` 文件路径（文件名格式
-            ``XXXMMYY.dat.gz``）。
 
         Returns
         -------
@@ -244,24 +204,18 @@ class BSRNDataset(BaseModel):
         """
         Minute-resolution DataFrame derived from ``lr0100``.
 
-        由 ``lr0100`` 派生的分钟分辨率 DataFrame。
-
         The base frame contains only the LR0100 **mean / scalar**
         columns under short names (``ghi``, ``bni``, ``dhi``,
         ``lwd``, ``temp``, ``rh``, ``pressure``). It is built once
         and cached so that pipeline methods (``solpos``, ``average``, etc.)
         can enrich it in-place.
 
-        基础帧仅包含 LR0100 均值/标量列的短名。首次构建后缓存，
-        管线方法可原地扩展。
-
         Parameters
         ----------
         include : sequence of str, optional
             Extra logical records to merge: ``"lr0300"`` and/or
-            ``"lr4000"`` (case-insensitive).  When given, the
+            ``"lr4000"`` (case-insensitive). When given, the
             corresponding mean/value columns are appended.
-            要合并的额外逻辑记录（不区分大小写）。
 
         Returns
         -------
@@ -299,22 +253,17 @@ class BSRNDataset(BaseModel):
     def plot(self):
         """
         Accessor for built-in plotting routines.
-
-        内置绘图程序的适配器。
         """
         return BSRNPlot(self)
 
     # ------------------------------------------------------------------ #
-    #  Pipeline methods (delegate to standalone functions)                  #
-    #  管线方法（委托给独立函数）                                           #
+    #  Pipeline methods (delegate to standalone functions)               #
     # ------------------------------------------------------------------ #
 
     def solpos(self):
         """
         Add solar position and extraterrestrial irradiance columns
         to the cached ``data()`` frame.
-
-        向缓存的 ``data()`` 帧添加太阳位置和地外辐射列。
 
         Delegates to
         :func:`~bsrn.physics.geometry.add_solpos_columns` using
@@ -338,8 +287,6 @@ class BSRNDataset(BaseModel):
         Add clear-sky irradiance columns to the cached ``data()``
         frame.
 
-        向缓存的 ``data()`` 帧添加晴空辐射列。
-
         Delegates to
         :func:`~bsrn.modeling.clear_sky.add_clearsky_columns`.
 
@@ -347,12 +294,9 @@ class BSRNDataset(BaseModel):
         ----------
         model : str, optional
             Clear-sky model name (default ``'ineichen'``).
-            晴空模型名称（默认 ``'ineichen'``）。
         mcclear_email : str, optional
             E-mail for CAMS McClear API (only when
             ``model='mcclear'``).
-            CAMS McClear API 邮箱（仅 ``model='mcclear'``
-            时使用）。
 
         Returns
         -------
@@ -373,15 +317,12 @@ class BSRNDataset(BaseModel):
         Run QC tests and add flag columns to the cached ``data()``
         frame.
 
-        运行 QC 测试并向缓存的 ``data()`` 帧添加标志列。
-
         Delegates to :func:`~bsrn.qc.wrapper.run_qc`.
 
         Parameters
         ----------
         tests : tuple of str, optional
             QC test names to run (default: all six).
-            要运行的 QC 测试名称（默认全部六项）。
 
         Returns
         -------
@@ -400,25 +341,18 @@ class BSRNDataset(BaseModel):
         Set irradiance values to NaN where QC flags fail; optionally drop
         flag columns.
 
-        在未通过 QC 处将辐照度置 NaN；可选删除标记列。
-
         Call :meth:`qc_test` first so flag columns exist. Delegates to
         :func:`~bsrn.qc.wrapper.mask_failed_irradiance` on ``data()``.
-
-        须先调用 :meth:`qc_test` 以生成标记列。委托
-        :func:`~bsrn.qc.wrapper.mask_failed_irradiance` 作用于 ``data()``。
 
         Parameters
         ----------
         flag_remove : bool, optional
             If True (default), drop standard QC flag columns after masking.
-            为 True（默认）时掩膜后删除标准 QC 标记列。
 
         Returns
         -------
         pandas.DataFrame
             ``data()`` after masking (same cached object).
-            掩膜后的 ``data()``（同一缓存对象）。
         """
         from .qc.wrapper import mask_failed_irradiance
         return mask_failed_irradiance(self.data(), flag_remove=flag_remove)
@@ -428,36 +362,24 @@ class BSRNDataset(BaseModel):
         """
         Time-average the cached ``data()`` with explicit labeled windows.
 
-        使用显式标签窗对缓存的 ``data()`` 做时间平均。
-
         Delegates to :func:`~bsrn.utils.averaging.pretty_average` and
         **replaces** the internal cache with the returned frame (new index).
-
-        委托 :func:`~bsrn.utils.averaging.pretty_average`，并以返回帧**替换**
-        内部缓存（新索引）。
 
         Native timestep for **center** windows is taken from ``self.resolution``
         (minutes) when set; otherwise passed as ``None`` for
         :func:`~bsrn.utils.averaging.pretty_average` to infer.
 
-        **center** 窗的原生步长取自 ``self.resolution``（分钟）；未设置时传
-        ``None`` 由 :func:`~bsrn.utils.averaging.pretty_average` 推断。
-
         Parameters
         ----------
         freq : str
             Fixed bin frequency (e.g. ``'1h'``, ``'30min'``).
-            固定分箱频率。
         alignment : {'floor', 'ceiling', 'center'}, optional
             Window alignment (default ``'ceiling'``).
-            窗对齐方式（默认 ``'ceiling'``）。
         aggfunc : str or callable, optional
             Aggregation function (default ``'mean'``).
-            聚合函数（默认 ``'mean'``）。
         match_ceiling_labels : bool, optional
             When ``alignment='center'``, monthly edge trim style (default
             ``True``, ceiling-like).
-            ``alignment='center'`` 时的月界裁剪方式（默认 ``True``，类 ceiling）。
 
         Returns
         -------
@@ -468,11 +390,9 @@ class BSRNDataset(BaseModel):
         ------
         TypeError
             If ``data().index`` is not a :class:`~pandas.DatetimeIndex`.
-            ``data()`` 索引非 :class:`~pandas.DatetimeIndex` 时。
         ValueError
             Propagated from :func:`~bsrn.utils.averaging.pretty_average` when
             ``freq`` is not a fixed frequency.
-            ``freq`` 非固定频率等由 ``pretty_average`` 抛出。
         """
         from .utils.averaging import pretty_average
         res = None
@@ -513,8 +433,6 @@ class BSRNDataset(BaseModel):
         """
         Infer temporal resolution from ``lr0100`` vector length
         vs calendar month.
-
-        根据 ``lr0100`` 向量长度与日历月推断时间分辨率。
         """
         y, m = map(int, self.lr0100.yearMonth.split("-"))
         ndays = calendar.monthrange(y, m)[1]
@@ -533,8 +451,6 @@ class BSRNDataset(BaseModel):
 class BSRNPlot:
     """
     Visualization accessor for BSRNDataset.
-    
-    BSRNDataset 的可视化适配器。
     """
 
     def __init__(self, ds: "BSRNDataset"):
@@ -543,23 +459,19 @@ class BSRNPlot:
     def __call__(self, dates, output_file=None, **kwargs):
         """
         Default to daily time series plot.
-        默认为画日时间序列图。
         """
         return self.daily(dates, output_file=output_file, **kwargs)
 
     def daily(self, dates, output_file=None, **kwargs):
         """
-        Plot daily daily plots (automatically delegates to day or booklet mode).
-        画时间序列图（根据输入的日期自动生成单日图或多页手册图）。
+        Plot daily time series (day or booklet mode from *dates*).
 
         Parameters
         ----------
         dates : str, pd.Timestamp, or sequence
             Date or dates to plot.
-            绘图日期或日期序列。
         output_file : str
-            Output path for the plot.
-            输出图像的路径。
+            Output path for the figure.
 
         Returns
         -------
@@ -602,16 +514,13 @@ class BSRNPlot:
     def table(self, output_file=None, title=None):
         """
         Plot the QC results summary table.
-        画质量控制结果汇总表。
 
         Parameters
         ----------
         output_file : str, optional
-            Output path for the plot.
-            输出图像的路径。
+            Output path for the figure.
         title : str, optional
             Plot title.
-            图表标题。
 
         Returns
         -------

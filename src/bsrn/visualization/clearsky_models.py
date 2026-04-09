@@ -1,6 +1,5 @@
 """
 Clear-sky model comparison booklet: one page per day, three panels (GHI, BNI, DHI).
-晴空模型对比手册：每天一页，三个面板（GHI、BNI、DHI）。
 """
 
 import pandas as pd
@@ -35,39 +34,29 @@ def plot_clearsky_models_booklet(
 ):  # noqa: PLR0913
     """
     Generate a monthly PDF booklet comparing measured irradiance with clear-sky models [1]_ [2]_ [3]_.
-    生成月度 PDF 手册，对比实测辐照度与晴空模型结果。
 
     One page is created per day. Each page has three panels for GHI, BNI, and DHI.
     Measured series is black solid; Ineichen, McClear, and REST2 are Wong colors and dashed.
-    每天生成一页。每页三个面板：GHI、BNI、DHI。
-    实测为黑色实线；Ineichen、McClear、REST2 使用 Wong 配色并为虚线。
 
     Parameters
     ----------
     file_path : str
         Path to one BSRN station-to-archive monthly file (.dat.gz).
-        单个 BSRN 站点月文件路径（.dat.gz）。
     output_file : str
         Output PDF path.
-        输出 PDF 路径。
     station_code : str
         BSRN station abbreviation, used by clear-sky model calls.
-        BSRN 站点缩写，用于晴空模型调用。
     mcclear_email : str, optional
         Email required by McClear API.
-        McClear API 所需邮箱。
     df : pd.DataFrame, optional
         If provided, use this DataFrame instead of reading from file_path.
-        若提供，则使用该 DataFrame 而非读取 file_path。
     title : str, optional
         Same title on every PDF page. If None (default), no plot title.
-        每页共用标题；默认 None 不显示。
 
     Returns
     -------
     None
         Save booklet to `output_file`.
-        将手册保存到 `output_file`。
 
     References
     ----------
@@ -94,11 +83,9 @@ def plot_clearsky_models_booklet(
         raise ValueError(f"Input data missing required columns: {sorted(missing)}")
 
     # Keep only measured core variables for model calls.
-    # 仅保留模型计算所需的实测核心变量。
     base = df[["ghi", "bni", "dhi"]].copy()
 
     # Run clear-sky models. McClear optional when mcclear_email is None.
-    # 运行晴空模型。mcclear_email 为 None 时 McClear 可选。
     out_ineichen = add_clearsky_columns(base.copy(), station_code=station_code, model="ineichen")
     if mcclear_email:
         out_mcclear = add_clearsky_columns(
@@ -116,7 +103,7 @@ def plot_clearsky_models_booklet(
     except FileNotFoundError:
         out_rest2 = None
 
-    # Build model list and style maps / 构建模型列表与样式映射
+    # Build model list and style maps
     models = ["Measured", "Ineichen"]
     if out_mcclear is not None:
         models.append("McClear")

@@ -5,29 +5,16 @@ Logical-record field definitions for BSRN station-to-archive files (``LR_SPECS``
 static lookup tables: ``STATION_METADATA``, ``TOPOGRAPHIES``, ``SURFACES``, ``QUANTITIES``,
 ``PYRGEOMETER_BODY``, ``PYRGEOMETER_DOME``.
 
-BSRN 台站存档文件的逻辑记录字段定义（``LR_SPECS``）及静态编码表。
-
 Format Codes (Fortran-style):
 - 'I#': Integer padded to # characters (e.g., I4)
 - 'A#': String/Alphanumeric padded to # characters (e.g., A38)
 - 'F#.#': Float padded to total width with specific decimals (e.g., F5.1)
 - 'L': Logical boolean (usually T/F or 1/0)
 - 'ND': Not defined / No specific width enforced by the original spec
-
-定义了所有 BSRN 逻辑记录的严格 ASCII 固定宽度格式化规则、缺失值、
-必填字段、默认值和说明性标签。
-
-格式代码（Fortran 风格）：
-- 'I#'：填充到 # 个字符的整数（如 I4）
-- 'A#'：填充到 # 个字符的字符串/字母数字（如 A38）
-- 'F#.#'：填充到指定总宽度并带特定小数位的浮点数（如 F5.1）
-- 'L'：逻辑布尔值（通常为 T/F 或 1/0）
-- 'ND'：未定义 / 原始规范未强制要求特定宽度
 """
 
 # LR_SPECS: per logical record (LR0001 … LR4000CONST), each field’s format, missing value,
 # mandatory flag, default, and validate_func name (callable name in ``validation``).
-# 各逻辑记录的字段规范：Fortran 风格格式、缺失值、必填、默认值、以及 ``validation`` 模块中的校验函数名。
 #: Nested mapping keyed by LR code and field name to Fortran-style format metadata
 #: (format, missing value, validator name, etc.); consumed by Pydantic LR models.
 LR_SPECS = {
@@ -61,7 +48,6 @@ LR_SPECS = {
     },
     "LR0003": {
         # BSRN: commentary; when the file includes LR4000, append ``@LR4000CONST`` lines (see ``LR4000`` note).
-        # BSRN：注释块；若文件含 LR4000，须追加 ``@LR4000CONST`` 行（见 ``LR4000`` 前说明）。
         "message": {"label": "Messages not to be inserted in the BSRN database", "format": "A", "missing": "XXX", "mandatory": False, "default": None, "validate_func": "A_validateFunction"}
     },
     "LR0004": {
@@ -213,8 +199,6 @@ LR_SPECS = {
     # ``@LR4000CONST, s/n (Manufacturer), s/n (WMO), CertificateCodeID, C, k0, k1, k2, k3, f`` (C, ki, f
     # are the general pyrgeometer equation parameters). Build with ``LR4000CONST.get_bsrn_format`` and
     # pass into ``LR0003.get_bsrn_format(message, *const_lines)``.
-    # BSRN：含 LR4000 时 LR0003 须含对应每个辐射表的 ``@LR4000CONST`` 元数据行；用 ``LR4000CONST`` 格式化后作为
-    # ``LR0003.get_bsrn_format`` 的额外参数追加。
     "LR4000": {
         "yearMonth":     {"label": "Year and month of measurement ('YYYY-MM')", "format": "A7", "missing": None, "mandatory": True, "default": None, "validate_func": "genericValidateFunction"},
         "domeT1_down":   {"label": "dome temperature 1downward long-wave instrument", "format": "F6.2", "missing": -99.99, "mandatory": False, "default": None, "validate_func": "LR4000_validateFunction"},
@@ -229,7 +213,6 @@ LR_SPECS = {
         "longwave_up":   {"label": "thermopile output upward long-wave instrument", "format": "F6.1", "missing": -999.9, "mandatory": False, "default": None, "validate_func": "LR4000_validateFunction"}
     },
     # One ``LR4000CONST`` record per pyrgeometer; formatted text belongs in LR0003 (see note above).
-    # 每个辐射表一条 ``LR4000CONST``；格式化文本写入 LR0003（见上）。
     "LR4000CONST": {
         "serialNumber_Manufacturer": {"label": "The serial number as it appears in the calibration certificate/instrument plate", "format": "I6", "missing": None, "mandatory": True, "default": None, "validate_func": "A_validateFunction"},
         "serialNumber_WRMC":         {"label": "The serial nimber used in your station-to-archive files (LR0008/0009) to identify the instrument with this serial number (e.g. for dom: \"74xxx\", with xxx=001,002,003,...)", "format": "ND", "missing": None, "mandatory": False, "default": None, "validate_func": "A_validateFunction"},
@@ -248,7 +231,6 @@ LR_SPECS = {
 
 # STATION_METADATA: BSRN station directory by 3-letter code (name, lat/lon, contacts, …).
 # Used when populating LR0001 / LR0002 / LR0004-style fields.
-# BSRN 站点目录（三位代码 → 名称、坐标、联系人等）；用于 LR0001 / LR0002 / LR0004 等字段。
 #: Three-letter station code to directory metadata (name, coordinates, contacts, etc.).
 STATION_METADATA = {
     "ABS": {"name": "Abashiri", "location": "Hokkaido, Japan", "station_no": None, "lat": 44.0178, "lon": 144.2797, "elevation": 38.0, "established": "2021-03-01", "closed": None, "surface_type": "asphalt", "topography_type": "flat, rural", "scientist": "Sasaki Shun", "email": "rrc-jma@met.kishou.go.jp", "url": None},
@@ -332,7 +314,6 @@ STATION_METADATA = {
 }
 
 # QUANTITIES: measured quantity label → WRMC ``radiationQuantityMeasured`` id for LR0008.
-# 辐射/气象量名称 → LR0008 中 ``radiationQuantityMeasured`` 的编号。
 #: Quantity label string to WRMC numeric id for LR0008 radiationQuantityMeasured.
 QUANTITIES = {
     "global 2 (pyranometer) ": 2,
@@ -365,7 +346,6 @@ QUANTITIES = {
 }
 
 # SURFACES: surface-type label → I2 code for LR0004 ``surfaceType``.
-# 地表类型描述 → LR0004 中 ``surfaceType`` 的整数码。
 #: Human-readable surface description to LR0004 surfaceType integer code.
 SURFACES = {
     "glacier - accumulation area": 1,
@@ -393,7 +373,6 @@ SURFACES = {
 
 
 # TOPOGRAPHIES: human-readable topography label → I2 code for LR0004 ``topographyType``.
-# 地形描述字符串 → LR0004 中 ``topographyType`` 的整数码。
 #: Topography description to LR0004 topographyType integer code.
 TOPOGRAPHIES = {
     "flat - urban": 1,
@@ -407,7 +386,6 @@ TOPOGRAPHIES = {
 }
 
 # PYRGEOMETER_BODY: pyrgeometer body compensation option → I2 code for LR0008 ``pyrgeometerBody``.
-# 长波表体补偿方式 → LR0008 ``pyrgeometerBody`` 编码。
 #: Pyrgeometer body compensation option to LR0008 pyrgeometerBody code.
 PYRGEOMETER_BODY = {
     "Manufacturer & battery circuit": 1,
@@ -417,7 +395,6 @@ PYRGEOMETER_BODY = {
 }
 
 # PYRGEOMETER_DOME: pyrgeometer dome / ventilation option → I2 code for LR0008 ``pyrgeometerDome``.
-# 长波表罩与通风组合 → LR0008 ``pyrgeometerDome`` 编码。
 #: Dome and ventilation option to LR0008 pyrgeometerDome code.
 PYRGEOMETER_DOME = {
     "Dome shaded": 1,

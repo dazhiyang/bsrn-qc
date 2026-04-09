@@ -27,7 +27,6 @@ from bsrn.constants import WONG_PALETTE
 from bsrn.dataset import BSRNDataset
 
 # L1–L6 QC markers: WONG[2–6] for L1–5, black for L6 (WONG[0–1] reserved for line series).
-# L1–L6 标记：L1–5 用 Wong 剩余五色，L6 黑色；WONG[0–1] 留给实测/晴空线。
 _QC_MARKER_BLACK = "#000000"
 _QC_LEVEL_COLORS = {
     "L1": WONG_PALETTE[2],
@@ -46,14 +45,12 @@ _QC_LEVEL_SHAPES = {
     "L6": "p",
 }
 # Plotted markers stay small; legend keys use 2× size for readability.
-# 图上点保持小号；图例符号为 2 倍便于辨认。
 _QC_MARKER_SIZE = 0.8
 _QC_MARKER_STROKE = 0.12
 _QC_MARKER_LEGEND_SIZE = _QC_MARKER_SIZE * 2
 _QC_MARKER_LEGEND_STROKE = _QC_MARKER_STROKE * 2
 
 # LR_SPECS missing tokens for plot-only masking (does not alter :meth:`BSRNDataset.data`).
-# LR_SPECS 缺失码，仅用于绘图前掩膜（不修改 :meth:`BSRNDataset.data`）。
 _PLOT_MISSING_I4 = frozenset(
     {"ghi", "bni", "dhi", "lwd", "pressure", "swu", "lwu", "net"}
 )
@@ -107,8 +104,6 @@ def _qc_marker_slices(df, mask, ycol, param_facet, level, chunks):
 def _build_qc_marker_frame(day_df, day_zenith):
     """
     Per-minute QC failures from existing ``flag*`` columns only (no ``run_qc``).
-
-    仅根据数据框上已有的 ``flag*`` 列绘制失败点（不调用 ``run_qc``）。
     """
     df = day_df.copy()
     df["zenith"] = day_zenith.reindex(df.index).to_numpy()
@@ -178,12 +173,9 @@ def _load_month_archive_for_daily(file_path=None, df=None):
 
     Requires ``zenith`` and ``apparent_zenith`` on the frame (from
     :meth:`~bsrn.dataset.BSRNDataset.solpos`). This module does not compute
-    geometry, PPL masks, clear-sky, or QC.
-
-    加载单月并加入闭合诊断量。帧上须已有 ``zenith``、``apparent_zenith``（``solpos()``）。
-    本模块不计算几何、不做 PPL/晴空/QC。为绘图可读性，会将 LR 缺失码
-    （``-999``、``-99.9``、``-99.99`` 等）在**副本**上替换为 NaN；不修改
-    :meth:`~bsrn.dataset.BSRNDataset.data` 的缓存。
+    geometry, PPL masks, clear-sky, or QC. For readability, LR missing sentinels
+    (``-999``, ``-99.9``, ``-99.99``, etc.) are replaced with NaN on a **copy**;
+    :meth:`~bsrn.dataset.BSRNDataset.data` cache is not modified.
     """
     if df is not None:
         plot_df = df.copy()
@@ -202,8 +194,7 @@ def _load_month_archive_for_daily(file_path=None, df=None):
     if "zenith" not in plot_df.columns or "apparent_zenith" not in plot_df.columns:
         raise ValueError(
             "Daily plots require ``zenith`` and ``apparent_zenith`` on the DataFrame. "
-            "Call :meth:`BSRNDataset.solpos` before plotting. / "
-            "请先调用 ``solpos()``，使数据框包含 ``zenith`` 与 ``apparent_zenith``。"
+            "Call :meth:`BSRNDataset.solpos` before plotting."
         )
     zenith = plot_df["zenith"]
     apparent_zenith = plot_df["apparent_zenith"]
@@ -221,9 +212,8 @@ def _ggplot_bsrn_daily_one_day(day_df, day_zenith, title=None,
     """
     Build the standard 3×3 facet times ggplot for one UTC day.
 
-    Clear-sky ribbon/lines are drawn only for irradiance columns present on ``day_df``.
+    Clear-sky ribbon/lines are drawn only when the corresponding ``*_clear`` columns exist on ``day_df``.
     QC markers are drawn only when ``show_qc_markers`` and matching ``flag*`` columns exist.
-    晴空曲线仅当帧上存在对应 ``*_clear`` 列时绘制；QC 标记仅当存在相应 ``flag*`` 列时绘制。
     """
     measured_color = WONG_PALETTE[0]
     clearsky_color = WONG_PALETTE[1]
@@ -443,7 +433,6 @@ def _ggplot_bsrn_daily_one_day(day_df, day_zenith, title=None,
                     | (
                         {
                             # Tight legend under facets, but leave room so it does not cover x title.
-                            # 图例靠上但不压住「Time (UTC)」：不用大负 margin，x 轴标题保留下方空隙。
                             "legend_margin": 0,
                             "legend_box_spacing": 0,
                             "axis_title_x": element_text(
@@ -467,7 +456,6 @@ def plot_bsrn_daily_day(file_path, day, show_qc_markers=True,
                         output_file=None, title=None, df=None):
     """
     Plot one UTC day from a single-month BSRN archive (same layout as each booklet page).
-    从单月 BSRN 存档绘制一个 UTC 日（版式与手册单页相同）。
 
     The frame (from ``df`` or loaded from ``file_path``) must already include
     ``zenith`` and ``apparent_zenith`` (e.g. after :meth:`BSRNDataset.solpos`).
@@ -476,26 +464,20 @@ def plot_bsrn_daily_day(file_path, day, show_qc_markers=True,
     ----------
     file_path : str, optional
         Path to a single-month archive when ``df`` is not passed; otherwise ignored.
-        未传 ``df`` 时的单月 ``.dat.gz`` 路径；传入 ``df`` 时可省略。
     day : str, datetime.date, datetime.datetime, or pd.Timestamp
         Calendar day to plot (UTC), e.g. ``"2024-01-15"`` or ``pd.Timestamp("2024-01-15")``.
-        要绘制的日历日（UTC）。
     show_qc_markers : bool, default True
         If True, overlay QC failure markers where matching ``flag*`` columns exist
         (no QC is run here; use :meth:`~bsrn.dataset.BSRNDataset.qc_test` first).
-        为 True 时在已有 ``flag*`` 列的分面上叠加失败点（此处不运行 QC；请先 ``qc_test()``）。
     output_file : str, optional
         If set, save the figure (e.g. ``".pdf"`` or ``".png"``) via plotnine.
-        若设置则保存图形（如 ``.pdf`` / ``.png``）。
     title : str, optional
         Plot title. If None (default), no title is drawn.
-        图标题；默认 None 不显示标题。
 
     Returns
     -------
     p : plotnine.ggplot.ggplot
         The figure; display in notebooks with the last expression or call ``.draw()``.
-        图形对象；笔记本中作为最后一行显示或调用 ``.draw()``。
     """
     plot_df, zenith = _load_month_archive_for_daily(file_path=file_path, df=df)
 
@@ -534,7 +516,6 @@ def plot_bsrn_daily_booklet(file_path, output_file, show_qc_markers=True,
                             title=None, df=None):
     """
     Generate a multi-page PDF booklet where each day is one page from a BSRN archive file.
-    从 BSRN 存档文件生成多页 PDF 手册，每一天占一页。
 
     The frame must include ``zenith`` and ``apparent_zenith`` (see :meth:`BSRNDataset.solpos`).
 
@@ -542,22 +523,17 @@ def plot_bsrn_daily_booklet(file_path, output_file, show_qc_markers=True,
     ----------
     file_path : str
         Path to the BSRN station-to-archive file (.dat.gz).
-        BSRN 站点存档文件的路径 (.dat.gz)。
     output_file : str
         Path to the output PDF file.
-        输出 PDF 文件的路径。
     show_qc_markers : bool, default True
         Draw QC markers per day when ``flag*`` columns are present.
-        当存在 ``flag*`` 列时为每日绘制 QC 标记。
     title : str, optional
         Plot title on every page. If None (default), no title.
-        每页图标题；默认 None 不显示。
 
     Returns
     -------
     None
         The function saves the plots to the specified PDF file.
-        该函数将图表保存到指定的 PDF 文件中。
     """
     plot_df, zenith = _load_month_archive_for_daily(file_path=file_path, df=df)
 

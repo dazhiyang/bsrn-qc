@@ -1,10 +1,8 @@
 """
 Solar geometry and extraterrestrial irradiance helpers.
-太阳几何与地外辐照度辅助函数。
 
 Uses the internal SPA implementation in :mod:`bsrn.physics.spa` for
 :func:`get_solar_position`; public callers use this module only.
-太阳位置由 :mod:`bsrn.physics.spa` 内部 SPA 实现支撑；对外请仅使用本模块。
 """
 
 import pandas as pd
@@ -16,26 +14,22 @@ from bsrn.constants import BSRN_STATIONS, GEO_SATELLITE_LAT_DEG, GEO_SATELLITE_L
 def get_pressure_from_elevation(elev):
     """
     Calculates standard-atmosphere pressure from elevation using pvlib-equivalent formula [1]_.
-    使用与 pvlib 等价的公式，根据海拔计算标准大气压。
 
     Parameters
     ----------
     elev : numeric
         Elevation above sea level. [m]
-        海拔高度。[米]
 
     Returns
     -------
     pressure : numeric
         Surface pressure. [Pa]
-        地表气压。[帕]
 
     Raises
     ------
     ValueError
         If *elev* is non-finite, or ``elev >= 44331.514`` m (outside the valid
         standard-atmosphere range for this formula).
-        *elev* 非有限值，或超出该公式有效标准大气范围（``elev >= 44331.514`` m）时。
 
     References
     ----------
@@ -45,10 +39,9 @@ def get_pressure_from_elevation(elev):
     """
     elev_arr = np.asarray(elev, dtype=float)
     if np.any(~np.isfinite(elev_arr)):
-        raise ValueError("elev must be finite. / elev 必须为有限值。")
+        raise ValueError("elev must be finite.")
 
     # Keep real-valued output and fail early for out-of-range altitudes.
-    # 保持实数输出，并对超范围海拔提前报错。
     if np.any(elev_arr >= 44331.514):
         raise ValueError("elev must be < 44331.514 m for standard-atmosphere formula.")
 
@@ -59,41 +52,32 @@ def get_pressure_from_elevation(elev):
 def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
     r"""
     Calculates solar zenith angle ($Z$) and solar azimuth angle ($\phi$) using SPA [1]_ [2]_.
-    使用 SPA 算法计算太阳天顶角 ($Z$) 和太阳方位角 ($\phi$)。
 
     Parameters
     ----------
     times : pd.DatetimeIndex
         Times for calculation.
-        计算对应的时间。
     lat : float
         Latitude. [degrees]
-        纬度。[度]
     lon : float
         Longitude. [degrees]
-        经度。[度]
     elev : float, default 0
         Elevation. [m]
-        海拔。[米]
     pressure : float, optional
         Surface pressure. [hPa] If None, calculated from elevation.
-        地表气压。[百帕]。若为 None，则根据海拔计算。
     temp : float, default 12.0
         Air temperature ($T$). [°C]
-        气温 ($T$)。[摄氏度]
 
     Returns
     -------
     solpos : pd.DataFrame
         DataFrame with columns 'zenith' ($Z$), 'apparent_zenith', 'azimuth' ($\phi$). [degrees]
-        包含 'zenith' ($Z$)、'apparent_zenith'、'azimuth' ($\phi$) 的 DataFrame。[度]
 
     Raises
     ------
     ValueError
         If *pressure* is provided and is non-positive or non-finite, or if
         :func:`get_pressure_from_elevation` rejects *elev* when *pressure* is omitted.
-        给定 *pressure* 时非正或非有限，或省略 *pressure* 时 :func:`get_pressure_from_elevation` 拒绝 *elev* 时。
 
     References
     ----------
@@ -103,27 +87,23 @@ def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
     .. [2] Anderson, K. S., et al. (2023). pvlib python: 2023 project update. 
        Journal of Open Source Software, 8(92), 5994.
     """
-    # Convert times to unix timestamp / 将时间转换为 unix 时间轴
+    # Convert times to unix timestamp
     unixtime = times.view(np.int64) / 1e9
     
     # Calculate pressure if not provided (standard atmosphere)
-    # 如果未提供气压，则根据标准大气压计算
     if pressure is None:
         # Use pvlib-equivalent alt2pres in Pa, then convert to hPa for SPA input.
-        # 使用与 pvlib 等价的 alt2pres（Pa），再转换为 SPA 需要的 hPa。
         pressure = get_pressure_from_elevation(elev) / 100.0
     else:
         pressure_arr = np.asarray(pressure, dtype=float)
         if np.any(~np.isfinite(pressure_arr)) or np.any(pressure_arr <= 0):
-            raise ValueError("pressure must be positive and finite. / pressure 必须为正且有限。")
+            raise ValueError("pressure must be positive and finite.")
 
         # Robust unit handling: SPA expects hPa. If values look like Pa, convert.
-        # 稳健单位处理：SPA 需要 hPa。若数值看起来像 Pa，则自动转换。
         pressure_hpa = np.where(pressure_arr > 2000.0, pressure_arr / 100.0, pressure_arr)
         pressure = float(pressure_hpa) if pressure_hpa.ndim == 0 else pressure_hpa
 
     # Use fixed delta_t (69.1s for 2024) for simplicity
-    # 为简便起见，使用固定的 delta_t（2024 年约为 69.1 秒）
     zenith, apparent_zenith, azimuth, _ = spa._solar_position(
         unixtime, lat, lon, elev, pressure=pressure, temp=temp, delta_t=69.1
     )
@@ -140,19 +120,16 @@ def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
 def get_bni_extra(times):
     """
     Calculates extraterrestrial beam normal irradiance ($BNI_E$, $E_{0n}$) using Spencer (1971) [1]_.
-    使用 Spencer (1971) 方法计算地外法向辐照度 ($BNI_E$, $E_{0n}$)。
 
     Parameters
     ----------
     times : pd.DatetimeIndex
         Times for calculation.
-        计算对应的时间。
 
     Returns
     -------
     bni_extra : pd.Series
         Extraterrestrial beam normal irradiance ($E_{0n}$). [W/m^2]
-        地外法向辐照度 ($E_{0n}$)。[瓦/平方米]
 
     References
     ----------
@@ -160,17 +137,15 @@ def get_bni_extra(times):
        Search, 2, 172.
     """
     # Day angle (radians) using Spencer (1971): (2*pi/365)*(doy - 1)
-    # 使用 Spencer (1971) 计算日角（弧度）：(2*pi/365)*(doy - 1)
     day_of_year = times.dayofyear
     b = (2.0 * np.pi / 365.0) * (day_of_year - 1.0)
     
-    # Eccentricity correction / 偏心率修正
+    # Eccentricity correction
     # E0 = Isc * (1.00011 + 0.034221*cos(B) + 0.001280*sin(B) + 0.000719*cos(2B) + 0.000077*sin(2B))
     r_r0_sq = (1.00011 + 0.034221 * np.cos(b) + 0.001280 * np.sin(b) + 
                0.000719 * np.cos(2 * b) + 0.000077 * np.sin(2 * b))
     
     # Using the project defined solar constant
-    # 使用项目定义的太阳常数
     from bsrn.constants import solar_constant
     bni_extra = solar_constant * r_r0_sq
     
@@ -180,22 +155,18 @@ def get_bni_extra(times):
 def get_ghi_extra(times, zenith):
     """
     Calculates extraterrestrial horizontal irradiance ($GHI_E$, $E_0$).
-    计算地外水平辐照度 ($GHI_E$, $E_0$)。
 
     Parameters
     ----------
     times : pd.DatetimeIndex
         Times for calculation.
-        计算对应的时间。
     zenith : numeric or Series
         Solar zenith angle ($Z$). [degrees]
-        太阳天顶角 ($Z$)。[度]
 
     Returns
     -------
     ghi_extra : pd.Series
         Extraterrestrial horizontal irradiance ($E_0$). [W/m^2]
-        地外水平辐照度 ($E_0$)。[瓦/平方米]
     """
     bni_extra = get_bni_extra(times)
     mu0 = np.cos(np.radians(zenith))
@@ -205,51 +176,41 @@ def get_ghi_extra(times, zenith):
 def add_solpos_columns(df, station_code=None, lat=None, lon=None, elev=None):
     """
     Adds high-precision solar geometry and extraterrestrial irradiance columns to a DataFrame.
-    向 DataFrame 添加高精度太阳几何和地外辐射列。
 
     Location can be given by BSRN station code or by explicit lat/lon/elev.
-    位置可由 BSRN 站点代码指定，或由显式的 lat/lon/elev 指定。
 
     Parameters
     ----------
     df : pd.DataFrame
         Input data with pd.DatetimeIndex.
-        包含 DatetimeIndex 的输入数据。
     station_code : str, optional
         BSRN station abbreviation. [e.g. 'QIQ'] Used if lat/lon/elev not provided.
-        BSRN 站点缩写。[例如 'QIQ']。未提供 lat/lon/elev 时使用。
     lat : float, optional
         Latitude. [degrees] Required if station_code omitted.
-        纬度。[度]。未提供 station_code 时必填。
     lon : float, optional
         Longitude. [degrees] Required if station_code omitted.
-        经度。[度]。未提供 station_code 时必填。
     elev : float, optional
         Elevation. [m] Required if station_code omitted.
-        海拔。[米]。未提供 station_code 时必填。
 
     Returns
     -------
     df : pd.DataFrame
         DataFrame with added 'zenith', 'apparent_zenith', 'azimuth', 'bni_extra', and 'ghi_extra' columns.
-        增加了 'zenith'、'apparent_zenith'、'azimuth'、'bni_extra' 和 'ghi_extra' 列的 DataFrame。
 
     Raises
     ------
     ValueError
-        If ``df.index`` is not a :class:`~pandas.DatetimeIndex`. / 索引非 DatetimeIndex。
+        If ``df.index`` is not a :class:`~pandas.DatetimeIndex`.
     ValueError
         If the median timestep is > 5 minutes (prevents non-linear geometric errors).
-        若数据时间步长大于 5 分钟（防止非线性几何误差）。
     ValueError
         If neither a valid station_code nor complete (lat, lon, elev) is provided.
-        若既未提供有效 station_code 也未提供完整的 (lat, lon, elev)。
     """
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError("DataFrame index must be a pandas DatetimeIndex.")
 
     if len(df.index) > 1:
-        # Check median time step size / 检查步长中位数
+        # Check median time step size
         median_dt = pd.Series(df.index).diff().median()
         if pd.notna(median_dt) and median_dt > pd.Timedelta(minutes=5):
             raise ValueError(
@@ -266,14 +227,12 @@ def add_solpos_columns(df, station_code=None, lat=None, lon=None, elev=None):
     elif station_code is not None:
         raise ValueError(
             f"Station '{station_code}' not found in BSRN registry. "
-            "For non-BSRN stations, provide 'lat', 'lon', and 'elev' explicitly. / "
-            f"在 BSRN 注册表中未找到站点 '{station_code}'。非 BSRN 站点请显式提供 lat、lon、elev。"
+            "For non-BSRN stations, provide 'lat', 'lon', and 'elev' explicitly."
         )
     else:
         raise ValueError(
             "Insufficient metadata. Provide a valid BSRN 'station_code' or "
-            "explicit 'lat', 'lon', and 'elev'. / "
-            "元数据不足。请提供有效的 BSRN 站点代码或显式的 lat、lon、elev。"
+            "explicit 'lat', 'lon', and 'elev'."
         )
     
     solpos = get_solar_position(df.index, lat, lon, elev)
@@ -287,84 +246,72 @@ def add_solpos_columns(df, station_code=None, lat=None, lon=None, elev=None):
 
 
 # ---------------------------------------------------------------------------
-#  Geographic helpers / 地理辅助函数
+# Geographic helpers
 # ---------------------------------------------------------------------------
 
 def _central_angle_deg(lat1, lon1, lat2, lon2):
     """
     Great-circle central angle between two surface points using the Haversine formula. [degrees]
-    使用 Haversine 公式计算两点间的大圆中心角 [度]。
 
     Parameters
     ----------
     lat1 : float or numeric
         Latitude of the first point. [degrees]
-        第一点纬度 [度]。
     lon1 : float or numeric
         Longitude of the first point. [degrees]
-        第一点经度 [度]。
     lat2 : float or numeric
         Latitude of the second point. [degrees]
-        第二点纬度 [度]。
     lon2 : float or numeric
         Longitude of the second point. [degrees]
-        第二点经度 [度]。
 
     Returns
     -------
     angle : float or numeric
         Central angle in degrees.
-        大圆中心角 [度]。
     """
-    # Convert degrees to radians / 将角度转换为弧度
+    # Convert degrees to radians
     rlat1 = np.radians(lat1)
     rlat2 = np.radians(lat2)
     dlat = np.radians(lat2 - lat1)
     dlon = np.radians(lon2 - lon1)
 
-    # Haversine half-chord squared / Haversine 半弦平方
+    # Haversine half-chord squared
     h = (
         np.sin(dlat / 2) ** 2
         + np.cos(rlat1) * np.cos(rlat2) * np.sin(dlon / 2) ** 2
     )
-    # Return central angle / 返回大圆中心角 [度]
+    # Return central angle [degrees]
     return 2 * np.degrees(np.arcsin(np.sqrt(np.clip(h, 0.0, 1.0))))
 
 
 def in_satellite_disk(lat, lon, sat_key):
     """
     True if (lat, lon) falls within the Earth-disk radius (approx. 60 deg) of the satellite.
-    若 (lat, lon) 在该卫星地球圆盘半径（约 60 度）内则为 True。
 
     Parameters
     ----------
     lat : float or numeric
         Latitude. [degrees]
-        纬度 [度]。
     lon : float or numeric
         Longitude. [degrees]
-        经度 [度]。
     sat_key : str
         Satellite key in ``bsrn.constants.GEO_SATELLITES`` (e.g., 'Himawari', 'MSG').
-        卫星名称键值。
 
     Returns
     -------
     covered : bool or boolean array
         True if covered, False otherwise.
-        若在覆盖范围内则返回 True，否则返回 False。
 
     Raises
     ------
     KeyError
         If *sat_key* is missing from the satellite longitude table
         (see ``GEO_SATELLITE_LON_DEG``).
-        *sat_key* 不在卫星经度表（``GEO_SATELLITE_LON_DEG``）中时。
     """
-    # Calculate angular distance to the sub-satellite point / 计算到本星下点的大圆角度
+    # Angular distance to the sub-satellite point
     angle = _central_angle_deg(
         lat, lon,
         GEO_SATELLITE_LAT_DEG, GEO_SATELLITE_LON_DEG[sat_key],
     )
-    # Check if within the 60° reliability limit / 检查是否在 60 度的可靠覆盖范围内
+    # Check if within the 60° reliability limit
     return angle <= GEO_SATELLITE_DISK_RADIUS_DEG

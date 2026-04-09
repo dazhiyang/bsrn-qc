@@ -1,6 +1,5 @@
 """
 ``get_bsrn_format`` implementations for Pydantic archive logical-record models.
-Pydantic 逻辑记录模型的 ``get_bsrn_format`` 实现。
 
 Also exposes :func:`get_azimuth_elevation` for LR0004 horizon ``az el`` lines.
 
@@ -20,28 +19,23 @@ def get_azimuth_elevation(azimuth=None, elevation=None):
     Format horizon azimuth/elevation lists for LR0004.
 
     Builds fixed-width ``az el`` rows (11 pairs per line, ``-1`` padding) for the BSRN archive layout.
-    按 BSRN 存档布局生成定宽 ``az el`` 行（每行 11 对，不足填 ``-1``）。
 
     Parameters
     ----------
     azimuth : str or sequence of float, optional
         Comma-separated string ``A1,A2,...`` or sequence of degrees from north.
-        逗号分隔字符串 ``A1,A2,...`` 或从正北起算的方位角序列。
     elevation : str or sequence of float, optional
         Comma-separated string ``E1,E2,...`` or sequence of elevation angles.
-        逗号分隔字符串 ``E1,E2,...`` 或高度角序列。
 
     Returns
     -------
     str
         Fixed-width lines of ``az el`` pairs, or ``  -1 -1`` when inputs are absent.
-        固定宽度 ``az el`` 行；无输入时为 ``  -1 -1``。
 
     Raises
     ------
     ValueError
         If ``azimuth`` and ``elevation`` lengths differ.
-        ``azimuth`` 与 ``elevation`` 长度不一致时。
     """
     if azimuth is None or elevation is None:
         return "  -1 -1"
@@ -68,14 +62,13 @@ def get_azimuth_elevation(azimuth=None, elevation=None):
 
 def lr0001_get_bsrn_format(self, listSensor=None):
     """
-    Emit ``*C0001`` block. / 输出 ``*C0001`` 块。
+    Emit ``*C0001`` block.
 
     Parameters
     ----------
     listSensor : sequence of int or str, optional
         Radiation-quantity slot IDs for the lines after the header; default matches
         typical BSRN shortwave + met columns (2,3,4,5,21,22,23).
-        头行之后的辐射量槽位编号；默认对应常见短波 + 气象列。
     """
     if listSensor is None:
         listSensor = ["2", "3", "4", "5", "21", "22", "23"]
@@ -100,7 +93,7 @@ def lr0001_get_bsrn_format(self, listSensor=None):
 
 
 def lr0002_get_bsrn_format(self):
-    """Emit LR0002 contact block. / 输出 LR0002 联系信息块。"""
+    """Emit LR0002 contact block."""
     self.stop_if_values_missing("LR0002")
     v = {name: self.get_format_value(name) for name in self._params.keys()}
     sci_change = self._private["scientistChange"]
@@ -127,7 +120,7 @@ def lr0002_get_bsrn_format(self):
 
 def lr0003_get_bsrn_format(self, *args):
     """
-    Emit LR0003 commentary block. / 输出 LR0003 注释块。
+    Emit LR0003 commentary block.
 
     Positional ``*args`` are appended after ``message`` (e.g. ``@LR4000CONST`` lines built with
     :func:`lr4000const_get_bsrn_format`). BSRN requires one such line per pyrgeometer when LR4000 is present.
@@ -141,7 +134,7 @@ def lr0003_get_bsrn_format(self, *args):
 
 
 def lr0004_get_bsrn_format(self):
-    """Emit LR0004 block. / 输出 LR0004 块。"""
+    """Emit LR0004 block."""
     self.stop_if_values_missing("LR0004")
     v = {name: self.get_format_value(name) for name in self._params.keys()}
     s_change = self._private["stationDescChange"]
@@ -167,7 +160,7 @@ def lr0004_get_bsrn_format(self):
 
 
 def lr0005_get_bsrn_format(self):
-    """Emit LR0005 radiosonde block. / 输出 LR0005 探空块。"""
+    """Emit LR0005 radiosonde block."""
     self.stop_if_values_missing("LR0005")
     v = {name: self.get_format_value(name) for name in self._params.keys()}
     ch = self._private["change"]
@@ -185,7 +178,7 @@ def lr0005_get_bsrn_format(self):
 
 
 def lr0006_get_bsrn_format(self):
-    """Emit LR0006 ozone block. / 输出 LR0006 臭氧块。"""
+    """Emit LR0006 ozone block."""
     self.stop_if_values_missing("LR0006")
     v = {name: self.get_format_value(name) for name in self._params.keys()}
     ch = self._private["change"]
@@ -199,7 +192,7 @@ def lr0006_get_bsrn_format(self):
 
 
 def lr0007_get_bsrn_format(self, synop=None):
-    """Emit LR0007 block. / 输出 LR0007 块。"""
+    """Emit LR0007 block."""
     self.stop_if_values_missing("LR0007")
     v = {name: self.get_format_value(name) for name in self._params.keys()}
     flags = [
@@ -223,7 +216,7 @@ def lr0007_get_bsrn_format(self, synop=None):
 
 
 def lr0008_get_bsrn_format(self, anyChange=False, printLr=False, LR0009Format=False):
-    """Emit LR0008 or LR0009-style fragment. / 输出 LR0008 或 LR0009 式片段。"""
+    """Emit LR0008 or LR0009-style fragment."""
     self.stop_if_values_missing("LR0008")
     v = {name: self.get_format_value(name) for name in self._params.keys()}
     ch = self._private["change"]
@@ -271,7 +264,7 @@ def lr0008_get_bsrn_format(self, anyChange=False, printLr=False, LR0009Format=Fa
 
 def lr4000const_get_bsrn_format(self, method=1):
     """
-    Emit ``@LR4000CONST`` wrapped line(s). / 输出折行 ``@LR4000CONST``。
+    Emit ``@LR4000CONST`` wrapped line(s).
 
     Template: ``@LR4000CONST, s/n (Manufacturer), s/n (WMO), CertificateCodeID, C, k0, k1, k2, k3, f``.
     Intended for inclusion in LR0003 when LR4000 minute data are shipped (one instance per instrument).
@@ -298,7 +291,7 @@ def lr4000const_get_bsrn_format(self, method=1):
 
 
 def lr0100_get_bsrn_format(self, changed=True):
-    """Emit full LR0100 minute table. / 输出 LR0100 分钟表。"""
+    """Emit full LR0100 minute table."""
     res = "*C0100" if changed else "*U0100"
     m = self._format_series_field
     y, mo = map(int, self._private["yearMonth"].split("-"))
@@ -324,7 +317,7 @@ def lr0100_get_bsrn_format(self, changed=True):
 
 
 def lr0300_get_bsrn_format(self, changed=True):
-    """Emit full LR0300 minute table. / 输出 LR0300 分钟表。"""
+    """Emit full LR0300 minute table."""
     res = "*C0300" if changed else "*U0300"
     m = self._format_series_field
     y, mo = map(int, self._private["yearMonth"].split("-"))
@@ -347,7 +340,7 @@ def lr0300_get_bsrn_format(self, changed=True):
 
 def lr4000_get_bsrn_format(self, changed=True):
     """
-    Emit full LR4000 minute table. / 输出 LR4000 分钟表。
+    Emit full LR4000 minute table.
 
     BSRN: pair with matching ``@LR4000CONST`` lines in LR0003 (see :func:`lr0003_get_bsrn_format`).
     """

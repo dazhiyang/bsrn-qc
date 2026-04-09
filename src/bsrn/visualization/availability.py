@@ -1,6 +1,5 @@
 """
-visualization of bsrn file availability.
-BSRN文件可用性的可视化。
+Visualization of BSRN archive file availability.
 """
 
 import os
@@ -22,67 +21,56 @@ def plot_bsrn_availability(
     stations, username, password, start_year=1992, end_year=None, output_file=None, title=None
 ):
     """
-    Unified function to plot bsrn file availability from ftp.
-    统一功能，用于绘制FTP中的BSRN文件可用性。
+    Plot BSRN archive file availability from the BSRN FTP inventory.
 
     Parameters
     ----------
     stations : str or list
         One or more station abbreviations (e.g., 'PAY' or ['PAY', 'NYA']).
-        一个或多个站点缩写（例如 'PAY' 或 ['PAY', 'NYA']）。
     username : str
         BSRN FTP username.
-        BSRN FTP 用户名。
     password : str
         BSRN FTP password.
-        BSRN FTP 密码。
     start_year : int, default 1992
-        year to start the visualization.
-        可视化开始的年份。
+        First year to include in the visualization.
     end_year : int, optional
-        year to end the visualization. If not specified, the current year is used.
-        可视化结束的年份。如果未指定，则使用当前年份。
+        Last year to include. If omitted, the current calendar year is used.
     output_file : str, optional
         Path to the output file (e.g., 'availability.pdf').
-        输出文件的路径（例如 'availability.pdf'）。
     title : str, optional
         Plot title. If None (default), no title is drawn.
-        图标题；默认 None 不显示。
 
     Returns
     -------
     fig : plotnine.ggplot.ggplot
         The generated availability heatmap figure.
-        生成的可用性热图对象。
     """
     if isinstance(stations, str):
         stations = [stations]
-    
+
     stations = [s.upper() for s in stations]
-    stations.sort()  # Sort stations alphabetically / 按字母顺序对站点进行排序
-    
+    stations.sort()  # Sort stations alphabetically
+
     if end_year is None:
         end_year = datetime.now().year
-        
+
     years = list(range(start_year, end_year + 1))
-    
-    # Fetch data from FTP / 从 FTP 获取数据
+
+    # Fetch data from FTP
     print(f"Searching BSRN FTP for stations: {', '.join(stations)}...")
     inventory = get_bsrn_file_inventory(stations, username, password)
     if not inventory or all(len(files) == 0 for files in inventory.values()):
         warnings.warn(
             "BSRN FTP connection failed or returned no data. Plot may be empty. "
-            "Check credentials (username/password) and network. / "
-            "BSRN FTP 未连接或未返回数据，图可能为空。请检查凭据与网络。",
+            "Check credentials (username/password) and network.",
             UserWarning,
             stacklevel=2,
         )
 
-    # Pattern: STNMMYY.dat.gz or STNMMYY.001 / 匹配模式：STNMMYY.dat.gz 或 STNMMYY.001
+    # Pattern: STNMMYY.dat.gz or STNMMYY.001
     pattern = re.compile(r"([A-Z]{3})(\d{2})(\d{2})\.(?:dat\.gz|\d{3}).*", re.IGNORECASE)
 
-    # Calculate dimensions to ensure square cells / 计算尺寸以确保方形单元格
-    # Width = 160mm = 6.299 inches / 宽度 = 160mm = 6.299 英寸
+    # Dimensions for square cells; width 160 mm
     width_inch = 160 / 25.4
     num_cols = len(years)
     num_rows = 12 if len(stations) == 1 else len(stations)
@@ -107,7 +95,7 @@ def plot_bsrn_availability(
             if match:
                 stn_match, mm_str, yy_str = match.groups()
                 month, yy = int(mm_str), int(yy_str)
-                # BSRN started 1991: yy>=91 -> 1900s / BSRN 自 1991 年起
+                # BSRN started 1991: yy>=91 -> 1900s
                 year = (1900 + yy) if yy >= 91 else (2000 + yy)
                 if year in df.columns and month in df.index:
                     df.at[month, year] = 1
@@ -123,12 +111,12 @@ def plot_bsrn_availability(
         
         # Create mapping dictionary for ggplot axis labels
         month_labels = {str(m): name for m, name in zip(range(1, 13), month_names)}
-        
+
         _labs = {"y": f"Station: {stn}", "x": "Year"}
         if title is not None:
             _labs["title"] = title
         p = (
-            ggplot(df_melt, aes(x='Year', y='Month', fill='Availability')) + 
+            ggplot(df_melt, aes(x='Year', y='Month', fill='Availability')) +
             geom_tile(color='white', size=0.5) +
             scale_fill_cmap(cmap_name='viridis', name="Availability") +
             labs(**_labs) +
@@ -143,21 +131,20 @@ def plot_bsrn_availability(
                 if match:
                     stn_match, mm_str, yy_str = match.groups()
                     yy = int(yy_str)
-                    # BSRN started 1991: yy>=91 -> 1900s / BSRN 自 1991 年起
                     year = (1900 + yy) if yy >= 91 else (2000 + yy)
                     if year in df.columns:
                         df.at[stn, year] += 1
-                        
+
         df = df.reset_index().rename(columns={'index': 'Station'})
         df_melt = df.melt(id_vars=['Station'], var_name='Year', value_name='Months_Available')
         df_melt['Station'] = pd.Categorical(df_melt['Station'], categories=reversed(stations), ordered=True)
         df_melt['Year'] = df_melt['Year'].astype(int)
-        
+
         _labs = {"y": "Stations", "x": "Year"}
         if title is not None:
             _labs["title"] = title
         p = (
-            ggplot(df_melt, aes(x='Year', y='Station', fill='Months_Available')) + 
+            ggplot(df_melt, aes(x='Year', y='Station', fill='Months_Available')) +
             geom_tile(color='white', size=0.5) +
             scale_fill_cmap(cmap_name='viridis', name="Months Available") +
             labs(**_labs) +
@@ -165,10 +152,9 @@ def plot_bsrn_availability(
         )
         
     year_breaks = [y for i, y in enumerate(years) if i % 2 == 0] if len(years) > 20 else years
-    
+
     p = p + scale_x_continuous(breaks=year_breaks) + coord_equal()
 
-    # Apply strict formatting rules / 应用严格的格式规则
     p = p + theme_minimal() + theme(
         text=element_text(family='Times New Roman', size=9),
         axis_title=element_text(size=9),
@@ -181,7 +167,7 @@ def plot_bsrn_availability(
         legend_key_height=5,
         legend_margin=-12,
         legend_box_spacing=0,
-        axis_title_x=element_text(size=9, margin={"t": 1, "b": 2}),  # space between x-title and legend
+        axis_title_x=element_text(size=9, margin={"t": 1, "b": 2}),
         plot_margin_top=0,
         plot_margin_right=0,
         plot_margin_bottom=0,
@@ -193,5 +179,5 @@ def plot_bsrn_availability(
 
     if output_file:
         p.save(output_file, dpi=300)
-        
+
     return p
