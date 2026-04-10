@@ -3,7 +3,7 @@ Explicit time-window averages for :class:`~pandas.DatetimeIndex` frames (LR0100-
 
 This is **not** :meth:`pandas.DataFrame.resample` semantics. For **floor / ceiling / center**
 windows, monthly label trimming, coverage rules, and examples, see
-``docs/tutorials/3.time_averaging.ipynb``.
+``docs/tutorials/4.time_averaging.ipynb``.
 """
 
 import numpy as np
@@ -285,7 +285,7 @@ def pretty_average(df, freq, alignment="ceiling",
                    aggfunc="mean", resolution=None, match_ceiling_labels=True):
     """
     Average ``df`` over explicit labeled windows (not pandas ``resample`` semantics).
-    Semantics and examples: ``docs/tutorials/3.time_averaging.ipynb``.
+    Semantics and examples: ``docs/tutorials/4.time_averaging.ipynb``.
 
     Parameters
     ----------
@@ -295,7 +295,7 @@ def pretty_average(df, freq, alignment="ceiling",
         Fixed bin frequency (e.g. ``'1h'``, ``'30min'``).
     alignment : {'floor', 'ceiling', 'center'}, default ``'ceiling'``
         **floor** ``[L, L+Δ)`` · **ceiling** ``(L-Δ, L]`` · **center** ``[L-Δ/2+res, L+Δ/2]``.
-        Definitions: tutorial ``docs/tutorials/3.time_averaging.ipynb``.
+        Definitions: tutorial ``docs/tutorials/4.time_averaging.ipynb``.
     aggfunc : str or callable, default ``'mean'``
         Passed to :func:`_aggregate`.
     resolution : pandas.Timedelta or None, default None

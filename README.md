@@ -203,9 +203,11 @@ bsrn-qc/
 │   ├── tutorials/                     # Jupyter tutorials + index.rst (nbsphinx)
 │   │   ├── 1.data_downloading.ipynb
 │   │   ├── 2.quality_control.ipynb
-│   │   ├── 3.time_averaging.ipynb
-│   │   ├── 4.clear_sky_detection.ipynb
-│   │   └── 5.cloud_enhancement_event.ipynb
+│   │   ├── 3.to_archive.ipynb         # station-to-archive writing (bsrn.archive)
+│   │   ├── 4.time_averaging.ipynb
+│   │   ├── 5.clear_sky_detection.ipynb
+│   │   ├── 6.cloud_enhancement_event.ipynb
+│   │   └── 7.separation_modeling.ipynb
 │   └── sphinx/                        # RST (user_guide, api, _static); not the doc homepage
 │       ├── api/                       # API reference (io, qc, physics, …)
 │       └── user_guide/                # installation, getting_started, package_overview, …

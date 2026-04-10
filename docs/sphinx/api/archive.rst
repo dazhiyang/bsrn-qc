@@ -3,7 +3,8 @@ Station-to-archive (LR)
 
 Logical-record specifications, validation, and string formatting for BSRN
 station-to-archive ``.dat`` files. For reading parsed LR data into pandas, see
-:func:`~bsrn.io.reader.read_station_to_archive` in :doc:`io`.
+:func:`~bsrn.io.reader.read_station_to_archive` in :doc:`io`. A minimal **writing**
+walk-through is in :doc:`/tutorials/3.to_archive`.
 
 The concrete ``LR*`` types are **Pydantic v2** models (:class:`pydantic.BaseModel` subclasses).
 Field layout and Fortran-width metadata come from :data:`~bsrn.archive.LR_SPECS`; each field’s
