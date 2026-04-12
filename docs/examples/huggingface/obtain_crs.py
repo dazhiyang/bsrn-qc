@@ -58,7 +58,6 @@ print(f"\nGenerating calendar plot: {output_plot} …")
 plot_calendar(
     df=df_avg,
     output_file=output_plot,
-    station_code=ds.station_code,
     meas_col="ghi",
     clear_col="ghi_clear",
     other_cols=["ghi_crs"],

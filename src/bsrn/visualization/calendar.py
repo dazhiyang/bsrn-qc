@@ -24,7 +24,7 @@ from plotnine import (
 )
 
 
-def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None, 
+def plot_calendar(df, output_file, meas_col=None, clear_col=None,
                   other_cols=None, labels=None, title=None):
     """
     Plot a one-page calendar-style comparison for multiple irradiance series (up to 7).
@@ -33,10 +33,8 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
     ----------
     df : pd.DataFrame
         Processed DataFrame with UTC DatetimeIndex and 'zenith' column.
-    output_file : str
-        Path to save the output PDF.
-    station_code : str
-        BSRN station code for the title.
+    output_file : str or None
+        Path to save the output PDF. If falsy, the figure is not written to disk.
     meas_col : str, optional
         Column name for measured data (plotted as solid line).
     clear_col : str, optional
