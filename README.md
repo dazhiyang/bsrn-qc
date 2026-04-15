@@ -75,6 +75,22 @@ ds.plot.daily("2025-01-15")             # UTC date inside the loaded month
 ds.plot.table()                         # QC summary table
 ```
 
+Optional LR selection (current supported selectors are
+``'lr0100'``, ``'lr0300'``, ``'lr4000'``):
+
+```python
+# Parse selected logical records; lr0100 remains required.
+ds = bsrn.BSRNDataset.from_file(
+    "data/QIQ/qiq0125.dat.gz",
+    include_lrs=["lr0100", "lr0300"],
+    strict=False,
+)
+
+# Query LR objects from the dataset.
+lr0100 = ds.get_lr("lr0100")
+has_lr0300 = ds.has_lr("lr0300")
+```
+
 ### Quick Example — Functional API
 
 The same steps are available as standalone functions, useful for

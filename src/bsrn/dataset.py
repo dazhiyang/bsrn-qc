@@ -19,7 +19,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import (BaseModel, ConfigDict, PrivateAttr,
+from pydantic import (BaseModel, ConfigDict, Field, PrivateAttr,
                       field_validator, model_validator)
 
 from .archive.records_models import LR0100, LR0300, LR4000
@@ -74,6 +74,9 @@ class BSRNDataset(BaseModel):
     lr4000 : LR4000 or None
         Validated LR4000 logical record (pyrgeometer minute
         data). Default ``None``.
+    metadata_lrs : dict
+        Mapping for additional non-core logical records keyed by
+        ``lr####`` (for example ``'lr0001'``). Default empty dict.
     station_name : str or None
         Resolved from ``BSRN_STATIONS`` when omitted.
     lat : float or None
@@ -112,6 +115,7 @@ class BSRNDataset(BaseModel):
     # Optional logical records.
     lr0300: Optional[LR0300] = None
     lr4000: Optional[LR4000] = None
+    metadata_lrs: dict = Field(default_factory=dict)
 
     # Resolved from BSRN_STATIONS; users may override.
     station_name: str = None
@@ -187,8 +191,9 @@ class BSRNDataset(BaseModel):
             parses all three.
         strict : bool, optional
             Passed to :func:`~bsrn.io.reader.read_bsrn_archive`.
-            If ``True``, optional LR parse failures raise; otherwise
-            failing optional LRs are returned as ``None``.
+            If ``True``, malformed optional LR blocks raise.
+            If ``False`` (default), malformed optional LRs are returned
+            as ``None``.
 
         Returns
         -------
@@ -267,6 +272,46 @@ class BSRNDataset(BaseModel):
         Accessor for built-in plotting routines.
         """
         return BSRNPlot(self)
+
+    def get_lr(self, lr_code):
+        """
+        Return one logical record by code.
+
+        Parameters
+        ----------
+        lr_code : str
+            Logical record code in ``lr####`` form (case-insensitive),
+            for example ``'lr0100'`` or ``'lr0001'``.
+
+        Returns
+        -------
+        object or None
+            Requested LR object when present, else ``None``.
+        """
+        key = str(lr_code).strip().lower()
+        if key == "lr0100":
+            return self.lr0100
+        if key == "lr0300":
+            return self.lr0300
+        if key == "lr4000":
+            return self.lr4000
+        return self.metadata_lrs.get(key)
+
+    def has_lr(self, lr_code):
+        """
+        Check whether one logical record exists on the dataset.
+
+        Parameters
+        ----------
+        lr_code : str
+            Logical record code in ``lr####`` form (case-insensitive).
+
+        Returns
+        -------
+        bool
+            True if the requested LR exists, else False.
+        """
+        return self.get_lr(lr_code) is not None
 
     # ------------------------------------------------------------------ #
     #  Pipeline methods (delegate to standalone functions)               #

@@ -57,15 +57,17 @@ def read_bsrn_archive(path, include_lrs=None, strict=False):
         ``'lr0100'``, ``'lr0300'``, ``'lr4000'``. Default ``None``
         parses all three.
     strict : bool, optional
-        If ``True``, raise when optional LR parsing fails.
-        If ``False`` (default), optional LRs that fail parsing are
-        returned as ``None``.
+        Controls optional-LR parse failures. If ``True``, malformed
+        optional LR blocks raise ``ValueError``. If ``False`` (default),
+        malformed optional LRs are returned as ``None``. Missing optional
+        LR blocks are returned as ``None`` in both modes.
 
     Returns
     -------
     dict
         Keys: ``station_code``, ``year``, ``month``, ``lr0100``,
-        ``lr0300`` (or ``None``), ``lr4000`` (or ``None``).
+        ``lr0300`` (or ``None``), ``lr4000`` (or ``None``),
+        ``metadata_lrs`` (currently empty dict placeholder).
         Suitable for unpacking into
         :class:`~bsrn.dataset.BSRNDataset`.
 
@@ -75,7 +77,8 @@ def read_bsrn_archive(path, include_lrs=None, strict=False):
         If *path* does not exist.
     ValueError
         If the filename cannot be parsed, requested LR codes are
-        unsupported, or no lr0100 block is found.
+        unsupported, ``include_lrs`` omits ``'lr0100'``, or no lr0100
+        block is found.
     """
     if include_lrs is None or include_lrs == "all":
         wanted_lrs = set(_SUPPORTED_LRS)
@@ -140,6 +143,7 @@ def read_bsrn_archive(path, include_lrs=None, strict=False):
         lr0100=lr0100,
         lr0300=lr0300,
         lr4000=lr4000,
+        metadata_lrs={},
     )
 
 
