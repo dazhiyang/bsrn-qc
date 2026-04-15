@@ -236,6 +236,36 @@ class LR0100(ArchiveRecordBase):
     def _validate_minute_lr0100(cls, v, info: ValidationInfo):
         return _validate_minute_vector(v, info.field_name, "LR0100", info.data.get("yearMonth"))
 
+    @classmethod
+    def from_file(cls, path, strict=False):
+        """
+        Load LR0100 from one BSRN ``.dat.gz`` archive file.
+
+        Parameters
+        ----------
+        path : str or Path
+            Path to one station-to-archive ``.dat.gz`` file.
+        strict : bool, optional
+            Passed to :func:`~bsrn.io.reader.read_bsrn_archive`.
+
+        Returns
+        -------
+        LR0100
+            Parsed and validated LR0100 record.
+
+        Raises
+        ------
+        ValueError
+            If the file does not contain a valid LR0100 block.
+        """
+        from bsrn.io.reader import read_bsrn_archive
+
+        out = read_bsrn_archive(path, include_lrs=["lr0100"], strict=strict)
+        rec = out.get("lr0100")
+        if rec is None:
+            raise ValueError("Failed to load lr0100 from file.")
+        return rec
+
 
 class LR0300(ArchiveRecordBase):
     """
@@ -263,6 +293,38 @@ class LR0300(ArchiveRecordBase):
     def _validate_minute_lr0300(cls, v, info: ValidationInfo):
         return _validate_minute_vector(v, info.field_name, "LR0300", info.data.get("yearMonth"))
 
+    @classmethod
+    def from_file(cls, path, strict=False):
+        """
+        Load LR0300 from one BSRN ``.dat.gz`` archive file.
+
+        Parameters
+        ----------
+        path : str or Path
+            Path to one station-to-archive ``.dat.gz`` file.
+        strict : bool, optional
+            Passed to :func:`~bsrn.io.reader.read_bsrn_archive`.
+
+        Returns
+        -------
+        LR0300
+            Parsed and validated LR0300 record.
+
+        Raises
+        ------
+        ValueError
+            If the file does not contain a valid LR0300 block.
+        """
+        from bsrn.io.reader import read_bsrn_archive
+
+        out = read_bsrn_archive(
+            path, include_lrs=["lr0100", "lr0300"], strict=strict,
+        )
+        rec = out.get("lr0300")
+        if rec is None:
+            raise ValueError("Failed to load lr0300 from file.")
+        return rec
+
 
 class LR4000(ArchiveRecordBase):
     """
@@ -287,6 +349,38 @@ class LR4000(ArchiveRecordBase):
     @classmethod
     def _validate_minute_lr4000(cls, v, info: ValidationInfo):
         return _validate_minute_vector(v, info.field_name, "LR4000", info.data.get("yearMonth"))
+
+    @classmethod
+    def from_file(cls, path, strict=False):
+        """
+        Load LR4000 from one BSRN ``.dat.gz`` archive file.
+
+        Parameters
+        ----------
+        path : str or Path
+            Path to one station-to-archive ``.dat.gz`` file.
+        strict : bool, optional
+            Passed to :func:`~bsrn.io.reader.read_bsrn_archive`.
+
+        Returns
+        -------
+        LR4000
+            Parsed and validated LR4000 record.
+
+        Raises
+        ------
+        ValueError
+            If the file does not contain a valid LR4000 block.
+        """
+        from bsrn.io.reader import read_bsrn_archive
+
+        out = read_bsrn_archive(
+            path, include_lrs=["lr0100", "lr4000"], strict=strict,
+        )
+        rec = out.get("lr4000")
+        if rec is None:
+            raise ValueError("Failed to load lr4000 from file.")
+        return rec
 
 
 class LR4000CONST(ArchiveRecordBase):
